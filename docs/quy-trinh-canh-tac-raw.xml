@@ -1,0 +1,2571 @@
+<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex" xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex" xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex" xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex" xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex" xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex" xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex" xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink" xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:oel="http://schemas.microsoft.com/office/2019/extlst" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex" xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid" xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml" xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du" xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash" xmlns:w16sdtfl="http://schemas.microsoft.com/office/word/2024/wordml/sdtformatlock" xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16sdtfl w16du wp14">
+  <w:body>
+    <w:p w14:paraId="77E6C042" w14:textId="3A56A872" w:rsidR="00CA4F56" w:rsidRPr="009224F0" w:rsidRDefault="00125CF2">
+      <w:pPr>
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:t>QUY TRÌNH CANH TÁC CÂY SÂM</w:t>
+      </w:r>
+      
+      
+    </w:p>
+    <w:tbl>
+      <w:tblPr>
+        <w:tblStyle w:val="TableGrid"/>
+        <w:tblW w:w="9895" w:type="dxa"/>
+        <w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>
+      </w:tblPr>
+      <w:tblGrid>
+        <w:gridCol w:w="1163"/>
+        <w:gridCol w:w="5222"/>
+        <w:gridCol w:w="1800"/>
+        <w:gridCol w:w="1710"/>
+      </w:tblGrid>
+      <w:tr w:rsidR="00A1264F" w:rsidRPr="00B76902" w14:paraId="650EC051" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="605E445F" w14:textId="0B574A51" w:rsidR="00A1264F" w:rsidRPr="00B76902" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Bước</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1B71E255" w14:textId="3ED3D6F3" w:rsidR="00A1264F" w:rsidRPr="00B76902" w:rsidRDefault="00A1264F">
+            <w:pPr>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Mô tả</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1C149F7D" w14:textId="03A3405D" w:rsidR="00A1264F" w:rsidRPr="00B76902" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Thời gian/ha</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="77BB3C8C" w14:textId="0877EB7D" w:rsidR="00A1264F" w:rsidRPr="00B76902" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Tần suất</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="4ECC4A6F" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5805A318" w14:textId="1DA270F7" w:rsidR="005A5EAD" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 1</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6B4EAC41" w14:textId="572EEF4A" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00923189">
+            <w:r>
+              <w:t>Rải phân cải tạo đất</w:t>
+            </w:r>
+            
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="23BAC47F" w14:textId="78DCBEBA" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="785E255D" w14:textId="4F09A81D" w:rsidR="00A1264F" w:rsidRDefault="00780E9C" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="7DCA379A" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="153BD0B5" w14:textId="22650171" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 2</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="32C264A8" w14:textId="3E9ED5C8" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00923189">
+            <w:r>
+              <w:t>Cày phay đất lên luống</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2BB55C40" w14:textId="5B50E1E4" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+            
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="12F5E120" w14:textId="031AB2D2" w:rsidR="00A1264F" w:rsidRDefault="00E125C0" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="3934137D" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1F93152A" w14:textId="2D352D21" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 3</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="689FC0B3" w14:textId="3837E35C" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00923189">
+            <w:r>
+              <w:t>Tưới ẩm mặt luống</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="16A12224" w14:textId="45B81067" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3660C360" w14:textId="7D6D4110" w:rsidR="00A1264F" w:rsidRDefault="00E125C0" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="33553563" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="213263E0" w14:textId="1392E31E" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 4</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="252E52EE" w14:textId="521812D5" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00923189">
+            <w:r>
+              <w:t>Phun chế phẩm sinh học</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="76A780AA" w14:textId="700CDF2E" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>3 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3FAEE35D" w14:textId="5963BB3C" w:rsidR="00A1264F" w:rsidRDefault="00E125C0" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="5A06B3F5" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="44D520B9" w14:textId="2B9D4EF2" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 5</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3F55366B" w14:textId="7E75BB16" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00923189">
+            <w:r>
+              <w:t>Phủ màng nilon</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="78F923DE" w14:textId="76FF8CAC" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>3 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2ABE1A61" w14:textId="05D6C754" w:rsidR="00A1264F" w:rsidRDefault="00E125C0" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="4109F902" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6BA76AE6" w14:textId="54B03B1A" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 6</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="10BCD74B" w14:textId="4F6A8EC0" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="006D14CE">
+            <w:r>
+              <w:t>Xuống giống trồng</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="33318021" w14:textId="4FE09290" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="79D37A5B" w14:textId="55E4ED80" w:rsidR="00A1264F" w:rsidRDefault="00E125C0" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="4DF05BE3" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="661467DD" w14:textId="0C0FB136" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 7</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="37E1751C" w14:textId="4C852A0A" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00590C2A">
+            <w:r>
+              <w:t>Tưới vi sinh dinh dưỡng</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1FCE91E5" w14:textId="3B428989" w:rsidR="00A1264F" w:rsidRDefault="00C22EEB" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="12DD46C3" w14:textId="1B52E9ED" w:rsidR="00A1264F" w:rsidRDefault="000333E1" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E93985" w14:paraId="7BAD0B1D" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="54D4FB32" w14:textId="2DFEE539" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 8</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="09B5947E" w14:textId="1269DF4B" w:rsidR="00E93985" w:rsidRDefault="008351BF" w:rsidP="00E93985">
+            <w:r>
+              <w:t>Chu kỳ bón lá</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="04CBF892" w14:textId="4FE51A09" w:rsidR="00E93985" w:rsidRDefault="00586E33" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4248BDFB" w14:textId="5D36E46A" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>20 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E93985" w14:paraId="062F5833" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5ED252A8" w14:textId="6853AB93" w:rsidR="00E93985" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 9</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="45B9DCC9" w14:textId="0DC526F9" w:rsidR="00E93985" w:rsidRDefault="008351BF" w:rsidP="00E93985">
+            <w:r>
+              <w:t>Chu kỳ bón củ</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0657D820" w14:textId="56354D0A" w:rsidR="00E93985" w:rsidRDefault="00586E33" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="730AF394" w14:textId="1DE5A674" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>30 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E93985" w14:paraId="5B5E7EF3" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="726F3521" w14:textId="652DA438" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 10</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2F561871" w14:textId="2F1A6E5A" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="00E93985">
+            <w:r>
+              <w:t>Thu hoạch thân lá Sâm</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2F4C7D71" w14:textId="50C6CBD5" w:rsidR="00E93985" w:rsidRDefault="00917B6F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="02B10020" w14:textId="4D2F9D7F" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>75 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E93985" w14:paraId="64782989" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6DF42336" w14:textId="1B80FD5D" w:rsidR="00E93985" w:rsidRPr="00B8544B" w:rsidRDefault="00E93985" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 11</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="49F7AE27" w14:textId="00C4E41D" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="00E93985">
+            <w:r>
+              <w:t>Thu hoạch củ Sâm</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="75DB814C" w14:textId="764FC2A4" w:rsidR="00E93985" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="00FC2731" w14:textId="18CB2437" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1095 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E93985" w14:paraId="582FEC47" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2F0A34A0" w14:textId="7ECF0625" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 12</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3591A442" w14:textId="386274DF" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="00E93985">
+            <w:r>
+              <w:t>Tưới mát</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0AED661A" w14:textId="4BE3DBDD" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="50729E4E" w14:textId="5BACDE80" w:rsidR="00E93985" w:rsidRDefault="00E93985" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 lần/ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="56E8ED56" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2A71A086" w14:textId="18FD1E69" w:rsidR="00A1264F" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 13</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="64280F57" w14:textId="20CEC63D" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Họp đầu ca sản xuất</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3741B119" w14:textId="77777777" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6E33DE6D" w14:textId="50AC89B5" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="5F78753F" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="19B336F8" w14:textId="0019D444" w:rsidR="00A1264F" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 14</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0B508085" w14:textId="46926B11" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Họp tuần quản lý</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1D55A94B" w14:textId="72AAB31A" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7A4C62D5" w14:textId="34E8A9B2" w:rsidR="00A1264F" w:rsidRDefault="00941444" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>7 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="278275E4" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="06CCACC5" w14:textId="57CB2AFA" w:rsidR="00A1264F" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 15</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="750CB5F0" w14:textId="149135F7" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Họp tháng vùng trồng</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="13F9C85A" w14:textId="19A5EFF2" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7087DEFD" w14:textId="2375A0E8" w:rsidR="00A1264F" w:rsidRDefault="00941444" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>30 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00445445" w14:paraId="27D72F61" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7BE9C81F" w14:textId="363AD5EC" w:rsidR="00445445" w:rsidRDefault="00445445" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 16</w:t>
+            </w:r>
+            
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="52AF4705" w14:textId="63A25E9E" w:rsidR="00445445" w:rsidRDefault="00B41363" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Loại cỏ dại và cây dại</w:t>
+            </w:r>
+            
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="29446B1A" w14:textId="77777777" w:rsidR="00445445" w:rsidRDefault="00445445" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="40CD8795" w14:textId="77777777" w:rsidR="00445445" w:rsidRDefault="00445445" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00B937C8" w14:paraId="1B23CC61" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="441F1C35" w14:textId="657676A9" w:rsidR="00B937C8" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 17</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7889F631" w14:textId="31822DCF" w:rsidR="00B937C8" w:rsidRDefault="00B937C8" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Kiểm tra và dặm cây</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5FB6A6F1" w14:textId="77777777" w:rsidR="00B937C8" w:rsidRDefault="00B937C8" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7D2F502D" w14:textId="25EE784C" w:rsidR="00B937C8" w:rsidRDefault="00B937C8" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="24C379EA" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6056F888" w14:textId="4D667B96" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 18</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0389557F" w14:textId="67F6D85E" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00590C2A">
+            <w:r>
+              <w:t>Kiểm tra hệ thống tưới</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="55F33BEE" w14:textId="3EC61A00" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="425DD50F" w14:textId="311E59AF" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="3FD287A6" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2B8E8603" w14:textId="6A6D1160" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 19</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="15B7E547" w14:textId="33D60C7D" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00590C2A">
+            <w:r>
+              <w:t>Kiểm tra sâu, bệnh</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="46341B71" w14:textId="7415023E" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="179EBD58" w14:textId="549BEE62" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="312F1D4E" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4670D62D" w14:textId="34A69C40" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 20</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="71D55163" w14:textId="121E9EEB" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00590C2A">
+            <w:r>
+              <w:t>Kiểm tra hiện tượng lạ</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="21FC6CEF" w14:textId="0A483ABD" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="632C2FB5" w14:textId="61DA10A6" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="45D1D139" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="482E327D" w14:textId="7DECED85" w:rsidR="00A1264F" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 21</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2F53CE89" w14:textId="342A7D84" w:rsidR="00A1264F" w:rsidRDefault="00B41363" w:rsidP="00590C2A">
+            <w:r>
+              <w:t>Nhập số liệu sản xuất</w:t>
+            </w:r>
+            
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="23A457D2" w14:textId="60FDF4D1" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="72C9E136" w14:textId="7952A289" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="11AC360C" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6CA2BF6F" w14:textId="08882979" w:rsidR="00A1264F" w:rsidRPr="00B8544B" w:rsidRDefault="005A5EAD" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 22</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3A970348" w14:textId="11503D26" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00590C2A">
+            <w:r>
+              <w:t>Báo cáo bất thường</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2BF80606" w14:textId="752068CC" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="650BD30B" w14:textId="4B9C80A0" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00A1264F" w14:paraId="399CAC81" w14:textId="77777777" w:rsidTr="00780E9C">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="654F2FFC" w14:textId="13D1F276" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00045769">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 23</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="29F0CA9D" w14:textId="0E041FDC" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="00590C2A">
+            <w:r>
+              <w:t>Quay về Bước 1</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1B6FC14F" w14:textId="78FDB8E4" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4329E756" w14:textId="06C700A0" w:rsidR="00A1264F" w:rsidRDefault="00A1264F" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+      </w:tr>
+    </w:tbl>
+    <w:p w14:paraId="2965BAD4" w14:textId="77777777" w:rsidR="00125CF2" w:rsidRDefault="00125CF2"/>
+    <w:p w14:paraId="61EB2262" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="6368697F" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="2BA96B1D" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="2C1E4054" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="70690237" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="5CEF5738" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="316CE079" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="5EE38EC5" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="39E41CDF" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="18A0DAF7" w14:textId="77777777" w:rsidR="009224F0" w:rsidRDefault="009224F0"/>
+    <w:p w14:paraId="563FAAA3" w14:textId="6B4C2D50" w:rsidR="004F627A" w:rsidRPr="009224F0" w:rsidRDefault="004F627A">
+      <w:pPr>
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:lastRenderedPageBreak/>
+        <w:t>QUY TRÌNH CANH TÁC CÂY GẤC</w:t>
+      </w:r>
+    </w:p>
+    <w:tbl>
+      <w:tblPr>
+        <w:tblStyle w:val="TableGrid"/>
+        <w:tblW w:w="9895" w:type="dxa"/>
+        <w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>
+      </w:tblPr>
+      <w:tblGrid>
+        <w:gridCol w:w="1163"/>
+        <w:gridCol w:w="5222"/>
+        <w:gridCol w:w="1800"/>
+        <w:gridCol w:w="1710"/>
+      </w:tblGrid>
+      <w:tr w:rsidR="00715451" w:rsidRPr="00B76902" w14:paraId="70708AF4" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="432ECCE0" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B76902" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Bước</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="75767CA5" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B76902" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Mô tả</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5D98CCE3" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B76902" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Thời gian/ha</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="49F8FF8C" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B76902" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Tần suất</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="0E01B4E2" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="288F9E77" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 1</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="28BEFD65" w14:textId="48F93AD8" w:rsidR="00715451" w:rsidRDefault="00817EF4" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Đào hố trồng 60x60cm</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="420BCE14" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="59EDAC8E" w14:textId="1780F8C9" w:rsidR="00715451" w:rsidRDefault="00E07210" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E07210" w14:paraId="13244049" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7284E7CA" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 2</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6FBD183B" w14:textId="0379F499" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:r>
+              <w:t>Ép cọc Giàn 400x500cm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="44578658" w14:textId="16EE9EDA" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6CC9C1FF" w14:textId="5C18DD63" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E07210" w14:paraId="703DD9FC" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="70C2F2AE" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 3</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="01E4E5F7" w14:textId="6749393B" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:r>
+              <w:t>Trộn hỗn hợp và lấp xuống hố</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4556E5CF" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="31BB0F11" w14:textId="1D6A0DF1" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E07210" w14:paraId="673283B1" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0FE09E72" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 4</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="372B45AB" w14:textId="1D3E8EB5" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:r>
+              <w:t>Ngâm ủ hỗn hợp dươi hố</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="121C8B30" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>3 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6C1470A6" w14:textId="548CDF1B" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E07210" w14:paraId="6758845A" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="17F31304" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 5</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="632D41A4" w14:textId="333235A4" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:r>
+              <w:t>Xuống giống trồng</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5A3C0B77" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>3 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4C90BABB" w14:textId="395399A5" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E07210" w14:paraId="3B6F821B" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="49DA6A87" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 6</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5B35A438" w14:textId="56B3F8E3" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:r>
+              <w:t>Tưới vi sinh dinh dưỡng</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="33E9D6C1" w14:textId="77777777" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2CE07EDC" w14:textId="6DFEC988" w:rsidR="00E07210" w:rsidRDefault="00E07210" w:rsidP="00E07210">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="453A0071" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3FDF2AE3" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 7</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6F7D2193" w14:textId="6C04AAA1" w:rsidR="00715451" w:rsidRDefault="003E0511" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Bón phân nước định kỳ</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2E7DFFD0" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="32CB8855" w14:textId="4DD0B08E" w:rsidR="00715451" w:rsidRDefault="000C61E7" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>60 ngày/lần</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="000C61E7" w14:paraId="655BE832" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5D2FC78A" w14:textId="77777777" w:rsidR="000C61E7" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 8</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0D06E6D5" w14:textId="05025F17" w:rsidR="000C61E7" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:r>
+              <w:t>Tỉa bỏ cây đực</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5CD229DB" w14:textId="04C1F1D7" w:rsidR="000C61E7" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="059CA468" w14:textId="3F385F2E" w:rsidR="000C61E7" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="000C61E7" w14:paraId="19182B44" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="11E7ABC5" w14:textId="77777777" w:rsidR="000C61E7" w:rsidRPr="00B8544B" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 9</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7FB563BA" w14:textId="78B87CF2" w:rsidR="000C61E7" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:r>
+              <w:t>Ghép cây Hom vào Hạt</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6CBFDB7E" w14:textId="178B670C" w:rsidR="000C61E7" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1754539B" w14:textId="0154F67F" w:rsidR="000C61E7" w:rsidRDefault="000C61E7" w:rsidP="000C61E7">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 lần/20 năm</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="495F3705" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4F408DE5" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 10</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7A905AE3" w14:textId="66722BD9" w:rsidR="00715451" w:rsidRDefault="0097436E" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Dẫn ngọn leo giàn</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0EFBA85C" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>1 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6776887E" w14:textId="0195D30B" w:rsidR="00715451" w:rsidRDefault="000C61E7" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="79C2EA1E" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="64CE8E36" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 11</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="63328DD3" w14:textId="583AB18D" w:rsidR="00715451" w:rsidRDefault="0097436E" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Thu hoạch quả Gấc</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2577BA2F" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7D2E7171" w14:textId="70392548" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="568F2164" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="459C7AA8" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 12</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1F1A5F51" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Tưới mát</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="51C76990" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6A29898F" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>2 lần/ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="4E550348" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4C00EF7D" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 13</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5AF07968" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Họp đầu ca sản xuất</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="566E734E" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="664A6015" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="4091A41E" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2E6BD273" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 14</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="797551D4" w14:textId="5E2534BB" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Họp tuần với quản lý</w:t>
+            </w:r>
+            
+            
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="24D119DE" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="04DA2A33" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>7 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="2CDB8C4D" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2E51F894" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 15</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="19BA0BE7" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Họp tháng vùng trồng</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="116750FF" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="439B0354" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>30 ngày/lần</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="4F7CC1F7" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="7DA23731" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 16</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="532C4F1B" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Loại cỏ dại và cây dại</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="65E3A5D5" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="695DD337" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="77A5B6A8" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="002A0A89" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 17</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="67E2C92A" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Kiểm tra và dặm cây</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="024C2E39" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="3F95FA07" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="02168393" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2B5D5341" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 18</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="364FA0C8" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Kiểm tra hệ thống tưới</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="27D7ED07" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="21ACED40" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="2FF4EFDF" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="34C25148" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 19</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1DB4F773" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Kiểm tra sâu, bệnh</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4285BB69" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1F7393AC" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="3CF6E321" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="62A3154D" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 20</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="25751C44" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Kiểm tra hiện tượng lạ</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="18CA28C2" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="1E8A5BF7" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="5E9741F5" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="66743F01" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 21</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="14A1F749" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Nhập số liệu sản xuất</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="249870E8" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="07302F67" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="266FEDBB" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="6BCA2F0A" w14:textId="77777777" w:rsidR="00715451" w:rsidRPr="00B8544B" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 22</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="467B8712" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Báo cáo bất thường</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0BF9A1DF" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="02C3A3CF" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Hàng ngày</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00715451" w14:paraId="15B746D9" w14:textId="77777777" w:rsidTr="00A7326B">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1163" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2EFFD4E3" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r>
+              <w:t>Bước 23</w:t>
+            </w:r>
+            
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="5222" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2796CA8E" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="00A7326B">
+            <w:r>
+              <w:t>Quay về Bước 1</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1800" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="5EE56501" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="1710" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2160B2C7" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451" w:rsidP="003D7C72">
+            <w:pPr>
+              <w:jc w:val="center"/>
+            </w:pPr>
+          </w:p>
+        </w:tc>
+      </w:tr>
+    </w:tbl>
+    <w:p w14:paraId="57F73EBD" w14:textId="77777777" w:rsidR="00715451" w:rsidRDefault="00715451"/>
+    <w:sectPr w:rsidR="00715451" w:rsidSect="00125CF2">
+      <w:pgSz w:w="12240" w:h="15840" w:code="1"/>
+      <w:pgMar w:top="990" w:right="1080" w:bottom="1440" w:left="1440" w:header="0" w:footer="0" w:gutter="0"/>
+      <w:cols w:space="720"/>
+      <w:docGrid w:linePitch="360"/>
+    </w:sectPr>
+  </w:body>
+</w:document>
