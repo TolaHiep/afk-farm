@@ -188,6 +188,17 @@ docker/                               # docker-compose, Dockerfile akf_farm
 
 ---
 
+## Gói 11b — KPI hiệu suất tổ trưởng  (ước tính: 3 công)
+
+### Task 11b.1: Tính KPI theo tổ trưởng
+**Files:** Create `akf_farm/engine/leader_kpi.py`
+- [ ] Test: với tập farm_task + daily_production + abnormal_report của một tổ trưởng trong kỳ → tính đúng: tỷ lệ đúng hạn (%), số việc quá hạn, tổng việc hoàn thành, tỷ lệ ngày báo cáo đầy đủ (%), số báo cáo bất thường, tổng công đảm nhận
+- [ ] Hàm `leader_kpi(team_leader, from_date, to_date)`; test pass; commit
+
+### Task 11b.2: Dashboard/báo cáo KPI tổ trưởng
+- [ ] Hiển thị KPI dạng bảng + biểu đồ, lọc theo tổ trưởng/vùng/kỳ (ngày/tuần/tháng); xuất được
+- [ ] Kiểm thử thủ công; commit
+
 ## Gói 11 — Cảnh báo + dashboard  (ước tính: 3 công)
 
 ### Task 11.1: Phát cảnh báo
@@ -235,9 +246,12 @@ docker/                               # docker-compose, Dockerfile akf_farm
 | 9 | CRUD việc thủ công + lùi lịch | 2 |
 | 10 | PWA tổ trưởng (offline, ảnh, báo cáo) | 7 |
 | 11 | Cảnh báo + dashboard | 3 |
+| 11b | KPI hiệu suất tổ trưởng | 3 |
 | 12 | Phân quyền + audit | 2 |
 | 13 | Dữ liệu mẫu + kiểm thử + tài liệu | 3 |
-| | **Tổng** | **45** |
+| | **Tổng phát triển** | **48** |
+| | Quản lý dự án, nghiệm thu & bàn giao | 2 |
+| | **Tổng cộng** | **50** |
 
 Dự phòng đề xuất 15% (~7 công) cho thay đổi yêu cầu và vòng phản hồi pilot.
 

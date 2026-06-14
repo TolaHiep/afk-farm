@@ -12,6 +12,7 @@
 4. **Tổ trưởng** (điện thoại): nhận việc, đánh dấu hoàn thành, cuối ngày nhập số liệu + báo cáo bất thường kèm ảnh bắt buộc; offline được.
 5. **Bản đồ nhiệt 3 màu:** xanh (ổn), vàng (đến hạn chưa xong / bất thường nhẹ), đỏ (quá hạn / bất thường chưa xử lý).
 6. **Cảnh báo KHÔNG tự đổi lịch ngày sau**; admin chủ động lùi lịch.
+7. **Tính năng KPI hiệu suất tổ trưởng:** dashboard đo % việc đúng hạn, số việc quá hạn, tổng việc hoàn thành, tỷ lệ ngày báo cáo đầy đủ, số báo cáo bất thường, tổng công đảm nhận — theo tổ trưởng/vùng/kỳ. Nền tảng để mở rộng KPI tổ viên ở giai đoạn sau.
 
 ## Chống xung đột khi 1 block trồng 2 cây (yêu cầu bắt buộc của khách)
 
