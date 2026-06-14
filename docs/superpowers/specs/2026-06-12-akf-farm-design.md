@@ -1,8 +1,10 @@
 # SPEC THIẾT KẾ HỆ THỐNG — PHẦN MỀM QUẢN LÝ SẢN XUẤT NÔNG TRẠI AKF
 
-- **Ngày lập:** 12/06/2026
+- **Ngày lập:** 12/06/2026 (tài liệu tổng quan 3 giai đoạn — giữ để không mất thông tin GĐ2/GĐ3)
 - **Trạng thái:** Đã brainstorm đủ 3 giai đoạn — chờ chủ đầu tư trả lời danh sách câu hỏi (Mục 10) trước khi bắt đầu code
 - **Tài liệu gốc:** `AKF_v0__18-3-2026.md` (mô tả nhu cầu) và `AKF_Tai-lieu_IT-BA_v1.0.docx` (tài liệu IT-BA, 41 yêu cầu chức năng FR-01→FR-41, 12 yêu cầu phi chức năng)
+
+> **CẬP NHẬT 14/06/2026 — GĐ1 đã được THIẾT KẾ LẠI theo feedback khách hàng.** Phần GĐ1 trong tài liệu này (mô tả MVP 7 vai trò, nhật ký + ảnh kiểu cũ) đã bị thay thế bởi `2026-06-14-akf-gd1-overview-design.md`: chỉ 2 tác nhân (Admin + Tổ trưởng; tổ viên là dữ liệu), hệ thống tự sinh việc từ quy trình canh tác (nhập tay/upload sheet), tự cân đối gán tổ trưởng, lịch 10 ngày, bản đồ nhiệt 3 màu, KPI hiệu suất tổ trưởng, cảnh báo không tự đổi lịch, chống xung đột 2 cây. **GĐ2 và GĐ3 trong tài liệu này vẫn còn hiệu lực** làm định hướng mở rộng.
 
 ## 1. Các quyết định đã chốt với chủ dự án
 

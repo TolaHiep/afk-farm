@@ -1,27 +1,30 @@
 # Dự án phần mềm quản lý sản xuất nông trại AKF
 
-Hệ thống quản lý sản xuất cho dự án 250ha (5 zone × 25 block, gấc trên giàn + sâm đất dưới tán), xây dựng trên nền ERPNext v15 với custom app `akf_farm`.
+Hệ thống quản lý sản xuất nông trại (gấc trên giàn + sâm đất dưới tán), xây dựng trên nền ERPNext v15 với custom app `akf_farm`.
 
-## Trạng thái
+## Trạng thái (cập nhật 14/06/2026)
 
-**Đang chờ nhà đầu tư trả lời câu hỏi nhóm A** (xem `docs/cau-hoi-nha-dau-tu.md`) — chưa bắt đầu code.
+- Đã hoàn tất thiết kế và kế hoạch triển khai **Giai đoạn 1 (MVP)**.
+- Báo giá GĐ1 đã chốt: **25.000.000đ** (50 công × 500.000đ, chưa VAT).
+- **Chưa code.** Chờ chủ đầu tư cung cấp thông tin Nhóm A và trả lời 6 câu hỏi còn mở trong spec GĐ1.
+- Git: **chỉ có repo cục bộ, chưa có remote / chưa push lên GitHub.**
 
-## Tài liệu
+## Tài liệu trong repo
 
-| Tài liệu | Vị trí |
-|---|---|
-| Spec thiết kế 3 giai đoạn | `docs/superpowers/specs/2026-06-12-akf-farm-design.md` |
-| Câu hỏi gửi nhà đầu tư | `docs/cau-hoi-nha-dau-tu.md` |
-| Tài liệu IT-BA (Word) | `C:\Users\SE-HiepNM\Downloads\AKF_Tai-lieu_IT-BA_v1.0.docx` |
-| Mô tả nhu cầu gốc | `C:\Users\SE-HiepNM\Downloads\38833FF26BA1D...\AKF_v0__18-3-2026.md` |
+| Tài liệu | Vị trí | Mục đích |
+|---|---|---|
+| Spec tổng quan 3 giai đoạn | `docs/superpowers/specs/2026-06-12-akf-farm-design.md` | Định hướng GĐ1/2/3 (GĐ1 đã thay bằng bản 14/06) |
+| Spec Giai đoạn 1 | `docs/superpowers/specs/2026-06-14-akf-gd1-overview-design.md` | Thiết kế GĐ1 hiện hành — căn cứ làm plan |
+| Kế hoạch triển khai GĐ1 | `docs/superpowers/plans/2026-06-14-akf-gd1-implementation.md` | 14 gói phát triển, từng task + test |
+| Quy trình canh tác nguồn | `docs/quy-trinh-canh-tac.md` | Dữ liệu để hệ thống tự sinh việc |
+| Câu hỏi gửi nhà đầu tư | `docs/cau-hoi-nha-dau-tu.md` | Thông tin cần thu thập trước khi code |
 
-## Lộ trình
+Các bản trình bày cho khách (docx) nằm ở thư mục `Downloads/` (Tổng quan hệ thống GĐ1, Báo giá GĐ1, Tài liệu IT-BA).
 
-1. **GĐ1 (MVP):** zone/block, thư viện đầu việc, lệnh việc, phiếu in A4/A5, nhật ký + ảnh hiện trường (PWA mobile, offline), dashboard, phân quyền 7 vai trò.
-2. **GĐ2:** kho vật tư, nghiệm thu QA checklist, chấm công, chu kỳ mùa vụ tự sinh việc, cảnh báo, báo cáo tuần/mùa vụ.
-3. **GĐ3:** QR truy xuất nguồn gốc, GIS, cân điện tử, cảm biến, dự báo năng suất, bảo trì, tài chính.
+## Giai đoạn 1 (MVP) — phạm vi
+
+2 tác nhân (Admin + Tổ trưởng); admin tạo vùng/lô (ranh giới tọa độ + diện tích), số hóa quy trình canh tác; hệ thống tự sinh việc 10 ngày và tự gán tổ trưởng; tổ trưởng báo cáo trên điện thoại (offline + ảnh bắt buộc); bản đồ nhiệt 3 màu; KPI hiệu suất tổ trưởng; cảnh báo chậm/bất thường (không tự đổi lịch); chống xung đột khi 1 lô trồng 2 cây.
 
 ## Môi trường phát triển
 
-- Docker (frappe_docker) trên máy Windows này — site demo `akf.localhost`.
-- Production dự kiến: VPS 4 vCPU / 8GB RAM, HTTPS, backup hằng đêm.
+Docker (frappe_docker) trên máy Windows — site demo `akf.localhost`. Production dự kiến: VPS 4 vCPU / 8GB RAM, HTTPS, backup hằng đêm.
