@@ -1,146 +1,139 @@
-# 🌾 Hệ thống Quản lý Sản xuất Nông trại
+# 🌾 Farm Management System - Hệ Thống Quản Lý Nông Trại
 
-Ứng dụng quản lý sản xuất nông trại thông minh với 2 giao diện: **Web Admin** cho quản trị viên và **Mobile PWA** cho tổ trưởng.
+Hệ thống quản lý sản xuất nông trại toàn diện với giao diện tiếng Việt, bao gồm Web Admin và Mobile PWA.
 
-## 🎯 Tính năng chính
+## ✨ Tính Năng Chính
 
-### Web Admin (Desktop)
-- **Dashboard**: Tổng quan số liệu, thẻ KPI, biểu đồ công việc
-- **Bản đồ Nhiệt**: Giám sát trạng thái các lô trồng (xanh/vàng/đỏ)
-- **Quản lý Vùng & Lô**: Tạo, sửa, xóa các vùng trồng và lô ruộng
-- **Quản lý Tổ**: Quản lý tổ trưởng và thành viên tổ
-- **Quy trình Canh tác**: Thiết lập SOP cho Gấc/Sâm + Import Excel
-- **Chu kỳ Cây trồng**: Khai báo chu kỳ canh tác, tự sinh công việc
-- **Lịch Công việc**: Xem 10 ngày tới, gán lại/lùi lịch công việc
-- **KPI Tổ trưởng**: Đánh giá hiệu suất (đúng hạn, quá hạn, bất thường)
-- **Cảnh báo**: Thông báo quá hạn, bất thường, vật tư thiếu
+### 🖥️ Web Admin (Desktop - 1440px)
+- **Dashboard**: 4 KPI cards, biểu đồ, danh sách cần chú ý
+- **Bản đồ nhiệt**: Visualize vùng/lô với màu trạng thái
+- **Quản lý vùng & lô**: Tree table, thêm/sửa với bản đồ polygon
+- **Quản lý tổ**: Tổ trưởng và tổ viên
+- **Quy trình canh tác**: Gấc và Sâm, upload Excel
+- **Chu kỳ cây trồng**: Khai báo và theo dõi
+- **Lịch 10 ngày**: Calendar view, gán lại, lùi lịch
+- **KPI tổ trưởng**: Biểu đồ và bảng chi tiết
+- **Thông báo**: Quá hạn, bất thường, báo cáo
+- **Chi tiết bất thường**: Ảnh, timeline, thao tác
 
-### Mobile PWA (Tổ trưởng)
-- **Việc hôm nay**: Danh sách thẻ lớn, tabs ngày (hôm nay/ngày mai/ngày kia)
-- **Chi tiết công việc**: SOP, nút Bắt đầu/Hoàn thành, ghi chú
-- **Báo cáo cuối ngày**: Nhập số liệu sản xuất, báo cáo bất thường (kèm ảnh)
-- **Offline mode**: Lưu báo cáo khi mất mạng, đồng bộ khi có mạng
-- **Nhớ đăng nhập**: Trải nghiệm user-friendly
+### 📱 Mobile PWA (390px)
+- **Việc hôm nay**: Danh sách thẻ lớn, màu trạng thái
+- **Các ngày tới**: View theo từng ngày
+- **Chi tiết việc**: SOP, nút lớn, chụp ảnh
+- **Báo cáo cuối ngày**: Số liệu, bất thường, ảnh bắt buộc
+- **Offline sync**: Lưu tạm, tự động đồng bộ
+- **Thông báo**: Việc mới, lùi lịch, gán lại
 
-## 🏗️ Kiến trúc
+## 🎨 Thiết Kế
+
+- **Phong cách**: Gọn gàng, sáng, professional
+- **Tông màu**: Trắng/xám, điểm nhấn xanh lá (#16a34a)
+- **Trạng thái**:
+  - 🟢 Xanh = Ổn định
+  - 🟡 Vàng = Cần chú ý
+  - 🔴 Đỏ = Quá hạn/Bất thường
+
+## 🚀 Bắt Đầu
+
+### Routes chính:
+
+**Admin:**
+- `/` - Đăng nhập Admin
+- `/admin/dashboard` - Dashboard
+- `/admin/heatmap` - Bản đồ nhiệt
+- `/admin/zones` - Quản lý vùng/lô
+- `/admin/teams` - Quản lý tổ
+- `/admin/processes` - Quy trình
+- `/admin/crop-cycles` - Chu kỳ cây
+- `/admin/calendar` - Lịch 10 ngày
+- `/admin/kpi` - KPI tổ trưởng
+- `/admin/notifications` - Thông báo
+
+**Mobile:**
+- `/mobile/login` - Đăng nhập Mobile
+- `/mobile/tasks` - Việc hôm nay
+- `/mobile/upcoming` - Các ngày tới
+- `/mobile/task/:id` - Chi tiết việc
+- `/mobile/report` - Báo cáo cuối ngày
+- `/mobile/offline` - Đồng bộ offline
+- `/mobile/notifications` - Thông báo
+
+## 📦 Công Nghệ
+
+- React 18.3.1
+- React Router 7 (Data mode)
+- Tailwind CSS v4
+- Recharts (Charts)
+- Lucide React (Icons)
+- TypeScript
+
+## 📖 Tài Liệu
+
+Xem file `SYSTEM-GUIDE.md` để biết hướng dẫn chi tiết về:
+- Từng màn hình
+- Luồng sử dụng (flows)
+- Component library
+- Dữ liệu mẫu
+
+## 🎯 Prototype Flows
+
+### Admin:
+```
+Login → Dashboard → Heatmap → Plot Detail → Calendar → Task Popup
+```
+
+### Admin Setup:
+```
+Zones → Teams → Processes → Crop Cycles → Auto-generate Tasks
+```
+
+### Team Leader:
+```
+Login → Today Tasks → Task Detail → Complete → Daily Report → Submit
+```
+
+### Offline:
+```
+No Network → Save Locally → Network Back → Auto Sync
+```
+
+## 📱 Mobile-First Features
+
+- **Nút lớn**: Dễ chạm ngoài trời
+- **Chữ lớn**: Dễ đọc dưới nắng
+- **Tối đa 5-7 nút/màn**: Không quá phức tạp
+- **Offline support**: Làm việc không cần mạng
+- **Validation ảnh**: Bắt buộc cho bất thường
+
+## 🔧 Cấu Trúc Project
 
 ```
-app/
-├── admin/                    # Web Admin (Desktop)
-│   ├── login/
-│   ├── page.tsx (Dashboard)
-│   ├── zones/
-│   ├── teams/
-│   ├── processes/
-│   ├── crop-cycles/
-│   ├── schedule/
-│   ├── heat-map/
-│   ├── kpi/
-│   └── alerts/
-│
-├── mobile/                   # Mobile PWA (Tổ trưởng)
-│   ├── login/
-│   ├── page.tsx (Việc hôm nay)
-│   ├── task-detail/[id]/
-│   └── daily-report/
-│
-└── components/
-    ├── admin/
-    │   └── sidebar.tsx
-    └── shared/
+src/
+├── app/
+│   ├── components/
+│   │   ├── admin/         # 12 màn Admin
+│   │   ├── mobile/        # 10 màn Mobile
+│   │   ├── layouts/       # AdminLayout, MobileLayout
+│   │   └── ui/            # StatusBadge, KPICard, Button
+│   ├── lib/
+│   │   └── mockData.ts    # Dữ liệu mẫu
+│   ├── routes.tsx         # Router config
+│   └── App.tsx            # Root component
+└── styles/
+    └── theme.css          # Tailwind theme
 ```
 
-## 🎨 Design System
+## 📝 Mock Data
 
-### Màu sắc
-- **Xanh lá**: #27AE60 (Primary - Agricultural green)
-- **Xám đậm**: #2C3E50 (Sidebar background)
-- **Trắng/Xám nhạt**: #FFFFFF / #F5F5F5 (Content area)
-- **Đỏ**: #E74C3C (Alerts - Overdue)
-- **Vàng**: #F39C12 (Warnings)
-
-### Typography
-- **Font**: Geist Sans + Geist Mono (Google Fonts)
-- **Heading**: Bold, 24-32px
-- **Body**: Regular, 14-16px
-- **Mobile**: Chữ lớn (16-18px) cho dễ đọc ngoài trời
-
-## 🚀 Bắt đầu
-
-### Cài đặt
-```bash
-pnpm install
-pnpm dev
-```
-
-### Truy cập
-- **Admin**: http://localhost:3000/admin/login
-  - Email: admin@nongrai.vn
-  - Password: bất kỳ
-  
-- **Mobile**: http://localhost:3000/mobile/login
-  - Email: totruong@nongrai.vn
-  - Password: bất kỳ
-
-- **Home**: http://localhost:3000
-
-## 📦 Dependencies
-
-- **Next.js 16**: Framework chính
-- **React 19**: UI library
-- **Tailwind CSS 4**: Styling
-- **shadcn/ui**: Prebuilt UI components
-- **Zustand**: State management
-- **react-hook-form + zod**: Form validation
-- **recharts**: Charts & data visualization
-- **leaflet**: Map integration (ready for heatmap)
-- **react-hot-toast**: Notifications
-- **framer-motion**: Animations
-
-## 🔌 Integrations Ready
-
-- **Database**: Neon PostgreSQL (for backend)
-- **Maps**: Leaflet/Mapbox (for heatmap)
-- **Storage**: Vercel Blob (for photos)
-- **Auth**: Better Auth (recommended) hoặc custom
-
-## 📱 PWA Features
-
-- `manifest.json` configured cho installable PWA
-- Service Worker ready (workbox-window installed)
-- Mobile-first responsive design
-- Offline support skeleton
-
-## 🎯 Luồng chính
-
-### Admin thiết lập (Lần đầu)
-1. Tạo Vùng & Lô → Quản lý Tổ → Thiết lập Quy trình → Khai báo Chu kỳ
-2. Hệ thống tự sinh công việc theo quy trình
-
-### Admin theo dõi (Hàng ngày)
-1. Dashboard → Bản đồ Nhiệt → Kiểm tra vùng đỏ
-2. Gán lại / Lùi lịch công việc → KPI
-
-### Tổ trưởng (Hàng ngày)
-1. Việc hôm nay → Chi tiết → Bắt đầu/Hoàn thành
-2. Báo cáo cuối ngày → Gửi
-
-## ⚠️ Cảnh báo
-
-- Khi công việc quá hạn: Block → đỏ trên bản đồ nhiệt
-- Khi có bất thường: Block → vàng/đỏ, gửi thông báo
-- Không tự động đổi lịch (Admin quyết định reschedule)
-
-## 🔮 Tiếp theo
-
-- Kết nối API backend
-- Thêm geospatial queries cho bản đồ
-- Push notifications khi có cảnh báo
-- Export báo cáo PDF
-- Analytics dashboard
-- Real-time sync WebSocket
+Hệ thống có đầy đủ dữ liệu mẫu:
+- 4 vùng, 6 lô
+- 6 tổ trưởng, 4 tổ viên
+- 2 quy trình (Gấc, Sâm)
+- 6 chu kỳ cây trồng
+- 10 công việc
+- 3 bất thường
+- Thông báo & KPI data
 
 ---
 
-**Version**: 1.0.0  
-**Made with ❤️ for Agricultural Management**
+**Lưu ý**: Đây là hệ thống demo với dữ liệu mẫu. Trong production cần tích hợp API thực tế và database.

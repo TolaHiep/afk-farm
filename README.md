@@ -25,6 +25,18 @@ Các bản trình bày cho khách (docx) nằm ở thư mục `Downloads/` (Tổ
 
 2 tác nhân (Admin + Tổ trưởng); admin tạo vùng/lô (ranh giới tọa độ + diện tích), số hóa quy trình canh tác; hệ thống tự sinh việc 10 ngày và tự gán tổ trưởng; tổ trưởng báo cáo trên điện thoại (offline + ảnh bắt buộc); bản đồ nhiệt 3 màu; KPI hiệu suất tổ trưởng; cảnh báo chậm/bất thường (không tự đổi lịch); chống xung đột khi 1 lô trồng 2 cây.
 
+## Tech stack (đã chốt frontend)
+
+Xem `docs/TECH-STACK.md`. Frontend chuẩn: **Vite + React 18 + TS + React Router 7 + Tailwind v4 + shadcn/ui + Recharts** tại `web/` (đã gom về một bản, bỏ Next.js và HTML tĩnh). Backend đang chờ chốt (ERPNext headless / NestJS / FastAPI).
+
+## Chạy frontend
+
+```
+cd web
+npm install
+npm run dev      # mở http://localhost:5173
+```
+
 ## Môi trường phát triển
 
-Docker (frappe_docker) trên máy Windows — site demo `akf.localhost`. Production dự kiến: VPS 4 vCPU / 8GB RAM, HTTPS, backup hằng đêm.
+Docker trên máy Windows. Production dự kiến: VPS, HTTPS, backup hằng đêm.
