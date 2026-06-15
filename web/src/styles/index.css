@@ -2,6 +2,13 @@
 @import './tailwind.css';
 @import './theme.css';
 
+/* ===== Co tỉ lệ giao diện cho laptop màn nhỏ hơn 27" =====
+   Giảm cỡ gốc rem trong dải desktop laptop để mọi khoảng cách/chữ (đơn vị rem)
+   nhỏ lại đồng đều, hiển thị nhiều hơn mỗi màn, đỡ phải cuộn. Mobile/tablet (<1024)
+   giữ 16px cho dễ chạm. Màn rất lớn (>1536, vd 27") giữ nguyên 16px. */
+@media (min-width: 1024px) and (max-width: 1536px) { html { font-size: 15px; } }
+@media (min-width: 1024px) and (max-width: 1366px) { html { font-size: 14px; } }
+
 /* ===== Bản đồ (Leaflet) — nhãn vùng/lô & điểm vẽ ranh giới ===== */
 .akf-zone-label,
 .akf-plot-label {

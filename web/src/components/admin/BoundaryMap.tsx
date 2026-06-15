@@ -151,7 +151,7 @@ export function BoundaryMap({ onChange }: { onChange?: (area: number, points: Pt
       </div>
       {msg && <p className="text-xs text-red-600 mb-2">{msg}</p>}
 
-      <div ref={elRef} className="w-full h-[460px] rounded-lg overflow-hidden border border-gray-200 relative z-0" />
+      <div ref={elRef} className="w-full h-[clamp(320px,52vh,460px)] rounded-lg overflow-hidden border border-gray-200 relative z-0" />
       <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
         <div className="text-sm text-gray-600">
           {points.length} điểm ·{" "}

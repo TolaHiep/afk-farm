@@ -111,7 +111,7 @@ function SatelliteMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterZone, filterCrop, selectedPlot, selectedZone]);
 
-  return <div ref={elRef} className="w-full h-[560px] rounded-lg overflow-hidden border border-gray-200 relative z-0" />;
+  return <div ref={elRef} className="w-full h-[clamp(360px,58vh,560px)] rounded-lg overflow-hidden border border-gray-200 relative z-0" />;
 }
 
 export function HeatMap() {
