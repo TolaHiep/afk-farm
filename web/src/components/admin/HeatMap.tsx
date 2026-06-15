@@ -18,6 +18,23 @@ const STATUS: Record<StatusKey, { label: string; tile: string; text: string; dot
 };
 const st = (s: string) => STATUS[(s as StatusKey)] || STATUS.pending;
 
+// Trộn nhiều màu hex theo trọng số (tỉ lệ) — dùng cho lô xen canh nhiều cây khác màu trạng thái
+function hexToRgb(h: string): [number, number, number] {
+  const n = parseInt(h.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mixColors(items: { hex: string; weight: number }[]): string {
+  const total = items.reduce((s, i) => s + (i.weight > 0 ? i.weight : 0), 0) || items.length || 1;
+  let r = 0, g = 0, b = 0;
+  items.forEach(({ hex, weight }) => {
+    const w = (weight > 0 ? weight : 0) / total;
+    const [R, G, B] = hexToRgb(hex);
+    r += R * w; g += G * w; b += B * w;
+  });
+  const f = (x: number) => Math.round(x).toString(16).padStart(2, "0");
+  return `#${f(r)}${f(g)}${f(b)}`;
+}
+
 // ===== Bản đồ vệ tinh kiểu "nhiệt thời tiết": lớp màu nền blur tạo gradient mượt =====
 function SatelliteMap({
   filterZone, filterCrop, selectedPlot, selectedZone, onSelectZone, onSelectPlot,
@@ -31,8 +48,14 @@ function SatelliteMap({
   const zoneRef = React.useRef<L.LayerGroup | null>(null);   // viền vùng + nhãn + bắt click
   const plotRef = React.useRef<L.LayerGroup | null>(null);   // viền lô của vùng đang chọn
 
-  const cropStatus = (p: typeof plots[number]) =>
-    filterCrop !== "all" ? (p.crops.find((c) => c.crop === filterCrop)?.status ?? p.status) : p.status;
+  // Màu tô của lô trên bản đồ nhiệt:
+  // - Khi lọc 1 cây: dùng đúng màu trạng thái cây đó.
+  // - Khi xem tất cả: TRỘN màu trạng thái của các cây theo tỉ lệ số việc (total) của từng cây.
+  const plotHeatColor = (p: typeof plots[number]) => {
+    if (filterCrop !== "all") return st(p.crops.find((c) => c.crop === filterCrop)?.status ?? p.status).hex;
+    if (!p.crops.length) return st(p.status).hex;
+    return mixColors(p.crops.map((c) => ({ hex: st(c.status).hex, weight: c.total || 1 })));
+  };
 
   // Khởi tạo bản đồ 1 lần
   React.useEffect(() => {
@@ -76,7 +99,7 @@ function SatelliteMap({
         const pg = plotGeo[p.id];
         if (!pg) return;
         L.polygon(pg.polygon, {
-          pane: "heat", stroke: false, fillColor: st(cropStatus(p)).hex, fillOpacity: 0.9, interactive: false,
+          pane: "heat", stroke: false, fillColor: plotHeatColor(p), fillOpacity: 0.9, interactive: false,
         }).addTo(heat);
       });
 

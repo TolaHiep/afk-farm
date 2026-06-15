@@ -51,7 +51,10 @@ export const plots = [
   // Vùng B (z2): LẪN vàng + đỏ (demo gradient)
   buildPlot({ id: "p5", name: "Lô B1", zoneId: "z2", area: 11250, teamLeader: "Nguyễn Văn A", teamLeaderId: "tl1", coordinates: noCoord }, mkCrops("warning")),
   buildPlot({ id: "p6", name: "Lô B2", zoneId: "z2", area: 11250, teamLeader: "Lê Văn C", teamLeaderId: "tl3", coordinates: noCoord }, mkCrops("danger")),
-  buildPlot({ id: "p7", name: "Lô B3", zoneId: "z2", area: 11250, teamLeader: "Lê Văn C", teamLeaderId: "tl3", coordinates: noCoord }, mkCrops("warning")),
+  buildPlot({ id: "p7", name: "Lô B3", zoneId: "z2", area: 11250, teamLeader: "Lê Văn C", teamLeaderId: "tl3", coordinates: noCoord }, [
+    { crop: "Gấc", done: 3, total: 3, status: "good" },   // xanh, trọng số 3
+    { crop: "Sâm", done: 1, total: 5, status: "danger" },  // đỏ, trọng số 5 -> trộn xanh:đỏ = 3:5
+  ]),
   buildPlot({ id: "p8", name: "Lô B4", zoneId: "z2", area: 11250, teamLeader: "Phạm Thị D", teamLeaderId: "tl4", coordinates: noCoord }, mkCrops("good")),
   // Vùng C (z3): chủ yếu xanh, 1 lô vàng
   buildPlot({ id: "p9", name: "Lô C1", zoneId: "z3", area: 15000, teamLeader: "Lê Văn C", teamLeaderId: "tl3", coordinates: noCoord }, mkCrops("good")),
