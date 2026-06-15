@@ -1,10 +1,47 @@
 import React from "react";
-import { Filter, Download } from "lucide-react";
+import { Filter, Download, ClipboardCheck, ClipboardX, AlertTriangle, LifeBuoy } from "lucide-react";
 import { Button } from "../ui/Button";
-import { kpiData } from "../../lib/mockData";
+import { KPICard } from "../ui/KPICard";
+import { StatusBadge } from "../ui/StatusBadge";
+import { kpiData, teamLeaders, teamLeaderReports, supportRequests } from "../../lib/mockData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
+const REPORT_DATE = "2026-06-14";
+
 export function TeamLeaderKPI() {
+  // ===== Thống kê tổng quan báo cáo trong ngày =====
+  const activeLeaders = teamLeaders.filter((t) => t.status === "active");
+  const totalTeams = activeLeaders.length;
+
+  // Các tổ đã báo cáo trong ngày (distinct teamLeaderId thuộc tổ active)
+  const reportedIds = new Set(
+    teamLeaderReports
+      .filter((r) => r.date === REPORT_DATE && activeLeaders.some((t) => t.id === r.teamLeaderId))
+      .map((r) => r.teamLeaderId)
+  );
+  const reportedCount = reportedIds.size;
+  const notReportedCount = Math.max(totalTeams - reportedCount, 0);
+  const reportRate = totalTeams ? Math.round((reportedCount / totalTeams) * 100) : 0;
+
+  // Tổ đang gặp vấn đề: có báo cáo bất thường HOẶC có yêu cầu hỗ trợ đang chờ
+  const problemIds = new Set<string>();
+  teamLeaderReports
+    .filter((r) => r.date === REPORT_DATE && r.abnormal)
+    .forEach((r) => problemIds.add(r.teamLeaderId));
+  supportRequests
+    .filter((s) => s.status === "pending")
+    .forEach((s) => problemIds.add(s.teamLeaderId));
+  const problemCount = problemIds.size;
+
+  // Yêu cầu hỗ trợ
+  const supportSent = supportRequests.length;
+  const supportHandled = supportRequests.filter((s) =>
+    ["approved", "rejected", "replied", "done"].includes(s.status)
+  ).length;
+
+  // Map nhanh: tổ nào đã báo cáo trong ngày (dùng cho bảng)
+  const reportedSet = reportedIds;
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -37,6 +74,38 @@ export function TeamLeaderKPI() {
             Xuất Excel
           </Button>
         </div>
+      </div>
+
+      {/* Tổng quan báo cáo trong ngày */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          title="Tổ đã báo cáo"
+          value={`${reportedCount}/${totalTeams}`}
+          icon={ClipboardCheck}
+          trend={`Tỷ lệ báo cáo: ${reportRate}%`}
+          color="green"
+        />
+        <KPICard
+          title="Tổ chưa báo cáo"
+          value={notReportedCount}
+          icon={ClipboardX}
+          trend={`Ngày ${REPORT_DATE.split("-").reverse().join("/")}`}
+          color={notReportedCount > 0 ? "yellow" : "green"}
+        />
+        <KPICard
+          title="Tổ đang gặp vấn đề"
+          value={problemCount}
+          icon={AlertTriangle}
+          trend="Có bất thường hoặc yêu cầu hỗ trợ chờ xử lý"
+          color={problemCount > 0 ? "red" : "green"}
+        />
+        <KPICard
+          title="Yêu cầu hỗ trợ"
+          value={`${supportSent}/${supportHandled}`}
+          icon={LifeBuoy}
+          trend={`Đã gửi ${supportSent} · Đã xử lý ${supportHandled}`}
+          color="blue"
+        />
       </div>
 
       {/* KPI Summary Cards */}
@@ -105,6 +174,9 @@ export function TeamLeaderKPI() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tổ trưởng</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Đã báo cáo</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Việc hoàn thành</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Việc chưa hoàn thành</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Đúng hạn</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Quá hạn</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hoàn thành</th>
@@ -118,6 +190,15 @@ export function TeamLeaderKPI() {
               {kpiData.map((kpi) => (
                 <tr key={kpi.teamLeaderId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{kpi.name}</td>
+                  <td className="px-6 py-4 text-sm text-center">
+                    {reportedSet.has(kpi.teamLeaderId) ? (
+                      <StatusBadge status="good">Có</StatusBadge>
+                    ) : (
+                      <StatusBadge status="danger">Không</StatusBadge>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-right text-blue-600 font-medium">{kpi.completed}</td>
+                  <td className="px-6 py-4 text-sm text-right text-red-600 font-medium">{kpi.overdue}</td>
                   <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">{kpi.onTime}</td>
                   <td className="px-6 py-4 text-sm text-right text-red-600 font-medium">{kpi.overdue}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900">{kpi.completed}</td>

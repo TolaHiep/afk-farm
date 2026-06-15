@@ -1,44 +1,174 @@
 import React from "react";
-import { Link } from "react-router";
-import { Plus, Search, Filter, ChevronRight, ChevronDown } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import {
+  Plus,
+  Search,
+  ChevronRight,
+  ChevronDown,
+  Trash2,
+  PauseCircle,
+  Layers,
+} from "lucide-react";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { zones, plots } from "../../lib/mockData";
+import { zones as zonesData, plots as plotsData } from "../../lib/mockData";
+
+// Kiểu trạng thái chi tiết của lô/vùng
+type PlotStatus = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
+
+// Map trạng thái -> nhãn tiếng Việt + màu badge tương thích StatusBadge
+const STATUS_META: Record<PlotStatus, { label: string; badge: "good" | "warning" | "danger" | "pending" | "completed" | "resolved" }> = {
+  good: { label: "Đang hoạt động", badge: "good" },
+  warning: { label: "Cảnh báo", badge: "warning" },
+  danger: { label: "Khẩn cấp", badge: "danger" },
+  pending: { label: "Chưa xử lý", badge: "pending" },
+  done: { label: "Đã hoàn thành", badge: "completed" },
+  inactive: { label: "Nghỉ / Không hoạt động", badge: "resolved" },
+};
+
+// Màu thanh tiến độ theo trạng thái
+const PROGRESS_COLOR: Record<PlotStatus, string> = {
+  good: "bg-green-500",
+  warning: "bg-yellow-500",
+  danger: "bg-red-500",
+  pending: "bg-gray-400",
+  done: "bg-green-500",
+  inactive: "bg-gray-300",
+};
+
+interface PlotItem {
+  id: string;
+  name: string;
+  zoneId: string;
+  area: number;
+  teamLeader: string;
+  teamLeaderId: string;
+  crop: string;
+  status: string;
+  done: number;
+  total: number;
+}
+
+interface ZoneItem {
+  id: string;
+  name: string;
+  area: number;
+  plots: number;
+  status: string;
+}
+
+type ConfirmTarget =
+  | { kind: "zone"; id: string; name: string }
+  | { kind: "plot"; id: string; name: string; suggestDeactivate: boolean };
 
 export function ZoneManagement() {
-  const [expandedZones, setExpandedZones] = React.useState<Set<string>>(new Set(["z1"]));
+  const navigate = useNavigate();
+
+  // State cục bộ (prototype) cho phép xóa / ngưng hoạt động
+  const [zones, setZones] = React.useState<ZoneItem[]>(() =>
+    zonesData.map((z) => ({ ...z }))
+  );
+  const [plots, setPlots] = React.useState<PlotItem[]>(() =>
+    plotsData.map((p) => ({ ...p }))
+  );
+
+  const [expandedZones, setExpandedZones] = React.useState<Set<string>>(
+    new Set(["z1"])
+  );
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [confirm, setConfirm] = React.useState<ConfirmTarget | null>(null);
 
   const toggleZone = (zoneId: string) => {
-    const newExpanded = new Set(expandedZones);
-    if (newExpanded.has(zoneId)) {
-      newExpanded.delete(zoneId);
-    } else {
-      newExpanded.add(zoneId);
-    }
-    setExpandedZones(newExpanded);
+    setExpandedZones((prev) => {
+      const next = new Set(prev);
+      if (next.has(zoneId)) next.delete(zoneId);
+      else next.add(zoneId);
+      return next;
+    });
   };
+
+  const normalize = (s: string) => s.toLowerCase().trim();
+  const term = normalize(searchTerm);
+
+  const plotMatches = (p: PlotItem) => {
+    const byStatus = statusFilter === "all" || p.status === statusFilter;
+    const byTerm =
+      !term ||
+      normalize(p.name).includes(term) ||
+      normalize(p.crop).includes(term) ||
+      normalize(p.teamLeader).includes(term);
+    return byStatus && byTerm;
+  };
+
+  // Điều hướng tới lịch công việc khi bấm vào tên lô hoặc tiến độ
+  const goToPlot = (plotId: string) => {
+    navigate(`/admin/calendar?plot=${plotId}`);
+  };
+
+  // Yêu cầu xác nhận xóa vùng
+  const askDeleteZone = (z: ZoneItem) =>
+    setConfirm({ kind: "zone", id: z.id, name: z.name });
+
+  // Yêu cầu xác nhận xóa lô (đề xuất ngưng hoạt động nếu đã có tiến độ)
+  const askDeletePlot = (p: PlotItem) =>
+    setConfirm({
+      kind: "plot",
+      id: p.id,
+      name: p.name,
+      suggestDeactivate: p.done > 0 || p.total > 0,
+    });
+
+  const closeConfirm = () => setConfirm(null);
+
+  const doDeleteZone = (zoneId: string) => {
+    setZones((prev) => prev.filter((z) => z.id !== zoneId));
+    setPlots((prev) => prev.filter((p) => p.zoneId !== zoneId));
+    closeConfirm();
+  };
+
+  const doDeletePlot = (plotId: string) => {
+    setPlots((prev) => prev.filter((p) => p.id !== plotId));
+    closeConfirm();
+  };
+
+  const doDeactivatePlot = (plotId: string) => {
+    setPlots((prev) =>
+      prev.map((p) => (p.id === plotId ? { ...p, status: "inactive" } : p))
+    );
+    closeConfirm();
+  };
+
+  const statusMeta = (status: string) =>
+    STATUS_META[(status as PlotStatus)] ?? STATUS_META.pending;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header / Filters */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Tìm kiếm vùng, lô..."
+              placeholder="Tìm kiếm lô, cây trồng, tổ trưởng..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64"
             />
           </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg">
-            <option>Tất cả trạng thái</option>
-            <option>Ổn định</option>
-            <option>Cần chú ý</option>
-            <option>Bất thường</option>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="good">Đang hoạt động</option>
+            <option value="warning">Cảnh báo</option>
+            <option value="danger">Khẩn cấp</option>
+            <option value="pending">Chưa xử lý</option>
+            <option value="done">Đã hoàn thành</option>
+            <option value="inactive">Nghỉ / Không hoạt động</option>
           </select>
         </div>
         <div className="flex gap-3">
@@ -57,94 +187,209 @@ export function ZoneManagement() {
         </div>
       </div>
 
-      {/* Zone Tree Table */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diện tích</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tổ trưởng</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cây trồng</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {zones.map((zone) => {
-              const zonePlots = plots.filter(p => p.zoneId === zone.id);
-              const isExpanded = expandedZones.has(zone.id);
-              
-              return (
-                <React.Fragment key={zone.id}>
-                  {/* Zone Row */}
-                  <tr className="bg-gray-50 hover:bg-gray-100">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <button
-                          onClick={() => toggleZone(zone.id)}
-                          className="mr-2 p-1 hover:bg-gray-200 rounded"
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="w-4 h-4 text-gray-600" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-gray-600" />
-                          )}
-                        </button>
-                        <span className="font-semibold text-gray-900">{zone.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {zone.area.toLocaleString()} m²
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {zone.plots} lô
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">-</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={zone.status}>
-                        {zone.status === "good" ? "Ổn định" : "Cần chú ý"}
-                      </StatusBadge>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="sm">Sửa</Button>
-                    </td>
-                  </tr>
+      {/* Cây Vùng & Lô (accordion theo zone) */}
+      <div className="space-y-4">
+        {zones.length === 0 && (
+          <div className="bg-white rounded-lg shadow border border-gray-200 p-10 text-center text-gray-400">
+            Không còn vùng nào.
+          </div>
+        )}
 
-                  {/* Plot Rows */}
-                  {isExpanded && zonePlots.map((plot) => (
-                    <tr key={plot.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 pl-16">
-                        <span className="text-gray-900">{plot.name}</span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {plot.area.toLocaleString()} m²
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {plot.teamLeader}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {plot.crop}
-                      </td>
-                      <td className="px-6 py-4">
-                        <StatusBadge status={plot.status}>
-                          {plot.status === "good" ? "Ổn định" :
-                           plot.status === "warning" ? "Cần chú ý" : "Bất thường"}
-                        </StatusBadge>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link to={`/admin/zones/edit/${plot.id}`}>
-                          <Button variant="ghost" size="sm">Sửa</Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+        {zones.map((zone) => {
+          const zonePlots = plots.filter((p) => p.zoneId === zone.id);
+          const visiblePlots = zonePlots.filter(plotMatches);
+
+          // Khi có bộ lọc/từ khóa, ẩn zone không có lô khớp
+          const filtering = term !== "" || statusFilter !== "all";
+          if (filtering && visiblePlots.length === 0) return null;
+
+          const isExpanded = expandedZones.has(zone.id) || filtering;
+          const zoneMeta = statusMeta(zone.status);
+
+          return (
+            <div
+              key={zone.id}
+              className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden"
+            >
+              {/* Zone header */}
+              <div className="flex items-center justify-between px-5 py-4 bg-gray-50 border-b border-gray-200">
+                <button
+                  onClick={() => toggleZone(zone.id)}
+                  className="flex items-center gap-2 text-left"
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  )}
+                  <Layers className="w-5 h-5 text-green-600" />
+                  <span className="font-semibold text-gray-900">{zone.name}</span>
+                  <span className="text-sm text-gray-500">
+                    · {zone.area.toLocaleString()} m² · {zonePlots.length} lô
+                  </span>
+                  <StatusBadge status={zoneMeta.badge}>{zoneMeta.label}</StatusBadge>
+                </button>
+                <button
+                  onClick={() => askDeleteZone(zone)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Xóa vùng
+                </button>
+              </div>
+
+              {/* Plot list */}
+              {isExpanded && (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white border-b border-gray-200">
+                      <tr>
+                        <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lô</th>
+                        <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Loại cây</th>
+                        <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tổ trưởng</th>
+                        <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                        <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiến độ</th>
+                        <th className="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {visiblePlots.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-5 py-6 text-center text-sm text-gray-400">
+                            Chưa có lô nào trong vùng này.
+                          </td>
+                        </tr>
+                      )}
+                      {visiblePlots.map((plot) => {
+                        const meta = statusMeta(plot.status);
+                        const pct =
+                          plot.total > 0
+                            ? Math.min(100, Math.round((plot.done / plot.total) * 100))
+                            : 0;
+                        const barColor =
+                          PROGRESS_COLOR[(plot.status as PlotStatus)] ??
+                          PROGRESS_COLOR.pending;
+
+                        return (
+                          <tr key={plot.id} className="hover:bg-gray-50">
+                            {/* Tên lô -> điều hướng */}
+                            <td className="px-5 py-4">
+                              <button
+                                onClick={() => goToPlot(plot.id)}
+                                className="font-medium text-green-700 hover:underline text-left"
+                              >
+                                {plot.name}
+                              </button>
+                              <div className="text-xs text-gray-400">
+                                {plot.area.toLocaleString()} m²
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 text-sm text-gray-700">{plot.crop}</td>
+                            <td className="px-5 py-4 text-sm text-gray-700">{plot.teamLeader}</td>
+                            <td className="px-5 py-4">
+                              <StatusBadge status={meta.badge}>{meta.label}</StatusBadge>
+                            </td>
+                            {/* Tiến độ -> điều hướng */}
+                            <td className="px-5 py-4">
+                              <button
+                                onClick={() => goToPlot(plot.id)}
+                                className="w-40 text-left group"
+                                title="Xem lịch công việc"
+                              >
+                                <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                                  <span className="group-hover:text-green-700">
+                                    {plot.done}/{plot.total}
+                                  </span>
+                                  <span className="text-gray-400">{pct}%</span>
+                                </div>
+                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${barColor}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </button>
+                            </td>
+                            <td className="px-5 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Link to={`/admin/zones/edit/${plot.id}`}>
+                                  <Button variant="ghost" size="sm">Sửa</Button>
+                                </Link>
+                                <button
+                                  onClick={() => askDeletePlot(plot)}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Xóa
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Modal xác nhận xóa */}
+      {confirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-md p-6">
+            {confirm.kind === "zone" ? (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Xóa vùng "{confirm.name}"?
+                </h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Bạn có chắc chắn muốn xóa vùng này không? Tất cả các lô bên trong
+                  cũng sẽ bị xóa. Dữ liệu liên quan có thể bị ảnh hưởng.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <Button variant="secondary" onClick={closeConfirm}>Hủy</Button>
+                  <Button variant="danger" onClick={() => doDeleteZone(confirm.id)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Xóa vùng
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Xóa lô "{confirm.name}"?
+                </h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  Bạn có chắc chắn muốn xóa lô này không? Dữ liệu liên quan có thể
+                  bị ảnh hưởng.
+                </p>
+                {confirm.suggestDeactivate && (
+                  <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    Lô này đã có công việc/tiến độ. Khuyến nghị "Ngưng hoạt động"
+                    thay vì xóa cứng để giữ lại dữ liệu lịch sử.
+                  </p>
+                )}
+                <div className="flex justify-end gap-3 mt-4">
+                  <Button variant="secondary" onClick={closeConfirm}>Hủy</Button>
+                  {confirm.suggestDeactivate && (
+                    <Button variant="primary" onClick={() => doDeactivatePlot(confirm.id)}>
+                      <PauseCircle className="w-4 h-4 mr-2" />
+                      Ngưng hoạt động
+                    </Button>
+                  )}
+                  <Button variant="danger" onClick={() => doDeletePlot(confirm.id)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Xóa lô
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
