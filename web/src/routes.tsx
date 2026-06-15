@@ -13,6 +13,9 @@ import { WorkCalendar } from "./components/admin/WorkCalendar";
 import { TeamLeaderKPI } from "./components/admin/TeamLeaderKPI";
 import { Notifications } from "./components/admin/Notifications";
 import { AnomalyDetail } from "./components/admin/AnomalyDetail";
+import { TeamLeaderReports } from "./components/admin/TeamLeaderReports";
+import { SupportRequests } from "./components/admin/SupportRequests";
+import { Settings } from "./components/admin/Settings";
 import { MobileLogin } from "./components/mobile/MobileLogin";
 import { TodayTasks } from "./components/mobile/TodayTasks";
 import { UpcomingTasks } from "./components/mobile/UpcomingTasks";
@@ -42,7 +45,10 @@ export const router = createBrowserRouter([
       { path: "crop-cycles", element: <CropCycleManagement /> },
       { path: "calendar", element: <WorkCalendar /> },
       { path: "kpi", element: <TeamLeaderKPI /> },
+      { path: "reports", element: <TeamLeaderReports /> },
+      { path: "support", element: <SupportRequests /> },
       { path: "notifications", element: <Notifications /> },
+      { path: "settings", element: <Settings /> },
       { path: "anomaly/:id", element: <AnomalyDetail /> },
     ],
   },

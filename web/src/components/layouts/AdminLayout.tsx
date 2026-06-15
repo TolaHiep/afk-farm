@@ -7,9 +7,12 @@ import {
   Users, 
   FileText, 
   Sprout, 
-  Calendar, 
-  TrendingUp, 
+  Calendar,
+  TrendingUp,
   Bell,
+  ClipboardList,
+  LifeBuoy,
+  Settings,
   LogOut,
   Menu,
   X
@@ -28,7 +31,10 @@ export function AdminLayout() {
     { path: "/admin/crop-cycles", icon: Sprout, label: "Chu kỳ cây trồng" },
     { path: "/admin/calendar", icon: Calendar, label: "Lịch công việc" },
     { path: "/admin/kpi", icon: TrendingUp, label: "KPI Tổ trưởng" },
+    { path: "/admin/reports", icon: ClipboardList, label: "Báo cáo tổ trưởng" },
+    { path: "/admin/support", icon: LifeBuoy, label: "Yêu cầu hỗ trợ" },
     { path: "/admin/notifications", icon: Bell, label: "Thông báo" },
+    { path: "/admin/settings", icon: Settings, label: "Cài đặt" },
   ];
 
   return (
