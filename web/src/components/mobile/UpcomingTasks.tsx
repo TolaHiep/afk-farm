@@ -42,6 +42,23 @@ function formatDate(dateStr: string): { dayOfWeek: string; day: number; month: n
   return { dayOfWeek: days[dt.getUTCDay()], day: d, month: m };
 }
 
+// Nhãn màu cho từng tầng cây (mô hình xen canh: Gấc tầng giàn + Sâm dưới tán)
+function getCropChip(crop: string): string {
+  switch (crop) {
+    case "Gấc":
+      return "bg-orange-100 text-orange-800";
+    case "Sâm":
+      return "bg-emerald-100 text-emerald-800";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
+// Thứ tự hiển thị cây: Gấc (tầng trên) trước, Sâm (tầng dưới) sau
+function cropOrder(crop: string): number {
+  return crop === "Gấc" ? 0 : crop === "Sâm" ? 1 : 2;
+}
+
 export function UpcomingTasks() {
   const [range, setRange] = useState<RangeKey>("10");
 
@@ -127,49 +144,79 @@ export function UpcomingTasks() {
                   </div>
                 </div>
 
-                {/* Nhóm theo lô */}
+                {/* Nhóm theo lô -> nhóm con theo cây */}
                 <div className="p-4 space-y-4">
-                  {Object.keys(plotsOfDate).map((plotId) => (
-                    <div key={plotId}>
-                      <div className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
-                        <MapPin className="w-4 h-4 text-green-600" />
-                        <span>{plotName(plotId)}</span>
-                      </div>
-                      <div className="space-y-2 pl-1">
-                        {plotsOfDate[plotId].map((task) => {
-                          const chip = getStatusChip(task.status);
-                          return (
-                            <Link
-                              key={task.id}
-                              to={`/mobile/task/${task.id}`}
-                              className="block bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:bg-gray-50"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <h3 className="font-bold text-gray-900">
-                                    {task.title}
-                                  </h3>
-                                  <p className="text-sm text-gray-600 mt-0.5">
-                                    Cây: {task.crop}
-                                  </p>
-                                </div>
+                  {Object.keys(plotsOfDate).map((plotId) => {
+                    // Gom việc trong lô theo từng cây (tầng giàn Gấc / dưới tán Sâm)
+                    const tasksOfPlot = plotsOfDate[plotId];
+                    const crops = Array.from(
+                      new Set(tasksOfPlot.map((t) => t.crop))
+                    ).sort((a, b) => cropOrder(a) - cropOrder(b));
+
+                    return (
+                      <div key={plotId}>
+                        <div className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
+                          <MapPin className="w-4 h-4 text-green-600" />
+                          <span>{plotName(plotId)}</span>
+                        </div>
+                        <div className="space-y-3 pl-1">
+                          {crops.map((crop) => (
+                            <div key={crop}>
+                              {/* Nhãn cây (tầng cây) */}
+                              <div className="mb-2">
                                 <span
-                                  className={`flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${chip.cls}`}
+                                  className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${getCropChip(
+                                    crop
+                                  )}`}
                                 >
-                                  {chip.label}
+                                  Cây: {crop}
                                 </span>
                               </div>
-                              {task.requirePhoto && (
-                                <span className="inline-block mt-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                                  Cần chụp ảnh
-                                </span>
-                              )}
-                            </Link>
-                          );
-                        })}
+                              <div className="space-y-2 pl-1">
+                                {tasksOfPlot
+                                  .filter((t) => t.crop === crop)
+                                  .map((task) => {
+                                    const chip = getStatusChip(task.status);
+                                    return (
+                                      <Link
+                                        key={task.id}
+                                        to={`/mobile/task/${task.id}`}
+                                        className="block bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:bg-gray-50"
+                                      >
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div>
+                                            <h3 className="font-bold text-gray-900">
+                                              {task.title}
+                                            </h3>
+                                            <span
+                                              className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full ${getCropChip(
+                                                task.crop
+                                              )}`}
+                                            >
+                                              {task.crop}
+                                            </span>
+                                          </div>
+                                          <span
+                                            className={`flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${chip.cls}`}
+                                          >
+                                            {chip.label}
+                                          </span>
+                                        </div>
+                                        {task.requirePhoto && (
+                                          <span className="inline-block mt-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                            Cần chụp ảnh
+                                          </span>
+                                        )}
+                                      </Link>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );

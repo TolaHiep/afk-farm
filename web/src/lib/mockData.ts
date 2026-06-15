@@ -7,15 +7,48 @@ export const zones = [
   { id: "z4", name: "Vùng D", area: 35000, plots: 3, status: "danger" },
 ];
 
-// Trạng thái lô/block: good | warning | danger | pending(chưa xử lý) | done(đã hoàn thành) | inactive(nghỉ)
-// progress: số việc đã xong / tổng số việc trong ngày
+// Trạng thái lô/cây: good | warning | danger | pending(chưa xử lý) | done(đã hoàn thành) | inactive(nghỉ)
+// MÔ HÌNH XEN CANH: mỗi lô trồng 2 tầng cây cùng lúc — Gấc leo giàn (tầng trên) + Sâm dưới tán (tầng dưới).
+// crops[] theo dõi RIÊNG từng cây: tiến độ việc (done/total) và trạng thái. Các trường tổng hợp
+// (crop, done, total, status) được suy ra tự động để tương thích phần hiển thị gộp.
+export interface CropOnPlot { crop: string; done: number; total: number; status: string }
+const STATUS_ORDER: Record<string, number> = { danger: 4, warning: 3, pending: 2, good: 1, done: 1, inactive: 0 };
+
+function buildPlot(
+  base: { id: string; name: string; zoneId: string; area: number; teamLeader: string; teamLeaderId: string; coordinates: number[][] },
+  crops: CropOnPlot[]
+) {
+  const done = crops.reduce((s, c) => s + c.done, 0);
+  const total = crops.reduce((s, c) => s + c.total, 0);
+  const status = crops.reduce((w, c) => (STATUS_ORDER[c.status] > (STATUS_ORDER[w] ?? 0) ? c.status : w), crops[0]?.status ?? "good");
+  return { ...base, crops, crop: crops.map((c) => c.crop).join(" + "), done, total, status };
+}
+
 export const plots = [
-  { id: "p1", name: "Lô A1", zoneId: "z1", area: 10000, teamLeader: "Nguyễn Văn A", teamLeaderId: "tl1", crop: "Gấc", status: "good", done: 7, total: 10, coordinates: [[0.1, 0.1], [0.2, 0.1], [0.2, 0.2], [0.1, 0.2]] },
-  { id: "p2", name: "Lô A2", zoneId: "z1", area: 12000, teamLeader: "Trần Thị B", teamLeaderId: "tl2", crop: "Sâm", status: "good", done: 8, total: 8, coordinates: [[0.2, 0.1], [0.3, 0.1], [0.3, 0.2], [0.2, 0.2]] },
-  { id: "p3", name: "Lô B1", zoneId: "z2", area: 15000, teamLeader: "Nguyễn Văn A", teamLeaderId: "tl1", crop: "Gấc", status: "warning", done: 5, total: 9, coordinates: [[0.1, 0.3], [0.2, 0.3], [0.2, 0.4], [0.1, 0.4]] },
-  { id: "p4", name: "Lô B2", zoneId: "z2", area: 11000, teamLeader: "Lê Văn C", teamLeaderId: "tl3", crop: "Gấc + Sâm", status: "good", done: 6, total: 6, coordinates: [[0.2, 0.3], [0.3, 0.3], [0.3, 0.4], [0.2, 0.4]] },
-  { id: "p5", name: "Lô C1", zoneId: "z3", area: 18000, teamLeader: "Nguyễn Văn A", teamLeaderId: "tl1", crop: "Gấc", status: "good", done: 4, total: 4, coordinates: [[0.4, 0.1], [0.5, 0.1], [0.5, 0.3], [0.4, 0.3]] },
-  { id: "p6", name: "Lô D1", zoneId: "z4", area: 13000, teamLeader: "Trần Thị B", teamLeaderId: "tl2", crop: "Sâm", status: "danger", done: 2, total: 9, coordinates: [[0.4, 0.4], [0.5, 0.4], [0.5, 0.5], [0.4, 0.5]] },
+  buildPlot({ id: "p1", name: "Lô A1", zoneId: "z1", area: 10000, teamLeader: "Nguyễn Văn A", teamLeaderId: "tl1", coordinates: [[0.1, 0.1], [0.2, 0.1], [0.2, 0.2], [0.1, 0.2]] }, [
+    { crop: "Gấc", done: 4, total: 6, status: "good" },
+    { crop: "Sâm", done: 3, total: 4, status: "warning" },
+  ]),
+  buildPlot({ id: "p2", name: "Lô A2", zoneId: "z1", area: 12000, teamLeader: "Trần Thị B", teamLeaderId: "tl2", coordinates: [[0.2, 0.1], [0.3, 0.1], [0.3, 0.2], [0.2, 0.2]] }, [
+    { crop: "Gấc", done: 4, total: 4, status: "good" },
+    { crop: "Sâm", done: 4, total: 4, status: "good" },
+  ]),
+  buildPlot({ id: "p3", name: "Lô B1", zoneId: "z2", area: 15000, teamLeader: "Nguyễn Văn A", teamLeaderId: "tl1", coordinates: [[0.1, 0.3], [0.2, 0.3], [0.2, 0.4], [0.1, 0.4]] }, [
+    { crop: "Gấc", done: 2, total: 5, status: "warning" },
+    { crop: "Sâm", done: 3, total: 4, status: "good" },
+  ]),
+  buildPlot({ id: "p4", name: "Lô B2", zoneId: "z2", area: 11000, teamLeader: "Lê Văn C", teamLeaderId: "tl3", coordinates: [[0.2, 0.3], [0.3, 0.3], [0.3, 0.4], [0.2, 0.4]] }, [
+    { crop: "Gấc", done: 3, total: 3, status: "good" },
+    { crop: "Sâm", done: 3, total: 3, status: "good" },
+  ]),
+  buildPlot({ id: "p5", name: "Lô C1", zoneId: "z3", area: 18000, teamLeader: "Nguyễn Văn A", teamLeaderId: "tl1", coordinates: [[0.4, 0.1], [0.5, 0.1], [0.5, 0.3], [0.4, 0.3]] }, [
+    { crop: "Gấc", done: 2, total: 2, status: "good" },
+    { crop: "Sâm", done: 2, total: 2, status: "good" },
+  ]),
+  buildPlot({ id: "p6", name: "Lô D1", zoneId: "z4", area: 13000, teamLeader: "Trần Thị B", teamLeaderId: "tl2", coordinates: [[0.4, 0.4], [0.5, 0.4], [0.5, 0.5], [0.4, 0.5]] }, [
+    { crop: "Gấc", done: 1, total: 5, status: "danger" },
+    { crop: "Sâm", done: 1, total: 4, status: "danger" },
+  ]),
 ];
 
 // Một tổ trưởng có thể phụ trách NHIỀU lô (plotIds), ở nhiều zone khác nhau.
@@ -63,26 +96,52 @@ export const processes = [
   },
 ];
 
+// Mỗi lô có 2 chu kỳ song song: Gấc (proc1) tầng trên + Sâm (proc2) tầng dưới.
 export const cropCycles = [
-  { id: "cc1", plotId: "p1", crop: "Gấc", startDate: "2026-05-01", processId: "proc1", status: "active" },
-  { id: "cc2", plotId: "p2", crop: "Sâm", startDate: "2026-04-15", processId: "proc2", status: "active" },
-  { id: "cc3", plotId: "p3", crop: "Gấc", startDate: "2026-05-10", processId: "proc1", status: "active" },
-  { id: "cc4", plotId: "p4", crop: "Sâm", startDate: "2026-04-20", processId: "proc2", status: "active" },
-  { id: "cc5", plotId: "p5", crop: "Gấc", startDate: "2026-05-05", processId: "proc1", status: "active" },
-  { id: "cc6", plotId: "p6", crop: "Sâm", startDate: "2026-04-25", processId: "proc2", status: "active" },
+  { id: "cc1g", plotId: "p1", crop: "Gấc", startDate: "2026-05-01", processId: "proc1", status: "active" },
+  { id: "cc1s", plotId: "p1", crop: "Sâm", startDate: "2026-04-18", processId: "proc2", status: "active" },
+  { id: "cc2g", plotId: "p2", crop: "Gấc", startDate: "2026-05-03", processId: "proc1", status: "active" },
+  { id: "cc2s", plotId: "p2", crop: "Sâm", startDate: "2026-04-15", processId: "proc2", status: "active" },
+  { id: "cc3g", plotId: "p3", crop: "Gấc", startDate: "2026-05-10", processId: "proc1", status: "active" },
+  { id: "cc3s", plotId: "p3", crop: "Sâm", startDate: "2026-04-22", processId: "proc2", status: "active" },
+  { id: "cc4g", plotId: "p4", crop: "Gấc", startDate: "2026-05-08", processId: "proc1", status: "active" },
+  { id: "cc4s", plotId: "p4", crop: "Sâm", startDate: "2026-04-20", processId: "proc2", status: "active" },
+  { id: "cc5g", plotId: "p5", crop: "Gấc", startDate: "2026-05-05", processId: "proc1", status: "active" },
+  { id: "cc5s", plotId: "p5", crop: "Sâm", startDate: "2026-04-25", processId: "proc2", status: "active" },
+  { id: "cc6g", plotId: "p6", crop: "Gấc", startDate: "2026-05-12", processId: "proc1", status: "active" },
+  { id: "cc6s", plotId: "p6", crop: "Sâm", startDate: "2026-04-28", processId: "proc2", status: "paused" },
 ];
 
+// Mỗi việc gắn với 1 cây (crop) trên 1 lô — Gấc và Sâm có lịch việc riêng dù cùng lô.
 export const tasks = [
-  { id: "t1", title: "Tưới nước", plotId: "p1", crop: "Gấc", date: "2026-06-14", status: "pending", teamLeaderId: "tl1", requirePhoto: false, priority: "normal" },
-  { id: "t2", title: "Bón phân", plotId: "p1", crop: "Gấc", date: "2026-06-14", status: "in-progress", teamLeaderId: "tl1", requirePhoto: true, priority: "high" },
-  { id: "t3", title: "Kiểm tra sâu bệnh", plotId: "p2", crop: "Sâm", date: "2026-06-14", status: "completed", teamLeaderId: "tl2", requirePhoto: true, priority: "normal" },
-  { id: "t4", title: "Tưới nước", plotId: "p3", crop: "Gấc", date: "2026-06-14", status: "overdue", teamLeaderId: "tl3", requirePhoto: false, priority: "urgent" },
-  { id: "t5", title: "Làm cỏ", plotId: "p4", crop: "Sâm", date: "2026-06-15", status: "pending", teamLeaderId: "tl4", requirePhoto: false, priority: "normal" },
-  { id: "t6", title: "Tưới nước", plotId: "p5", crop: "Gấc", date: "2026-06-15", status: "pending", teamLeaderId: "tl5", requirePhoto: false, priority: "normal" },
-  { id: "t7", title: "Bón phân", plotId: "p6", crop: "Sâm", date: "2026-06-16", status: "pending", teamLeaderId: "tl6", requirePhoto: true, priority: "high" },
-  { id: "t8", title: "Kiểm tra sâu bệnh", plotId: "p1", crop: "Gấc", date: "2026-06-17", status: "pending", teamLeaderId: "tl1", requirePhoto: true, priority: "normal" },
-  { id: "t9", title: "Tưới nước", plotId: "p2", crop: "Sâm", date: "2026-06-18", status: "pending", teamLeaderId: "tl2", requirePhoto: false, priority: "normal" },
-  { id: "t10", title: "Làm cỏ", plotId: "p3", crop: "Gấc", date: "2026-06-19", status: "pending", teamLeaderId: "tl3", requirePhoto: false, priority: "normal" },
+  // ----- Hôm nay 2026-06-14 -----
+  // Lô A1 (tl1)
+  { id: "t1", title: "Tưới nước giàn gấc", plotId: "p1", crop: "Gấc", date: "2026-06-14", status: "completed", teamLeaderId: "tl1", requirePhoto: false, priority: "normal" },
+  { id: "t2", title: "Bón phân gốc gấc", plotId: "p1", crop: "Gấc", date: "2026-06-14", status: "in-progress", teamLeaderId: "tl1", requirePhoto: true, priority: "high" },
+  { id: "t3", title: "Làm cỏ luống sâm", plotId: "p1", crop: "Sâm", date: "2026-06-14", status: "pending", teamLeaderId: "tl1", requirePhoto: false, priority: "normal" },
+  // Lô B1 (tl1)
+  { id: "t4", title: "Tưới nước giàn gấc", plotId: "p3", crop: "Gấc", date: "2026-06-14", status: "overdue", teamLeaderId: "tl1", requirePhoto: false, priority: "urgent" },
+  { id: "t5", title: "Kiểm tra sâu đục thân gấc", plotId: "p3", crop: "Gấc", date: "2026-06-14", status: "pending", teamLeaderId: "tl1", requirePhoto: true, priority: "high" },
+  { id: "t6", title: "Bón phân sâm", plotId: "p3", crop: "Sâm", date: "2026-06-14", status: "pending", teamLeaderId: "tl1", requirePhoto: true, priority: "normal" },
+  // Lô C1 (tl1)
+  { id: "t7", title: "Tưới nước giàn gấc", plotId: "p5", crop: "Gấc", date: "2026-06-14", status: "completed", teamLeaderId: "tl1", requirePhoto: false, priority: "normal" },
+  { id: "t8", title: "Kiểm tra củ sâm", plotId: "p5", crop: "Sâm", date: "2026-06-14", status: "completed", teamLeaderId: "tl1", requirePhoto: true, priority: "normal" },
+  // Lô A2 (tl2)
+  { id: "t9", title: "Tưới nước giàn gấc", plotId: "p2", crop: "Gấc", date: "2026-06-14", status: "completed", teamLeaderId: "tl2", requirePhoto: false, priority: "normal" },
+  { id: "t10", title: "Kiểm tra sâu bệnh sâm", plotId: "p2", crop: "Sâm", date: "2026-06-14", status: "completed", teamLeaderId: "tl2", requirePhoto: true, priority: "normal" },
+  // Lô B2 (tl3)
+  { id: "t11", title: "Dựng lại giàn gấc", plotId: "p4", crop: "Gấc", date: "2026-06-14", status: "in-progress", teamLeaderId: "tl3", requirePhoto: true, priority: "high" },
+  { id: "t12", title: "Làm cỏ luống sâm", plotId: "p4", crop: "Sâm", date: "2026-06-14", status: "pending", teamLeaderId: "tl3", requirePhoto: false, priority: "normal" },
+  // Lô D1 (tl2)
+  { id: "t13", title: "Tưới nước giàn gấc", plotId: "p6", crop: "Gấc", date: "2026-06-14", status: "overdue", teamLeaderId: "tl2", requirePhoto: false, priority: "urgent" },
+  { id: "t14", title: "Bón phân sâm", plotId: "p6", crop: "Sâm", date: "2026-06-14", status: "pending", teamLeaderId: "tl2", requirePhoto: true, priority: "high" },
+  // ----- Sắp tới (tl1) -----
+  { id: "t15", title: "Kiểm tra sâu bệnh gấc", plotId: "p1", crop: "Gấc", date: "2026-06-15", status: "pending", teamLeaderId: "tl1", requirePhoto: true, priority: "normal" },
+  { id: "t16", title: "Tưới nước luống sâm", plotId: "p1", crop: "Sâm", date: "2026-06-15", status: "pending", teamLeaderId: "tl1", requirePhoto: false, priority: "normal" },
+  { id: "t17", title: "Bón phân giàn gấc", plotId: "p3", crop: "Gấc", date: "2026-06-16", status: "pending", teamLeaderId: "tl1", requirePhoto: true, priority: "high" },
+  { id: "t18", title: "Làm cỏ luống sâm", plotId: "p3", crop: "Sâm", date: "2026-06-16", status: "pending", teamLeaderId: "tl1", requirePhoto: false, priority: "normal" },
+  { id: "t19", title: "Tưới nước giàn gấc", plotId: "p5", crop: "Gấc", date: "2026-06-17", status: "pending", teamLeaderId: "tl1", requirePhoto: false, priority: "normal" },
+  { id: "t20", title: "Kiểm tra củ sâm", plotId: "p5", crop: "Sâm", date: "2026-06-17", status: "pending", teamLeaderId: "tl1", requirePhoto: true, priority: "normal" },
 ];
 
 export const anomalies = [
@@ -99,14 +158,28 @@ export const notifications = [
 ];
 
 // completed = số việc đã hoàn thành; notDone = số việc chưa hoàn thành (còn lại trong kỳ)
-export const kpiData = [
+// byCrop: tách RIÊNG chỉ số theo từng cây (Gấc/Sâm) — tự tính từ tổng theo tỷ lệ gacShare.
+const KPI_FIELDS = ["onTime", "overdue", "completed", "notDone", "fullReport", "anomalies", "totalWork"] as const;
+type KpiBase = { teamLeaderId: string; name: string; onTime: number; overdue: number; completed: number; notDone: number; fullReport: number; anomalies: number; totalWork: number };
+
+function withCropSplit(row: KpiBase, gacShare: number) {
+  const gac: Record<string, number> = {};
+  const sam: Record<string, number> = {};
+  for (const k of KPI_FIELDS) {
+    gac[k] = Math.round((row[k] as number) * gacShare);
+    sam[k] = (row[k] as number) - gac[k];
+  }
+  return { ...row, byCrop: { "Gấc": gac, "Sâm": sam } as Record<string, Record<string, number>> };
+}
+
+export const kpiData = ([
   { teamLeaderId: "tl1", name: "Nguyễn Văn A", onTime: 45, overdue: 3, completed: 48, notDone: 5, fullReport: 46, anomalies: 1, totalWork: 480 },
   { teamLeaderId: "tl2", name: "Trần Thị B", onTime: 50, overdue: 2, completed: 52, notDone: 2, fullReport: 52, anomalies: 0, totalWork: 520 },
   { teamLeaderId: "tl3", name: "Lê Văn C", onTime: 38, overdue: 7, completed: 45, notDone: 9, fullReport: 40, anomalies: 3, totalWork: 450 },
   { teamLeaderId: "tl4", name: "Phạm Thị D", onTime: 42, overdue: 4, completed: 46, notDone: 6, fullReport: 44, anomalies: 2, totalWork: 460 },
   { teamLeaderId: "tl5", name: "Hoàng Văn E", onTime: 48, overdue: 1, completed: 49, notDone: 3, fullReport: 49, anomalies: 0, totalWork: 490 },
   { teamLeaderId: "tl6", name: "Vũ Thị F", onTime: 35, overdue: 8, completed: 43, notDone: 11, fullReport: 38, anomalies: 4, totalWork: 430 },
-];
+] as KpiBase[]).map((r, i) => withCropSplit(r, [0.55, 0.5, 0.6, 0.5, 0.45, 0.6][i] ?? 0.5));
 
 export const mobileNotifications = [
   { id: "mn1", type: "new-task", title: "Công việc mới", description: "Tưới nước - Lô A1 - Gấc", date: "2026-06-14 08:00", read: false },
@@ -170,6 +243,10 @@ export function leaderPlots(leaderId: string) {
 }
 export function plotName(plotId: string) {
   return plots.find((p) => p.id === plotId)?.name || plotId;
+}
+// Danh sách cây (kèm tiến độ/trạng thái) trên một lô
+export function plotCrops(plotId: string): CropOnPlot[] {
+  return plots.find((p) => p.id === plotId)?.crops ?? [];
 }
 export function zoneName(zoneId: string) {
   return zones.find((z) => z.id === zoneId)?.name || zoneId;

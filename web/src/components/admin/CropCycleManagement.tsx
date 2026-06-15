@@ -11,6 +11,7 @@ import {
   teamLeaderReports,
   plotName,
   zoneName,
+  plotCrops,
 } from "../../lib/mockData";
 
 interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
@@ -51,6 +52,33 @@ export function CropCycleManagement() {
     navigate(`/admin/zones?plot=${plotId}`);
   };
 
+  // Nhóm các chu kỳ theo LÔ để thể hiện mô hình xen canh 2 tầng (Gấc + Sâm) trên cùng lô.
+  // Giữ thứ tự lô theo danh sách plots, và xếp Gấc trước Sâm trong mỗi lô.
+  const cropOrder = (crop: string) => (crop === "Gấc" ? 0 : crop === "Sâm" ? 1 : 2);
+  const groupedPlots = plots
+    .map((plot) => ({
+      plot,
+      cycles: cycles
+        .filter((c) => c.plotId === plot.id)
+        .sort((a, b) => cropOrder(a.crop) - cropOrder(b.crop)),
+    }))
+    .filter((g) => g.cycles.length > 0);
+  // Chu kỳ thuộc lô không còn trong danh sách plots (phòng trường hợp dữ liệu lệch)
+  const orphanCycles = cycles.filter((c) => !plots.some((p) => p.id === c.plotId));
+
+  // Tiến độ 1 chu kỳ con: ưu tiên lấy theo cây tương ứng trong plot.crops (done/total).
+  // Nếu không tìm thấy cây khớp thì rơi về cách tính cũ theo số ngày đã trôi (giả định chu kỳ 90 ngày).
+  const cycleProgress = (cycle: Cycle): number => {
+    const match = plotCrops(cycle.plotId).find((c) => c.crop === cycle.crop);
+    if (match && match.total > 0) {
+      return Math.min(Math.round((match.done / match.total) * 100), 100);
+    }
+    const startDate = new Date(cycle.startDate);
+    const today = new Date("2026-06-14");
+    const daysElapsed = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.min(Math.max(Math.round((daysElapsed / 90) * 100), 0), 100);
+  };
+
   // Lô đang xem báo cáo + danh sách báo cáo của lô đó
   const reportPlot = reportPlotId ? plots.find((p) => p.id === reportPlotId) : null;
   const plotReports = reportPlotId
@@ -71,16 +99,13 @@ export function CropCycleManagement() {
         </Button>
       </div>
 
-      {/* Crop Cycles Table */}
+      {/* Crop Cycles Table — nhóm theo LÔ, mỗi lô gồm 2 tầng cây (Gấc giàn trên + Sâm dưới tán) */}
       <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lô</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cây trồng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diện tích</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tổ trưởng</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tầng cây</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày bắt đầu</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quy trình</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
@@ -88,83 +113,142 @@ export function CropCycleManagement() {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {cycles.map((cycle) => {
-                const plot = plots.find((p) => p.id === cycle.plotId);
+            <tbody>
+              {groupedPlots.map(({ plot, cycles: plotCycles }) => {
+                const reportCount = teamLeaderReports.filter((r) => r.plotId === plot.id).length;
+                return (
+                  <React.Fragment key={plot.id}>
+                    {/* Dòng tiêu đề LÔ: tên lô + vùng + diện tích + tổ trưởng */}
+                    <tr className="bg-green-50/70 border-t-4 border-green-100">
+                      <td colSpan={6} className="px-6 py-3">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <button
+                            type="button"
+                            onClick={() => goToPlot(plot.id)}
+                            className="text-green-800 hover:text-green-900 hover:underline font-semibold"
+                            title="Xem chi tiết lô tại trang quản lý vùng"
+                          >
+                            {plot.name}
+                          </button>
+                          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {zoneName(plot.zoneId)}
+                          </span>
+                          <span className="text-gray-300">·</span>
+                          <span className="text-xs text-gray-500">{(plot.area / 10000).toFixed(1)} ha</span>
+                          <span className="text-gray-300">·</span>
+                          <span className="text-xs text-gray-500">Tổ trưởng: {plot.teamLeader || "—"}</span>
+                          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5">
+                            Xen canh {plotCycles.length} tầng
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Các chu kỳ con của lô (Gấc, Sâm) */}
+                    {plotCycles.map((cycle) => {
+                      const process = processes.find((p) => p.id === cycle.processId);
+                      const cycleStatus = CYCLE_STATUS[cycle.status] ?? CYCLE_STATUS.active;
+                      const progress = cycleProgress(cycle);
+                      const isGac = cycle.crop === "Gấc";
+                      return (
+                        <tr key={cycle.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="px-6 py-3 text-sm">
+                            <div className="flex items-center gap-2 pl-3">
+                              <span
+                                className={`inline-block w-1.5 h-6 rounded-full ${isGac ? "bg-emerald-500" : "bg-amber-500"}`}
+                              ></span>
+                              <div>
+                                <div className="font-medium text-gray-900">{cycle.crop}</div>
+                                <div className="text-xs text-gray-400">
+                                  {isGac ? "Giàn trên" : "Dưới tán"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              {new Date(cycle.startDate).toLocaleDateString("vi-VN")}
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-sm text-gray-600">{process?.name}</td>
+                          <td className="px-6 py-3">
+                            <StatusBadge status={cycleStatus.badge}>{cycleStatus.label}</StatusBadge>
+                          </td>
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-2 min-w-[140px]">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${isGac ? "bg-emerald-600" : "bg-amber-500"}`}
+                                  style={{ width: `${progress}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-600 w-12 text-right">{progress}%</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setReportPlotId(cycle.plotId)}
+                                title="Xem báo cáo tổ trưởng của lô này"
+                              >
+                                <FileText className="w-4 h-4 mr-1" />
+                                Báo cáo
+                                {reportCount > 0 && (
+                                  <span className="ml-1 inline-flex items-center justify-center px-1.5 h-5 min-w-[20px] rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                                    {reportCount}
+                                  </span>
+                                )}
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setCycleModal({ mode: "edit", data: { ...cycle } })} title="Sửa chu kỳ">
+                                <Edit2 className="w-4 h-4 mr-1" /> Sửa
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setConfirmId(cycle.id)} title="Xóa chu kỳ">
+                                <Trash2 className="w-4 h-4 mr-1 text-red-600" /> <span className="text-red-600">Xóa</span>
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              })}
+
+              {/* Chu kỳ thuộc lô không xác định (nếu có) */}
+              {orphanCycles.map((cycle) => {
                 const process = processes.find((p) => p.id === cycle.processId);
                 const cycleStatus = CYCLE_STATUS[cycle.status] ?? CYCLE_STATUS.active;
-                const startDate = new Date(cycle.startDate);
-                const today = new Date("2026-06-14");
-                const daysElapsed = Math.floor(
-                  (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-                );
-                const progress = Math.min(Math.round((daysElapsed / 90) * 100), 100);
-                const reportCount = teamLeaderReports.filter(
-                  (r) => r.plotId === cycle.plotId
-                ).length;
-
+                const progress = cycleProgress(cycle);
                 return (
-                  <tr key={cycle.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium">
-                      {/* Bấm vào tên Lô để xem chi tiết lô tại trang quản lý vùng */}
-                      <button
-                        type="button"
-                        onClick={() => goToPlot(cycle.plotId)}
-                        className="text-green-700 hover:text-green-800 hover:underline font-medium"
-                        title="Xem chi tiết lô tại trang quản lý vùng"
-                      >
-                        {plot?.name || plotName(cycle.plotId)}
-                      </button>
-                      {plot && (
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          {zoneName(plot.zoneId)}
-                        </div>
-                      )}
+                  <tr key={cycle.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-6 py-3 text-sm">
+                      <div className="font-medium text-gray-900">{cycle.crop}</div>
+                      <div className="text-xs text-gray-400">{plotName(cycle.plotId)}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{cycle.crop}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {plot ? `${(plot.area / 10000).toFixed(1)} ha` : "—"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {plot?.teamLeader || "—"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-3 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         {new Date(cycle.startDate).toLocaleDateString("vi-VN")}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{process?.name}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3 text-sm text-gray-600">{process?.name}</td>
+                    <td className="px-6 py-3">
                       <StatusBadge status={cycleStatus.badge}>{cycleStatus.label}</StatusBadge>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                    <td className="px-6 py-3">
+                      <div className="flex items-center gap-2 min-w-[140px]">
                         <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-green-600 rounded-full"
-                            style={{ width: `${progress}%` }}
-                          ></div>
+                          <div className="h-full bg-green-600 rounded-full" style={{ width: `${progress}%` }}></div>
                         </div>
                         <span className="text-sm text-gray-600 w-12 text-right">{progress}%</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setReportPlotId(cycle.plotId)}
-                          title="Xem báo cáo tổ trưởng của lô này"
-                        >
-                          <FileText className="w-4 h-4 mr-1" />
-                          Báo cáo
-                          {reportCount > 0 && (
-                            <span className="ml-1 inline-flex items-center justify-center px-1.5 h-5 min-w-[20px] rounded-full bg-green-100 text-green-800 text-xs font-medium">
-                              {reportCount}
-                            </span>
-                          )}
-                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => setCycleModal({ mode: "edit", data: { ...cycle } })} title="Sửa chu kỳ">
                           <Edit2 className="w-4 h-4 mr-1" /> Sửa
                         </Button>
@@ -183,11 +267,12 @@ export function CropCycleManagement() {
 
       {/* Info Panel */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">Lưu ý</h4>
+        <h4 className="font-medium text-blue-900 mb-2">Lưu ý — Mô hình xen canh 2 tầng</h4>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Một lô có thể có nhiều chu kỳ cây trồng song song (ví dụ: cả Gấc và Sâm)</li>
-          <li>• Hệ thống sẽ tự động sinh công việc theo quy trình đã chọn</li>
-          <li>• Chu kỳ có thể được tạm dừng hoặc kết thúc sớm nếu cần</li>
+          <li>• Mỗi lô canh tác đồng thời <strong>2 tầng cây trên cùng diện tích</strong>: Gấc leo giàn (tầng trên) và Sâm dưới tán (tầng dưới) — tương ứng 2 chu kỳ song song.</li>
+          <li>• Mỗi tầng cây có <strong>quy trình và lịch công việc riêng</strong> (Quy trình Gấc / Quy trình Sâm); hệ thống tự động sinh công việc theo quy trình đã chọn.</li>
+          <li>• Tiến độ mỗi tầng được tính theo số việc đã hoàn thành của cây tương ứng trên lô.</li>
+          <li>• Có thể tạm dừng hoặc kết thúc sớm từng tầng độc lập mà không ảnh hưởng tầng còn lại.</li>
         </ul>
       </div>
 

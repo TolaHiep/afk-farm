@@ -32,11 +32,16 @@ export function HeatMap() {
     return true;
   });
 
-  // Tổng quan trạng thái (đếm theo nhóm xanh/vàng/đỏ)
+  // Lấy danh sách cây của lô theo bộ lọc loại cây (nếu lọc 1 cây thì chỉ giữ cây đó)
+  const cropsOf = (p: typeof plots[number]) =>
+    filterCrop === "all" ? p.crops : p.crops.filter((c) => c.crop === filterCrop);
+
+  // Tổng quan trạng thái: đếm theo TỪNG CÂY đang hiển thị (xen canh: mỗi lô tối đa 2 cây)
+  const allShownCrops = visiblePlots.flatMap(cropsOf);
   const summary = {
-    good: visiblePlots.filter((p) => p.status === "good" || p.status === "done").length,
-    warning: visiblePlots.filter((p) => p.status === "warning" || p.status === "pending").length,
-    danger: visiblePlots.filter((p) => p.status === "danger").length,
+    good: allShownCrops.filter((c) => c.status === "good" || c.status === "done").length,
+    warning: allShownCrops.filter((c) => c.status === "warning" || c.status === "pending").length,
+    danger: allShownCrops.filter((c) => c.status === "danger").length,
   };
 
   // Vùng hiển thị (kèm lô đã lọc)
@@ -44,15 +49,27 @@ export function HeatMap() {
     .map((z) => ({ zone: z, items: visiblePlots.filter((p) => p.zoneId === z.id) }))
     .filter((g) => g.items.length > 0);
 
-  // Công việc của lô đang chọn theo ngày đã lọc
-  const plotTasks = tasks.filter((t) => t.plotId === selectedPlot && t.date === filterDate);
-  const groups = [
-    { title: "Đã hoàn thành", items: plotTasks.filter((t) => t.status === "completed"), dot: "bg-green-500", text: "text-green-700", Icon: CheckCircle2 },
-    { title: "Đang làm", items: plotTasks.filter((t) => t.status === "in-progress"), dot: "bg-blue-500", text: "text-blue-700", Icon: Clock },
-    { title: "Chưa làm", items: plotTasks.filter((t) => t.status === "pending"), dot: "bg-gray-400", text: "text-gray-600", Icon: CircleDashed },
-    { title: "Quá hạn", items: plotTasks.filter((t) => t.status === "overdue"), dot: "bg-red-500", text: "text-red-700", Icon: AlertTriangle },
-  ];
-  const plotAnomalies = anomalies.filter((a) => a.plotId === selectedPlot);
+  // Công việc của lô đang chọn theo ngày đã lọc (tôn trọng bộ lọc loại cây)
+  const plotTasks = tasks.filter(
+    (t) => t.plotId === selectedPlot && t.date === filterDate && (filterCrop === "all" || t.crop === filterCrop)
+  );
+  // Cấu hình hiển thị theo trạng thái việc
+  const TASK_STATUS: Record<string, { title: string; dot: string; text: string; Icon: typeof CheckCircle2 }> = {
+    completed:     { title: "Đã hoàn thành", dot: "bg-green-500", text: "text-green-700", Icon: CheckCircle2 },
+    "in-progress": { title: "Đang làm",      dot: "bg-blue-500",  text: "text-blue-700",  Icon: Clock },
+    pending:       { title: "Chưa làm",      dot: "bg-gray-400",  text: "text-gray-600",  Icon: CircleDashed },
+    overdue:       { title: "Quá hạn",       dot: "bg-red-500",   text: "text-red-700",   Icon: AlertTriangle },
+  };
+  const TASK_ORDER = ["completed", "in-progress", "pending", "overdue"];
+  // Chia việc theo TỪNG CÂY (xen canh) trước, trong mỗi cây sắp xếp theo trạng thái
+  const detailCrops = selectedPlotData ? (filterCrop === "all" ? selectedPlotData.crops : selectedPlotData.crops.filter((c) => c.crop === filterCrop)) : [];
+  const tasksByCrop = detailCrops.map((c) => ({
+    crop: c,
+    items: plotTasks
+      .filter((t) => t.crop === c.crop)
+      .sort((a, b) => TASK_ORDER.indexOf(a.status) - TASK_ORDER.indexOf(b.status)),
+  }));
+  const plotAnomalies = anomalies.filter((a) => a.plotId === selectedPlot && (filterCrop === "all" || a.crop === filterCrop));
 
   return (
     <div className="space-y-6">
@@ -121,9 +138,9 @@ export function HeatMap() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {items.map((p) => {
-                    const s = st(p.status);
-                    const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+                    const s = st(p.status); // màu nền/viền theo trạng thái xấu nhất của lô
                     const active = selectedPlot === p.id;
+                    const shownCrops = cropsOf(p);
                     return (
                       <button key={p.id} onClick={() => setSelectedPlot(p.id)}
                         className={`text-left rounded-xl border-l-4 border border-gray-100 p-3 transition hover:shadow-md ${s.tile} ${active ? `ring-2 ${s.ring}` : ""}`}>
@@ -131,18 +148,29 @@ export function HeatMap() {
                           <span className="font-bold text-gray-900">{p.name}</span>
                           <span className={`w-2.5 h-2.5 rounded-full ${s.dot}`} />
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                          <Sprout className="w-3 h-3" /> {p.crop}
+                        <div className="flex items-center gap-1 text-[11px] text-gray-400 mt-0.5">
+                          <Sprout className="w-3 h-3" /> Xen canh
                         </div>
-                        {/* Thanh tiến độ */}
-                        <div className="mt-2">
-                          <div className="flex items-center justify-between text-[11px] text-gray-500 mb-1">
-                            <span>Tiến độ</span>
-                            <span className="font-medium">{p.done}/{p.total}</span>
-                          </div>
-                          <div className="h-1.5 w-full rounded-full bg-white/70 overflow-hidden">
-                            <div className={`h-full rounded-full ${s.bar}`} style={{ width: `${pct}%` }} />
-                          </div>
+                        {/* Mỗi cây 1 dòng tiến độ riêng */}
+                        <div className="mt-2 space-y-2">
+                          {shownCrops.map((c) => {
+                            const cs = st(c.status);
+                            const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+                            return (
+                              <div key={c.crop}>
+                                <div className="flex items-center justify-between text-[11px] mb-1">
+                                  <span className="flex items-center gap-1 font-medium text-gray-700">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${cs.dot}`} />
+                                    {c.crop}
+                                  </span>
+                                  <span className="font-medium text-gray-500">{c.done}/{c.total}</span>
+                                </div>
+                                <div className="h-1.5 w-full rounded-full bg-white/70 overflow-hidden">
+                                  <div className={`h-full rounded-full ${cs.bar}`} style={{ width: `${pct}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                         <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-2">
                           <User className="w-3 h-3" /> {p.teamLeader}
@@ -163,7 +191,7 @@ export function HeatMap() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{selectedPlotData.name}</h3>
-                  <p className="text-sm text-gray-500">{zoneName(selectedPlotData.zoneId)} · {selectedPlotData.crop}</p>
+                  <p className="text-sm text-gray-500">{zoneName(selectedPlotData.zoneId)} · Xen canh {selectedPlotData.crop}</p>
                 </div>
                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${st(selectedPlotData.status).tile} ${st(selectedPlotData.status).text}`}>
                   {st(selectedPlotData.status).label}
@@ -172,29 +200,70 @@ export function HeatMap() {
 
               <div className="grid grid-cols-2 gap-3">
                 <InfoBox label="Tổ trưởng" value={selectedPlotData.teamLeader} />
-                <InfoBox label="Tiến độ" value={`${selectedPlotData.done}/${selectedPlotData.total} việc`} />
                 <InfoBox label="Diện tích" value={`${selectedPlotData.area.toLocaleString()} m²`} />
-                <InfoBox label="Loại cây" value={selectedPlotData.crop} />
+              </div>
+
+              {/* Tiến độ riêng từng cây (xen canh) */}
+              <div className="pt-4 border-t border-gray-100">
+                <h4 className="font-medium text-gray-900 mb-3">Tiến độ theo cây</h4>
+                <div className="space-y-3">
+                  {detailCrops.map((c) => {
+                    const cs = st(c.status);
+                    const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+                    return (
+                      <div key={c.crop} className="rounded-lg bg-gray-50 p-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-800">
+                            <Sprout className={`w-4 h-4 ${cs.text}`} /> {c.crop}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${cs.tile} ${cs.text}`}>
+                            {cs.label}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                          <span>Tiến độ công việc</span>
+                          <span className="font-medium">{c.done}/{c.total} ({pct}%)</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-white overflow-hidden">
+                          <div className={`h-full rounded-full ${cs.bar}`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="pt-4 border-t border-gray-100">
                 <h4 className="font-medium text-gray-900 mb-3">Công việc ngày {filterDate}</h4>
                 {plotTasks.length > 0 ? (
-                  <div className="space-y-3">
-                    {groups.map((g) => (
-                      <div key={g.title}>
-                        <div className={`flex items-center gap-2 mb-1 text-sm font-medium ${g.text}`}>
-                          <g.Icon className="w-4 h-4" /> {g.title} ({g.items.length})
+                  <div className="space-y-4">
+                    {tasksByCrop.map(({ crop, items }) => {
+                      const cs = st(crop.status);
+                      return (
+                        <div key={crop.crop}>
+                          <div className="flex items-center gap-1.5 mb-2 text-sm font-semibold text-gray-800">
+                            <span className={`w-2 h-2 rounded-full ${cs.dot}`} />
+                            {crop.crop} <span className="text-xs font-normal text-gray-400">· {items.length} việc</span>
+                          </div>
+                          {items.length > 0 ? (
+                            <ul className="ml-2 space-y-1.5">
+                              {items.map((it) => {
+                                const ts = TASK_STATUS[it.status] ?? TASK_STATUS.pending;
+                                return (
+                                  <li key={it.id} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <ts.Icon className={`w-4 h-4 shrink-0 ${ts.text}`} />
+                                    <span className="flex-1">{it.title}</span>
+                                    <span className={`text-[11px] font-medium ${ts.text}`}>{ts.title}</span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="ml-2 text-xs text-gray-400">Không có việc</p>
+                          )}
                         </div>
-                        {g.items.length > 0 && (
-                          <ul className="ml-6 space-y-1">
-                            {g.items.map((it) => (
-                              <li key={it.id} className="text-sm text-gray-700 list-disc">{it.title}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">Không có công việc</p>

@@ -60,6 +60,22 @@ function statusIcon(status: string) {
   }
 }
 
+// Mô hình xen canh: Gấc leo giàn (tầng trên) + Sâm dưới tán (tầng dưới).
+// Mỗi cây có nhãn tầng + màu badge riêng để tổ trưởng phân biệt nhanh.
+function cropMeta(crop: string) {
+  switch (crop) {
+    case "Gấc":
+      return { label: "Gấc (giàn)", layer: "tầng giàn", cls: "bg-emerald-100 text-emerald-800" };
+    case "Sâm":
+      return { label: "Sâm (dưới tán)", layer: "dưới tán", cls: "bg-amber-100 text-amber-800" };
+    default:
+      return { label: crop, layer: "", cls: "bg-gray-100 text-gray-700" };
+  }
+}
+
+// Thứ tự hiển thị cây trong lô: Gấc (tầng trên) trước, Sâm (tầng dưới) sau
+const CROP_ORDER = ["Gấc", "Sâm"];
+
 export function TodayTasks() {
   const navigate = useNavigate();
   const [viewDate, setViewDate] = useState(TODAY);
@@ -69,16 +85,32 @@ export function TodayTasks() {
     (t) => t.date === viewDate && t.teamLeaderId === TEAM_LEADER_ID
   );
 
-  // Nhóm việc theo lô
+  // Nhóm việc theo lô, rồi trong mỗi lô nhóm tiếp theo cây (Gấc / Sâm) — mô hình xen canh
   const plotGroups = Array.from(new Set(dayTasks.map((t) => t.plotId))).map((plotId) => {
     const plot = plots.find((p) => p.id === plotId);
     const items = dayTasks.filter((t) => t.plotId === plotId);
     const done = items.filter((t) => t.status === "completed").length;
+
+    // Nhóm con theo cây, sắp xếp Gấc (tầng trên) trước, Sâm (tầng dưới) sau
+    const cropNames = Array.from(new Set(items.map((t) => t.crop))).sort(
+      (a, b) => (CROP_ORDER.indexOf(a) + 1 || 99) - (CROP_ORDER.indexOf(b) + 1 || 99)
+    );
+    const cropGroups = cropNames.map((crop) => {
+      const cropItems = items.filter((t) => t.crop === crop);
+      return {
+        crop,
+        items: cropItems,
+        done: cropItems.filter((t) => t.status === "completed").length,
+        total: cropItems.length,
+      };
+    });
+
     return {
       plotId,
       name: plot?.name || plotId,
       crop: plot?.crop || items[0]?.crop || "",
       items,
+      cropGroups,
       done,
       total: items.length,
       finished: items.length > 0 && items.every((t) => t.status === "completed"),
@@ -232,34 +264,56 @@ export function TodayTasks() {
                 </div>
               </div>
 
-              {/* Danh sách việc trong lô */}
+              {/* Việc trong lô, nhóm theo cây (Gấc giàn / Sâm dưới tán) */}
               <div className="divide-y divide-gray-100">
-                {group.items.map((task) => {
-                  const chip = statusChip(task.status);
+                {group.cropGroups.map((cg) => {
+                  const meta = cropMeta(cg.crop);
                   return (
-                    <button
-                      key={task.id}
-                      onClick={() => navigate(`/mobile/task/${task.id}`)}
-                      className="w-full flex items-center gap-3 p-4 text-left active:bg-gray-50"
-                    >
-                      <div className="flex-shrink-0">{statusIcon(task.status)}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">{task.title}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span
-                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${chip.cls}`}
-                          >
-                            {chip.label}
-                          </span>
-                          {task.requirePhoto && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
-                              Cần ảnh
-                            </span>
-                          )}
-                        </div>
+                    <div key={cg.crop}>
+                      {/* Tiêu đề nhóm cây + badge cây + tiến độ riêng của cây */}
+                      <div className="flex items-center justify-between gap-2 px-4 py-2 bg-gray-50">
+                        <span
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${meta.cls}`}
+                        >
+                          {meta.label}
+                        </span>
+                        <span className="text-xs font-medium text-gray-500">
+                          {cg.done}/{cg.total} việc
+                        </span>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
-                    </button>
+
+                      {/* Danh sách việc của cây này */}
+                      <div className="divide-y divide-gray-100">
+                        {cg.items.map((task) => {
+                          const chip = statusChip(task.status);
+                          return (
+                            <button
+                              key={task.id}
+                              onClick={() => navigate(`/mobile/task/${task.id}`)}
+                              className="w-full flex items-center gap-3 p-4 text-left active:bg-gray-50"
+                            >
+                              <div className="flex-shrink-0">{statusIcon(task.status)}</div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-gray-900 truncate">{task.title}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${chip.cls}`}
+                                  >
+                                    {chip.label}
+                                  </span>
+                                  {task.requirePhoto && (
+                                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                                      Cần ảnh
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>

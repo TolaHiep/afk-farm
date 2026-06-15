@@ -124,13 +124,21 @@ export function Dashboard() {
 
       {/* Area stats */}
       <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
-        <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Sprout className="w-5 h-5 text-green-600" /> Diện tích đang gieo trồng
-        </h3>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+          <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+            <Sprout className="w-5 h-5 text-green-600" /> Diện tích đang gieo trồng
+          </h3>
+          <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
+            Mô hình xen canh 2 tầng: Gấc (giàn) + Sâm (dưới tán)
+          </span>
+        </div>
+        <p className="text-xs text-gray-500 mb-4">
+          Gấc và Sâm trồng xen trên cùng diện tích nên tổng diện tích phủ của 2 cây có thể trùng nhau.
+        </p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Stat label="Tổng diện tích" value={`${area.totalHa} ha`} big />
-          <Stat label="Gấc" value={`${area.gacHa} ha`} />
-          <Stat label="Sâm" value={`${area.samHa} ha`} />
+          <Stat label="Tổng diện tích đất" value={`${area.totalHa} ha`} big />
+          <Stat label="Diện tích phủ Gấc (giàn)" value={`${area.gacHa} ha`} />
+          <Stat label="Diện tích phủ Sâm (dưới tán)" value={`${area.samHa} ha`} />
           <Stat label="Zone hoạt động" value={area.zones} />
           <Stat label="Lô hoạt động" value={area.plots} />
         </div>

@@ -8,7 +8,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 const REPORT_DATE = "2026-06-14";
 
+type CropFilter = "all" | "Gấc" | "Sâm";
+
 export function TeamLeaderKPI() {
+  // Bộ lọc theo cây (mô hình xen canh: mỗi lô có Gấc + Sâm)
+  const [cropFilter, setCropFilter] = React.useState<CropFilter>("all");
+
+  // Lấy số liệu của 1 tổ theo cây đang chọn: nếu chọn cây thì đọc byCrop, else đọc tổng
+  const val = (row: (typeof kpiData)[number], field: string): number =>
+    cropFilter === "all"
+      ? ((row as unknown as Record<string, number>)[field] ?? 0)
+      : (row.byCrop?.[cropFilter]?.[field] ?? 0);
+
   // ===== Thống kê tổng quan báo cáo trong ngày =====
   const activeLeaders = teamLeaders.filter((t) => t.status === "active");
   const totalTeams = activeLeaders.length;
@@ -42,6 +53,17 @@ export function TeamLeaderKPI() {
   // Map nhanh: tổ nào đã báo cáo trong ngày (dùng cho bảng)
   const reportedSet = reportedIds;
 
+  // ===== Số liệu KPI theo cây đang chọn =====
+  const sumOnTime = kpiData.reduce((s, k) => s + val(k, "onTime"), 0);
+  const sumCompleted = kpiData.reduce((s, k) => s + val(k, "completed"), 0);
+
+  // Dữ liệu biểu đồ theo cây đang chọn
+  const chartData = kpiData.map((k) => ({
+    name: k.name,
+    onTime: val(k, "onTime"),
+    overdue: val(k, "overdue"),
+  }));
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -56,11 +78,18 @@ export function TeamLeaderKPI() {
               ))}
             </select>
           </div>
-          <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-            <option>Tất cả vùng</option>
-            <option>Vùng A</option>
-            <option>Vùng B</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Cây:</span>
+            <select
+              value={cropFilter}
+              onChange={(e) => setCropFilter(e.target.value as CropFilter)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="all">Tất cả cây</option>
+              <option value="Gấc">Gấc (giàn)</option>
+              <option value="Sâm">Sâm (dưới tán)</option>
+            </select>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Từ:</span>
             <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-sm" defaultValue="2026-05-01" />
@@ -109,50 +138,58 @@ export function TeamLeaderKPI() {
       </div>
 
       {/* KPI Summary Cards */}
+      {cropFilter !== "all" && (
+        <div className="text-sm text-gray-600">
+          Đang xem số liệu cây: <span className="font-semibold text-green-700">{cropFilter}</span>
+          {cropFilter === "Gấc" ? " (tầng giàn)" : " (tầng dưới tán)"}
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
           <div className="text-sm text-gray-600 mb-1">Đúng hạn</div>
           <div className="text-2xl font-bold text-green-600">
-            {Math.round((kpiData.reduce((s, k) => s + k.onTime, 0) / kpiData.reduce((s, k) => s + k.completed, 0)) * 100)}%
+            {Math.round((sumOnTime / Math.max(sumCompleted, 1)) * 100)}%
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
           <div className="text-sm text-gray-600 mb-1">Quá hạn</div>
           <div className="text-2xl font-bold text-red-600">
-            {kpiData.reduce((s, k) => s + k.overdue, 0)}
+            {kpiData.reduce((s, k) => s + val(k, "overdue"), 0)}
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
           <div className="text-sm text-gray-600 mb-1">Hoàn thành</div>
           <div className="text-2xl font-bold text-blue-600">
-            {kpiData.reduce((s, k) => s + k.completed, 0)}
+            {sumCompleted}
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
           <div className="text-sm text-gray-600 mb-1">Báo cáo đầy đủ</div>
           <div className="text-2xl font-bold text-green-600">
-            {Math.round((kpiData.reduce((s, k) => s + k.fullReport, 0) / kpiData.reduce((s, k) => s + k.completed, 0)) * 100)}%
+            {Math.round((kpiData.reduce((s, k) => s + val(k, "fullReport"), 0) / Math.max(sumCompleted, 1)) * 100)}%
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
           <div className="text-sm text-gray-600 mb-1">Bất thường</div>
           <div className="text-2xl font-bold text-yellow-600">
-            {kpiData.reduce((s, k) => s + k.anomalies, 0)}
+            {kpiData.reduce((s, k) => s + val(k, "anomalies"), 0)}
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 border border-gray-200">
           <div className="text-sm text-gray-600 mb-1">Tổng công</div>
           <div className="text-2xl font-bold text-gray-900">
-            {kpiData.reduce((s, k) => s + k.totalWork, 0)}
+            {kpiData.reduce((s, k) => s + val(k, "totalWork"), 0)}
           </div>
         </div>
       </div>
 
       {/* Chart */}
       <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Biểu đồ KPI theo tổ trưởng</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Biểu đồ KPI theo tổ trưởng{cropFilter !== "all" ? ` · ${cropFilter}` : ""}
+        </h3>
         <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={kpiData}>
+          <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
             <YAxis />
@@ -186,7 +223,11 @@ export function TeamLeaderKPI() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {kpiData.map((kpi) => (
+              {kpiData.map((kpi) => {
+                const completed = val(kpi, "completed");
+                const onTime = val(kpi, "onTime");
+                const rate = completed ? onTime / completed : 0;
+                return (
                 <tr key={kpi.teamLeaderId} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{kpi.name}</td>
                   <td className="px-6 py-4 text-sm text-center">
@@ -196,23 +237,24 @@ export function TeamLeaderKPI() {
                       <StatusBadge status="danger">Không</StatusBadge>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-right text-blue-600 font-medium">{kpi.completed}</td>
-                  <td className="px-6 py-4 text-sm text-right text-yellow-600 font-medium">{kpi.notDone}</td>
-                  <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">{kpi.onTime}</td>
-                  <td className="px-6 py-4 text-sm text-right text-red-600 font-medium">{kpi.overdue}</td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900">{kpi.fullReport}</td>
-                  <td className="px-6 py-4 text-sm text-right text-yellow-600 font-medium">{kpi.anomalies}</td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900 font-medium">{kpi.totalWork}</td>
+                  <td className="px-6 py-4 text-sm text-right text-blue-600 font-medium">{completed}</td>
+                  <td className="px-6 py-4 text-sm text-right text-yellow-600 font-medium">{val(kpi, "notDone")}</td>
+                  <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">{onTime}</td>
+                  <td className="px-6 py-4 text-sm text-right text-red-600 font-medium">{val(kpi, "overdue")}</td>
+                  <td className="px-6 py-4 text-sm text-right text-gray-900">{val(kpi, "fullReport")}</td>
+                  <td className="px-6 py-4 text-sm text-right text-yellow-600 font-medium">{val(kpi, "anomalies")}</td>
+                  <td className="px-6 py-4 text-sm text-right text-gray-900 font-medium">{val(kpi, "totalWork")}</td>
                   <td className="px-6 py-4 text-sm text-right">
                     <span className={`font-medium ${
-                      (kpi.onTime / kpi.completed) >= 0.9 ? 'text-green-600' :
-                      (kpi.onTime / kpi.completed) >= 0.7 ? 'text-yellow-600' : 'text-red-600'
+                      rate >= 0.9 ? 'text-green-600' :
+                      rate >= 0.7 ? 'text-yellow-600' : 'text-red-600'
                     }`}>
-                      {Math.round((kpi.onTime / kpi.completed) * 100)}%
+                      {Math.round(rate * 100)}%
                     </span>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

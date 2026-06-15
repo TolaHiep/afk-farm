@@ -12,6 +12,18 @@ const STATUS_META: Record<TaskStatus, { label: string; cls: string }> = {
   overdue: { label: "Quá hạn", cls: "bg-red-100 text-red-800" },
 };
 
+// Mô hình xen canh: Gấc leo giàn (tầng trên) + Sâm dưới tán (tầng dưới)
+function cropMeta(crop: string) {
+  switch (crop) {
+    case "Gấc":
+      return { label: "Gấc · tầng giàn", layer: "Tầng trên — leo giàn", cls: "bg-emerald-100 text-emerald-800" };
+    case "Sâm":
+      return { label: "Sâm · dưới tán", layer: "Tầng dưới — dưới tán", cls: "bg-amber-100 text-amber-800" };
+    default:
+      return { label: crop, layer: "", cls: "bg-gray-100 text-gray-700" };
+  }
+}
+
 export function TaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,6 +66,7 @@ export function TaskDetail() {
   };
 
   const statusMeta = STATUS_META[status];
+  const crop = cropMeta(task.crop);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -63,11 +76,17 @@ export function TaskDetail() {
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <h1 className="text-2xl font-bold">{task.title}</h1>
-        <div className="mt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <span
             className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${statusMeta.cls}`}
           >
             {statusMeta.label}
+          </span>
+          {/* Badge cây + tầng: phân biệt việc Gấc (giàn) / Sâm (dưới tán) trong cùng lô */}
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${crop.cls}`}
+          >
+            {crop.label}
           </span>
         </div>
       </div>
@@ -88,8 +107,13 @@ export function TaskDetail() {
               <span className="text-gray-600">🌱</span>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Cây trồng</p>
-              <p className="font-bold text-gray-900">{task.crop}</p>
+              <p className="text-sm text-gray-600">Cây trồng (xen canh)</p>
+              <p className="font-bold text-gray-900">
+                {task.crop}
+                {crop.layer && (
+                  <span className="ml-2 text-sm font-medium text-gray-500">· {crop.layer}</span>
+                )}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">

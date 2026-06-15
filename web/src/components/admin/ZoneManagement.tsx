@@ -11,7 +11,11 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { zones as zonesData, plots as plotsData } from "../../lib/mockData";
+import {
+  zones as zonesData,
+  plots as plotsData,
+  type CropOnPlot,
+} from "../../lib/mockData";
 
 // Kiểu trạng thái chi tiết của lô/vùng
 type PlotStatus = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
@@ -47,6 +51,8 @@ interface PlotItem {
   status: string;
   done: number;
   total: number;
+  // Mô hình xen canh: từng cây (Gấc tầng trên + Sâm tầng dưới) có tiến độ/trạng thái riêng
+  crops: CropOnPlot[];
 }
 
 interface ZoneItem {
@@ -92,7 +98,11 @@ export function ZoneManagement() {
   const term = normalize(searchTerm);
 
   const plotMatches = (p: PlotItem) => {
-    const byStatus = statusFilter === "all" || p.status === statusFilter;
+    // Khớp nếu trạng thái gộp hoặc BẤT KỲ cây nào trong lô có trạng thái khớp
+    const byStatus =
+      statusFilter === "all" ||
+      p.status === statusFilter ||
+      p.crops.some((c) => c.status === statusFilter);
     const byTerm =
       !term ||
       normalize(p.name).includes(term) ||
@@ -270,14 +280,18 @@ export function ZoneManagement() {
                         </tr>
                       )}
                       {visiblePlots.map((plot) => {
-                        const meta = statusMeta(plot.status);
-                        const pct =
-                          plot.total > 0
-                            ? Math.min(100, Math.round((plot.done / plot.total) * 100))
-                            : 0;
-                        const barColor =
-                          PROGRESS_COLOR[(plot.status as PlotStatus)] ??
-                          PROGRESS_COLOR.pending;
+                        // Danh sách cây xen canh trên lô (Gấc tầng trên + Sâm tầng dưới)
+                        const cropList =
+                          plot.crops.length > 0
+                            ? plot.crops
+                            : [
+                                {
+                                  crop: plot.crop,
+                                  done: plot.done,
+                                  total: plot.total,
+                                  status: plot.status,
+                                },
+                              ];
 
                         return (
                           <tr key={plot.id} className="hover:bg-gray-50">
@@ -293,30 +307,76 @@ export function ZoneManagement() {
                                 {plot.area.toLocaleString()} m²
                               </div>
                             </td>
-                            <td className="px-5 py-4 text-sm text-gray-700">{plot.crop}</td>
-                            <td className="px-5 py-4 text-sm text-gray-700">{plot.teamLeader}</td>
+                            {/* Loại cây: liệt kê từng cây xen canh dạng chip */}
                             <td className="px-5 py-4">
-                              <StatusBadge status={meta.badge}>{meta.label}</StatusBadge>
+                              <div className="flex flex-wrap gap-1.5">
+                                {cropList.map((c, i) => (
+                                  <span
+                                    key={`${plot.id}-crop-${i}`}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200"
+                                  >
+                                    {c.crop}
+                                  </span>
+                                ))}
+                              </div>
                             </td>
-                            {/* Tiến độ -> điều hướng */}
+                            <td className="px-5 py-4 text-sm text-gray-700">{plot.teamLeader}</td>
+                            {/* Trạng thái: 1 badge cho mỗi cây (kèm nhãn cây) */}
+                            <td className="px-5 py-4">
+                              <div className="flex flex-col gap-1.5">
+                                {cropList.map((c, i) => {
+                                  const cMeta = statusMeta(c.status);
+                                  return (
+                                    <div
+                                      key={`${plot.id}-status-${i}`}
+                                      className="flex items-center gap-1.5"
+                                    >
+                                      <span className="text-xs text-gray-500 w-9 shrink-0">
+                                        {c.crop}
+                                      </span>
+                                      <StatusBadge status={cMeta.badge}>
+                                        {cMeta.label}
+                                      </StatusBadge>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </td>
+                            {/* Tiến độ: 1 thanh nhỏ cho mỗi cây -> điều hướng */}
                             <td className="px-5 py-4">
                               <button
                                 onClick={() => goToPlot(plot.id)}
-                                className="w-40 text-left group"
+                                className="w-44 text-left group space-y-2"
                                 title="Xem lịch công việc"
                               >
-                                <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                                  <span className="group-hover:text-green-700">
-                                    {plot.done}/{plot.total}
-                                  </span>
-                                  <span className="text-gray-400">{pct}%</span>
-                                </div>
-                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${barColor}`}
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
+                                {cropList.map((c, i) => {
+                                  const cPct =
+                                    c.total > 0
+                                      ? Math.min(
+                                          100,
+                                          Math.round((c.done / c.total) * 100)
+                                        )
+                                      : 0;
+                                  const cBarColor =
+                                    PROGRESS_COLOR[(c.status as PlotStatus)] ??
+                                    PROGRESS_COLOR.pending;
+                                  return (
+                                    <div key={`${plot.id}-prog-${i}`}>
+                                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                                        <span className="group-hover:text-green-700">
+                                          {c.crop}: {c.done}/{c.total}
+                                        </span>
+                                        <span className="text-gray-400">{cPct}%</span>
+                                      </div>
+                                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full ${cBarColor}`}
+                                          style={{ width: `${cPct}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </button>
                             </td>
                             <td className="px-5 py-4 text-right">

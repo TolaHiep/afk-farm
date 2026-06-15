@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList } from "lucide-react";
-import { leaderPlots, plotName } from "../../lib/mockData";
+import { leaderPlots } from "../../lib/mockData";
 
 const ANOMALY_TYPES = [
   { value: "ung", label: "Úng nước" },
@@ -11,16 +11,43 @@ const ANOMALY_TYPES = [
   { value: "khac", label: "Khác" },
 ];
 
+// Một mục báo cáo = (Lô × Cây). Mô hình xen canh nên mỗi lô có thể có 2 mục
+// (Gấc tầng giàn + Sâm dưới tán), mỗi cây là một quy trình riêng -> báo cáo riêng.
+type ReportItem = { id: string; plotId: string; plotName: string; crop: string };
+
+// Nhãn màu cho từng tầng cây
+function getCropChip(crop: string): string {
+  switch (crop) {
+    case "Gấc":
+      return "bg-orange-100 text-orange-800";
+    case "Sâm":
+      return "bg-emerald-100 text-emerald-800";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
 export function DailyReport() {
   const navigate = useNavigate();
 
-  // Danh sách lô do tổ trưởng tl1 phụ trách
-  const myPlots = React.useMemo(() => leaderPlots("tl1"), []);
+  // Danh sách mục báo cáo (Lô × Cây) do tổ trưởng tl1 phụ trách
+  const reportItems = React.useMemo<ReportItem[]>(
+    () =>
+      leaderPlots("tl1").flatMap((plot) =>
+        plot.crops.map((c) => ({
+          id: `${plot.id}__${c.crop}`,
+          plotId: plot.id,
+          plotName: plot.name,
+          crop: c.crop,
+        }))
+      ),
+    []
+  );
 
-  // State cục bộ: lô nào đã báo cáo
+  // State cục bộ: mục (lô×cây) nào đã báo cáo
   const [reportedIds, setReportedIds] = React.useState<string[]>([]);
-  // Lô đang mở form (null = đang xem danh sách)
-  const [activePlotId, setActivePlotId] = React.useState<string | null>(null);
+  // Mục đang mở form (null = đang xem danh sách)
+  const [activeItemId, setActiveItemId] = React.useState<string | null>(null);
 
   // State của form lô hiện tại
   const [work, setWork] = React.useState("");
@@ -30,9 +57,9 @@ export function DailyReport() {
   const [anomalyDesc, setAnomalyDesc] = React.useState("");
   const [anomalyPhoto, setAnomalyPhoto] = React.useState(false);
 
-  const total = myPlots.length;
+  const total = reportItems.length;
   const doneCount = reportedIds.length;
-  const activePlot = myPlots.find((p) => p.id === activePlotId) || null;
+  const activeItem = reportItems.find((it) => it.id === activeItemId) || null;
 
   const resetForm = () => {
     setWork("");
@@ -43,19 +70,19 @@ export function DailyReport() {
     setAnomalyPhoto(false);
   };
 
-  const openPlot = (plotId: string) => {
+  const openItem = (itemId: string) => {
     resetForm();
-    setActivePlotId(plotId);
+    setActiveItemId(itemId);
   };
 
   const backToList = () => {
-    setActivePlotId(null);
+    setActiveItemId(null);
     resetForm();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activePlot) return;
+    if (!activeItem) return;
 
     if (hasAnomaly && !anomalyType) {
       alert("Vui lòng chọn loại bất thường!");
@@ -71,14 +98,14 @@ export function DailyReport() {
     }
 
     setReportedIds((prev) =>
-      prev.includes(activePlot.id) ? prev : [...prev, activePlot.id]
+      prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]
     );
-    alert(`Đã gửi báo cáo cho ${activePlot.name}!`);
+    alert(`Đã gửi báo cáo cho ${activeItem.plotName} · ${activeItem.crop}!`);
     backToList();
   };
 
-  // ===== Màn hình form nhập báo cáo cho 1 lô =====
-  if (activePlot) {
+  // ===== Màn hình form nhập báo cáo cho 1 mục (lô × cây) =====
+  if (activeItem) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
@@ -86,8 +113,10 @@ export function DailyReport() {
           <button onClick={backToList} className="mb-3">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-2xl font-bold">Báo cáo: {activePlot.name}</h1>
-          <p className="text-green-100 mt-1">Cây trồng: {activePlot.crop}</p>
+          <h1 className="text-2xl font-bold">
+            Báo cáo: {activeItem.plotName} · {activeItem.crop}
+          </h1>
+          <p className="text-green-100 mt-1">Cây trồng: {activeItem.crop}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -231,7 +260,9 @@ export function DailyReport() {
           <ArrowLeft className="w-6 h-6" />
         </button>
         <h1 className="text-2xl font-bold">Báo cáo cuối ngày</h1>
-        <p className="text-green-100 mt-1">Báo cáo theo từng lô phụ trách</p>
+        <p className="text-green-100 mt-1">
+          Báo cáo riêng theo từng cây trên mỗi lô (xen canh)
+        </p>
       </div>
 
       <div className="p-4 space-y-4">
@@ -240,7 +271,7 @@ export function DailyReport() {
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-gray-900">Tiến độ báo cáo</span>
             <span className="font-bold text-green-700">
-              Đã báo cáo {doneCount}/{total} lô
+              Đã báo cáo {doneCount}/{total} mục
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
@@ -251,15 +282,15 @@ export function DailyReport() {
           </div>
         </div>
 
-        {/* Danh sách lô */}
+        {/* Danh sách mục báo cáo (lô × cây) */}
         <div className="space-y-3">
-          {myPlots.map((plot) => {
-            const reported = reportedIds.includes(plot.id);
+          {reportItems.map((item) => {
+            const reported = reportedIds.includes(item.id);
             return (
               <button
-                key={plot.id}
+                key={item.id}
                 type="button"
-                onClick={() => !reported && openPlot(plot.id)}
+                onClick={() => !reported && openItem(item.id)}
                 disabled={reported}
                 className={`w-full text-left bg-white rounded-xl shadow p-4 flex items-center justify-between transition-colors ${
                   reported ? "opacity-80" : "hover:bg-green-50 active:bg-green-100"
@@ -278,17 +309,27 @@ export function DailyReport() {
                     )}
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900 text-lg">{plotName(plot.id)}</p>
-                    <p className="text-sm text-gray-500">Cây trồng: {plot.crop}</p>
-                    <span
-                      className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        reported
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {reported ? "Đã báo cáo" : "Chưa báo cáo"}
-                    </span>
+                    <p className="font-bold text-gray-900 text-lg">
+                      {item.plotName} · {item.crop}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full ${getCropChip(
+                          item.crop
+                        )}`}
+                      >
+                        Cây: {item.crop}
+                      </span>
+                      <span
+                        className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          reported
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {reported ? "Đã báo cáo" : "Chưa báo cáo"}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 {!reported && <ChevronRight className="w-6 h-6 text-gray-400" />}
