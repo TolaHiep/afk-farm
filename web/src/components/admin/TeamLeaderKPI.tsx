@@ -206,7 +206,8 @@ export function TeamLeaderKPI() {
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Chi tiết KPI</h3>
         </div>
-        <div className="overflow-x-auto">
+        {/* Bảng đầy đủ: chỉ hiện từ md trở lên */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -257,6 +258,69 @@ export function TeamLeaderKPI() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Dạng thẻ: chỉ hiện trên điện thoại, xếp dọc, không tràn ngang */}
+        <div className="md:hidden divide-y divide-gray-200">
+          {kpiData.map((kpi) => {
+            const completed = val(kpi, "completed");
+            const onTime = val(kpi, "onTime");
+            const rate = completed ? onTime / completed : 0;
+            return (
+              <div key={kpi.teamLeaderId} className="p-4">
+                {/* Tên + badge Đã báo cáo */}
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="text-sm font-semibold text-gray-900">{kpi.name}</div>
+                  {reportedSet.has(kpi.teamLeaderId) ? (
+                    <StatusBadge status="good">Đã báo cáo</StatusBadge>
+                  ) : (
+                    <StatusBadge status="danger">Chưa báo cáo</StatusBadge>
+                  )}
+                </div>
+
+                {/* Lưới 2 cột các chỉ số */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Việc hoàn thành</span>
+                    <span className="font-medium text-blue-600">{completed}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Việc chưa hoàn thành</span>
+                    <span className="font-medium text-yellow-600">{val(kpi, "notDone")}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Đúng hạn</span>
+                    <span className="font-medium text-green-600">{onTime}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Quá hạn</span>
+                    <span className="font-medium text-red-600">{val(kpi, "overdue")}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Báo cáo đầy đủ</span>
+                    <span className="font-medium text-gray-900">{val(kpi, "fullReport")}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Bất thường</span>
+                    <span className="font-medium text-yellow-600">{val(kpi, "anomalies")}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Tổng công</span>
+                    <span className="font-medium text-gray-900">{val(kpi, "totalWork")}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Tỷ lệ đúng hạn</span>
+                    <span className={`font-medium ${
+                      rate >= 0.9 ? 'text-green-600' :
+                      rate >= 0.7 ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {Math.round(rate * 100)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

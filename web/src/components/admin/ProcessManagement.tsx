@@ -113,7 +113,8 @@ export function ProcessManagement() {
           </div>
 
           <div className="p-6">
-            <div className="overflow-x-auto">
+            {/* Bảng (chỉ hiện từ md trở lên) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -156,6 +157,54 @@ export function ProcessManagement() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Dạng thẻ (chỉ hiện trên mobile) */}
+            <div className="md:hidden space-y-3">
+              {selected.steps.length === 0 ? (
+                <p className="px-1 py-6 text-center text-sm text-gray-400">Chưa có bước nào. Bấm "Thêm bước" để bắt đầu.</p>
+              ) : (
+                selected.steps.map((step, index) => (
+                  <div key={index} className="rounded-lg border border-gray-200 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2 min-w-0">
+                        <span className="flex-shrink-0 inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                          {step.step}
+                        </span>
+                        <p className="text-sm font-semibold text-gray-900 break-words">{step.description}</p>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-1">
+                        <button onClick={() => setStepModal({ mode: "edit", procId: selected.id, index, data: { ...step } })}
+                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded" title="Sửa bước">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setConfirm({ kind: "step", procId: selected.id, index, name: step.description })}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Xóa bước">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1 text-sm">
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Công/ha</span>
+                        <span className="text-gray-900 text-right break-words">{step.workPerHa}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Tần suất</span>
+                        <span className="text-gray-900 text-right break-words">{step.frequency || "—"}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Phạm vi</span>
+                        <span className="text-gray-900 text-right break-words">{step.scope || "—"}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Yêu cầu ảnh</span>
+                        {step.requirePhoto ? <span className="text-green-600 font-medium">✓</span> : <span className="text-gray-400">—</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="mt-4 flex justify-end">

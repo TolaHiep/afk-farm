@@ -190,7 +190,8 @@ export function Dashboard() {
           <h3 className="text-lg font-semibold text-gray-900">Công việc hôm nay</h3>
           <Link to="/admin/calendar" className="text-sm text-green-600 hover:underline">Lịch công việc →</Link>
         </div>
-        <div className="overflow-x-auto">
+        {/* Bảng đầy đủ: chỉ hiển thị từ md trở lên */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
@@ -220,6 +221,39 @@ export function Dashboard() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Dạng thẻ cho màn nhỏ: xếp dọc, không cuộn ngang */}
+        <div className="md:hidden p-4 space-y-3">
+          {today.map((task) => {
+            const plot = plots.find((p) => p.id === task.plotId);
+            return (
+              <div key={task.id} className="rounded-lg border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium text-gray-900 text-sm break-words">{task.title}</div>
+                  <StatusBadge status={task.status as any}>
+                    {task.status === "completed" ? "Xong" :
+                     task.status === "in-progress" ? "Đang làm" :
+                     task.status === "overdue" ? "Quá hạn" : "Chưa làm"}
+                  </StatusBadge>
+                </div>
+                <div className="mt-2 space-y-1 text-xs text-gray-600">
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-500">Lô</span>
+                    <span className="text-right break-words">{plot?.name}</span>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-500">Cây</span>
+                    <span className="text-right break-words">{task.crop}</span>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-gray-500">Tổ trưởng</span>
+                    <span className="text-right break-words">{plot?.teamLeader}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

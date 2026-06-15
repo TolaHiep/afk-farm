@@ -156,21 +156,21 @@ export function ZoneManagement() {
     <div className="space-y-6">
       {/* Header / Filters */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Tìm kiếm lô, cây trồng, tổ trưởng..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className="px-4 py-2 border border-gray-300 rounded-lg w-full sm:w-auto"
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="good">Đang hoạt động</option>
@@ -222,24 +222,24 @@ export function ZoneManagement() {
               className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden"
             >
               {/* Zone header */}
-              <div className="flex items-center justify-between px-5 py-4 bg-gray-50 border-b border-gray-200">
+              <div className="flex flex-wrap items-center justify-between gap-y-2 px-4 sm:px-5 py-4 bg-gray-50 border-b border-gray-200">
                 <button
                   onClick={() => toggleZone(zone.id)}
-                  className="flex items-center gap-2 text-left"
+                  className="flex flex-wrap items-center gap-x-2 gap-y-1 text-left min-w-0"
                 >
                   {isExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-gray-600" />
+                    <ChevronDown className="w-5 h-5 text-gray-600 shrink-0" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                    <ChevronRight className="w-5 h-5 text-gray-600 shrink-0" />
                   )}
-                  <Layers className="w-5 h-5 text-green-600" />
+                  <Layers className="w-5 h-5 text-green-600 shrink-0" />
                   <span className="font-semibold text-gray-900">{zone.name}</span>
                   <span className="text-sm text-gray-500">
                     · {zone.area.toLocaleString()} m² · {zonePlots.length} lô
                   </span>
                   <StatusBadge status={zoneMeta.badge}>{zoneMeta.label}</StatusBadge>
                 </button>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <Link
                     to={`/admin/zones/add?type=plot&zone=${zone.id}`}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 rounded-lg"
@@ -259,7 +259,9 @@ export function ZoneManagement() {
 
               {/* Plot list */}
               {isExpanded && (
-                <div className="overflow-x-auto">
+                <>
+                {/* Bảng đầy đủ (chỉ hiện từ md trở lên) */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-white border-b border-gray-200">
                       <tr>
@@ -399,6 +401,128 @@ export function ZoneManagement() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Dạng thẻ cho màn nhỏ (chỉ hiện dưới md) - không tràn ngang */}
+                <div className="md:hidden divide-y divide-gray-200">
+                  {visiblePlots.length === 0 && (
+                    <div className="px-4 py-6 text-center text-sm text-gray-400">
+                      Chưa có lô nào trong vùng này.
+                    </div>
+                  )}
+                  {visiblePlots.map((plot) => {
+                    // Danh sách cây xen canh trên lô (Gấc tầng trên + Sâm tầng dưới)
+                    const cropList =
+                      plot.crops.length > 0
+                        ? plot.crops
+                        : [
+                            {
+                              crop: plot.crop,
+                              done: plot.done,
+                              total: plot.total,
+                              status: plot.status,
+                            },
+                          ];
+
+                    return (
+                      <div key={`m-${plot.id}`} className="p-4 space-y-3">
+                        {/* Tên lô + diện tích */}
+                        <div>
+                          <button
+                            onClick={() => goToPlot(plot.id)}
+                            className="font-medium text-green-700 hover:underline text-left break-words"
+                          >
+                            {plot.name}
+                          </button>
+                          <div className="text-xs text-gray-400">
+                            {plot.area.toLocaleString()} m²
+                          </div>
+                        </div>
+
+                        {/* Chip các cây */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {cropList.map((c, i) => (
+                            <span
+                              key={`m-${plot.id}-crop-${i}`}
+                              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-200"
+                            >
+                              {c.crop}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Tổ trưởng */}
+                        <div className="text-sm text-gray-700">
+                          <span className="text-gray-500">Tổ trưởng: </span>
+                          {plot.teamLeader}
+                        </div>
+
+                        {/* Từng cây 1 dòng: badge trạng thái + thanh tiến độ */}
+                        <div className="space-y-3">
+                          {cropList.map((c, i) => {
+                            const cMeta = statusMeta(c.status);
+                            const cPct =
+                              c.total > 0
+                                ? Math.min(
+                                    100,
+                                    Math.round((c.done / c.total) * 100)
+                                  )
+                                : 0;
+                            const cBarColor =
+                              PROGRESS_COLOR[(c.status as PlotStatus)] ??
+                              PROGRESS_COLOR.pending;
+                            return (
+                              <div key={`m-${plot.id}-row-${i}`}>
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <span className="text-xs font-medium text-gray-700">
+                                    {c.crop}
+                                  </span>
+                                  <StatusBadge status={cMeta.badge}>
+                                    {cMeta.label}
+                                  </StatusBadge>
+                                </div>
+                                <button
+                                  onClick={() => goToPlot(plot.id)}
+                                  className="w-full text-left group"
+                                  title="Xem lịch công việc"
+                                >
+                                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                                    <span className="group-hover:text-green-700">
+                                      {c.done}/{c.total}
+                                    </span>
+                                    <span className="text-gray-400">{cPct}%</span>
+                                  </div>
+                                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${cBarColor}`}
+                                      style={{ width: `${cPct}%` }}
+                                    />
+                                  </div>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Thao tác: Sửa / Xóa */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <Link to={`/admin/zones/edit/${plot.id}`} className="flex-1">
+                            <Button variant="ghost" size="sm" className="w-full border border-gray-300">
+                              Sửa
+                            </Button>
+                          </Link>
+                          <button
+                            onClick={() => askDeletePlot(plot)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg border border-red-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                </>
               )}
             </div>
           );

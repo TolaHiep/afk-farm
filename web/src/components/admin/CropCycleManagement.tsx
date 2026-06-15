@@ -100,7 +100,8 @@ export function CropCycleManagement() {
       </div>
 
       {/* Crop Cycles Table — nhóm theo LÔ, mỗi lô gồm 2 tầng cây (Gấc giàn trên + Sâm dưới tán) */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+      {/* Bảng: chỉ hiển thị từ md trở lên để tránh tràn ngang trên điện thoại */}
+      <div className="hidden md:block bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -263,6 +264,171 @@ export function CropCycleManagement() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Dạng THẺ cho điện thoại — chỉ hiển thị dưới md, nhóm theo LÔ, không tràn ngang */}
+      <div className="md:hidden space-y-4">
+        {groupedPlots.map(({ plot, cycles: plotCycles }) => {
+          const reportCount = teamLeaderReports.filter((r) => r.plotId === plot.id).length;
+          return (
+            <div
+              key={plot.id}
+              className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden"
+            >
+              {/* Header lô: tên + vùng + diện tích + tổ trưởng + badge xen canh */}
+              <div className="bg-green-50/70 border-l-4 border-green-400 px-4 py-3">
+                <div className="flex items-start justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => goToPlot(plot.id)}
+                    className="text-green-800 hover:text-green-900 hover:underline font-semibold text-left"
+                    title="Xem chi tiết lô tại trang quản lý vùng"
+                  >
+                    {plot.name}
+                  </button>
+                  <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5">
+                    Xen canh {plotCycles.length} tầng
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {zoneName(plot.zoneId)}
+                  </span>
+                  <span className="text-gray-300">·</span>
+                  <span>{(plot.area / 10000).toFixed(1)} ha</span>
+                  <span className="text-gray-300">·</span>
+                  <span>Tổ trưởng: {plot.teamLeader || "—"}</span>
+                </div>
+              </div>
+
+              {/* Các chu kỳ con (Gấc / Sâm) xếp dọc */}
+              <div className="p-3 space-y-3">
+                {plotCycles.map((cycle) => {
+                  const process = processes.find((p) => p.id === cycle.processId);
+                  const cycleStatus = CYCLE_STATUS[cycle.status] ?? CYCLE_STATUS.active;
+                  const progress = cycleProgress(cycle);
+                  const isGac = cycle.crop === "Gấc";
+                  return (
+                    <div
+                      key={cycle.id}
+                      className="border border-gray-200 rounded-lg p-3 space-y-3"
+                    >
+                      {/* Tầng cây + trạng thái */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-block w-1.5 h-8 rounded-full ${isGac ? "bg-emerald-500" : "bg-amber-500"}`}
+                          ></span>
+                          <div>
+                            <div className="font-medium text-gray-900">{cycle.crop}</div>
+                            <div className="text-xs text-gray-400">
+                              {isGac ? "Giàn trên" : "Dưới tán"}
+                            </div>
+                          </div>
+                        </div>
+                        <StatusBadge status={cycleStatus.badge}>{cycleStatus.label}</StatusBadge>
+                      </div>
+
+                      {/* Ngày bắt đầu */}
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-500">Bắt đầu:</span>
+                        {new Date(cycle.startDate).toLocaleDateString("vi-VN")}
+                      </div>
+
+                      {/* Quy trình */}
+                      <div className="text-sm text-gray-600">
+                        <span className="text-gray-500">Quy trình: </span>
+                        {process?.name}
+                      </div>
+
+                      {/* Thanh tiến độ */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${isGac ? "bg-emerald-600" : "bg-amber-500"}`}
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-gray-600 w-12 text-right">{progress}%</span>
+                      </div>
+
+                      {/* Thao tác: Báo cáo / Sửa / Xóa */}
+                      <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-gray-100">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setReportPlotId(cycle.plotId)}
+                          title="Xem báo cáo tổ trưởng của lô này"
+                        >
+                          <FileText className="w-4 h-4 mr-1" />
+                          Báo cáo
+                          {reportCount > 0 && (
+                            <span className="ml-1 inline-flex items-center justify-center px-1.5 h-5 min-w-[20px] rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                              {reportCount}
+                            </span>
+                          )}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setCycleModal({ mode: "edit", data: { ...cycle } })} title="Sửa chu kỳ">
+                          <Edit2 className="w-4 h-4 mr-1" /> Sửa
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setConfirmId(cycle.id)} title="Xóa chu kỳ">
+                          <Trash2 className="w-4 h-4 mr-1 text-red-600" /> <span className="text-red-600">Xóa</span>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Chu kỳ thuộc lô không xác định (nếu có) */}
+        {orphanCycles.length > 0 && (
+          <div className="bg-white rounded-lg shadow border border-gray-200 p-3 space-y-3">
+            {orphanCycles.map((cycle) => {
+              const process = processes.find((p) => p.id === cycle.processId);
+              const cycleStatus = CYCLE_STATUS[cycle.status] ?? CYCLE_STATUS.active;
+              const progress = cycleProgress(cycle);
+              return (
+                <div key={cycle.id} className="border border-gray-200 rounded-lg p-3 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-medium text-gray-900">{cycle.crop}</div>
+                      <div className="text-xs text-gray-400">{plotName(cycle.plotId)}</div>
+                    </div>
+                    <StatusBadge status={cycleStatus.badge}>{cycleStatus.label}</StatusBadge>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-500">Bắt đầu:</span>
+                    {new Date(cycle.startDate).toLocaleDateString("vi-VN")}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <span className="text-gray-500">Quy trình: </span>
+                    {process?.name}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-600 rounded-full" style={{ width: `${progress}%` }}></div>
+                    </div>
+                    <span className="text-sm text-gray-600 w-12 text-right">{progress}%</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-gray-100">
+                    <Button variant="ghost" size="sm" onClick={() => setCycleModal({ mode: "edit", data: { ...cycle } })} title="Sửa chu kỳ">
+                      <Edit2 className="w-4 h-4 mr-1" /> Sửa
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setConfirmId(cycle.id)} title="Xóa chu kỳ">
+                      <Trash2 className="w-4 h-4 mr-1 text-red-600" /> <span className="text-red-600">Xóa</span>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Info Panel */}

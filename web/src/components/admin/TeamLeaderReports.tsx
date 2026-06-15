@@ -75,8 +75,8 @@ export function TeamLeaderReports() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+      {/* Table (desktop) */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -117,6 +117,41 @@ export function TeamLeaderReports() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Cards (mobile) */}
+      <div className="md:hidden space-y-3">
+        {rows.map((r) => {
+          const p = plots.find((x) => x.id === r.plotId);
+          return (
+            <div key={r.id} className="bg-white rounded-lg border border-gray-200 p-4 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-gray-900">{r.date}</span>
+                <div className="flex items-center gap-2">
+                  {r.abnormal && (
+                    <span className="inline-flex items-center gap-1 text-red-600 text-xs font-medium"><AlertTriangle className="w-4 h-4" /> Bất thường</span>
+                  )}
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600">
+                <span className="font-medium text-gray-900">{r.reporter}</span> · {p ? `${zoneName(p.zoneId)} · ${p.name}` : plotName(r.plotId)} · {r.crop}
+              </div>
+              <p className="text-sm text-gray-600 line-clamp-2">{r.content}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">
+                  {r.photos.length > 0
+                    ? <span className="inline-flex items-center gap-1"><ImageIcon className="w-4 h-4" />{r.photos.length} ảnh</span>
+                    : "Không có ảnh"}
+                </span>
+                <button onClick={() => setDetail(r.id)} className="text-sm text-green-600 hover:underline">Xem</button>
+              </div>
+            </div>
+          );
+        })}
+        {rows.length === 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 px-4 py-10 text-center text-gray-400 text-sm">Không có báo cáo phù hợp</div>
+        )}
       </div>
 
       {/* Detail modal */}
