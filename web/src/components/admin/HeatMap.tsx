@@ -18,9 +18,7 @@ const STATUS: Record<StatusKey, { label: string; tile: string; text: string; dot
 };
 const st = (s: string) => STATUS[(s as StatusKey)] || STATUS.pending;
 
-const PLOT_ZOOM = 16; // từ mức zoom này trở lên sẽ hiện các lô
-
-// ===== Bản đồ vệ tinh: vùng (polygon + nhãn) → zoom hiện lô =====
+// ===== Bản đồ vệ tinh kiểu "nhiệt thời tiết": lớp màu nền blur tạo gradient mượt =====
 function SatelliteMap({
   filterZone, filterCrop, selectedPlot, selectedZone, onSelectZone, onSelectPlot,
 }: {
@@ -29,74 +27,87 @@ function SatelliteMap({
 }) {
   const elRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<L.Map | null>(null);
-  const zoneLayerRef = React.useRef<L.LayerGroup | null>(null);
-  const plotLayerRef = React.useRef<L.LayerGroup | null>(null);
-  const ctx = React.useRef({ filterZone, selectedZone });
-  ctx.current = { filterZone, selectedZone };
+  const heatRef = React.useRef<L.LayerGroup | null>(null);   // lớp màu nền (blur) — KHÔNG nhận click
+  const zoneRef = React.useRef<L.LayerGroup | null>(null);   // viền vùng + nhãn + bắt click
+  const plotRef = React.useRef<L.LayerGroup | null>(null);   // viền lô của vùng đang chọn
 
-  const plotColor = (p: typeof plots[number]) => {
-    if (filterCrop !== "all") return st(p.crops.find((c) => c.crop === filterCrop)?.status ?? p.status).hex;
-    return st(p.status).hex;
-  };
-
-  const updatePlotVisibility = () => {
-    const map = mapRef.current, layer = plotLayerRef.current;
-    if (!map || !layer) return;
-    const show = map.getZoom() >= PLOT_ZOOM || ctx.current.filterZone !== "all" || !!ctx.current.selectedZone;
-    if (show && !map.hasLayer(layer)) layer.addTo(map);
-    else if (!show && map.hasLayer(layer)) map.removeLayer(layer);
-  };
+  const cropStatus = (p: typeof plots[number]) =>
+    filterCrop !== "all" ? (p.crops.find((c) => c.crop === filterCrop)?.status ?? p.status) : p.status;
 
   // Khởi tạo bản đồ 1 lần
   React.useEffect(() => {
     if (!elRef.current || mapRef.current) return;
-    const map = L.map(elRef.current, { center: farmCenter, zoom: 14, attributionControl: false });
+    const map = L.map(elRef.current, { center: farmCenter, zoom: 15, attributionControl: false, zoomControl: true });
     L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }).addTo(map);
-    zoneLayerRef.current = L.layerGroup().addTo(map);
-    plotLayerRef.current = L.layerGroup();
-    map.on("zoomend", updatePlotVisibility);
+    // Pane riêng cho lớp màu nhiệt, làm mờ để các ô màu hòa vào nhau (gradient như bản đồ thời tiết)
+    const pane = map.createPane("heat");
+    pane.style.zIndex = "250";
+    pane.style.filter = "blur(18px)";
+    pane.style.opacity = "0.8";
+    pane.style.pointerEvents = "none";
+    heatRef.current = L.layerGroup().addTo(map);
+    zoneRef.current = L.layerGroup().addTo(map);
+    plotRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
+    // Canh để thấy toàn bộ 4 vùng
+    const allPts = zones.flatMap((z) => zoneGeo[z.id]?.polygon || []);
+    if (allPts.length) map.fitBounds(L.latLngBounds(allPts as L.LatLngExpression[]), { padding: [24, 24] });
     setTimeout(() => map.invalidateSize(), 200);
     return () => { map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Vẽ lại vùng + lô khi bộ lọc/lựa chọn đổi
+  // Vẽ lại khi bộ lọc / lựa chọn đổi
   React.useEffect(() => {
-    const map = mapRef.current, zoneLayer = zoneLayerRef.current, plotLayer = plotLayerRef.current;
-    if (!map || !zoneLayer || !plotLayer) return;
+    const map = mapRef.current, heat = heatRef.current, zoneLayer = zoneRef.current, plotLayer = plotRef.current;
+    if (!map || !heat || !zoneLayer || !plotLayer) return;
+    heat.clearLayers();
     zoneLayer.clearLayers();
     plotLayer.clearLayers();
 
     const shownZones = zones.filter((z) => filterZone === "all" || z.id === filterZone);
 
     shownZones.forEach((z) => {
-      const geo = zoneGeo[z.id];
-      if (!geo) return;
-      const sel = selectedZone === z.id;
-      const poly = L.polygon(geo.polygon, {
-        color: st(z.status).hex, weight: sel ? 4 : 2, fillColor: st(z.status).hex, fillOpacity: 0.22,
-      }).addTo(zoneLayer);
-      poly.bindTooltip(`${z.name}`, { permanent: true, direction: "center", className: "akf-zone-label" });
-      poly.on("click", () => { onSelectZone(z.id); map.flyToBounds(L.latLngBounds(geo.polygon), { maxZoom: 17, duration: 0.6 }); });
+      const zg = zoneGeo[z.id];
+      if (!zg) return;
 
-      // Lô trong vùng
+      // 1) Lớp màu nhiệt: tô từng lô theo trạng thái cây → blur thành gradient
       plots.filter((p) => p.zoneId === z.id).forEach((p) => {
+        const pg = plotGeo[p.id];
+        if (!pg) return;
+        L.polygon(pg.polygon, {
+          pane: "heat", stroke: false, fillColor: st(cropStatus(p)).hex, fillOpacity: 0.9, interactive: false,
+        }).addTo(heat);
+      });
+
+      // 2) Viền vùng mảnh + nhãn tên + bắt click
+      const sel = selectedZone === z.id;
+      const zonePoly = L.polygon(zg.polygon, {
+        color: "#ffffff", weight: sel ? 2.5 : 1, opacity: sel ? 0.95 : 0.6, fill: true, fillOpacity: 0,
+      }).addTo(zoneLayer);
+      zonePoly.bindTooltip(z.name, { permanent: true, direction: "center", className: "akf-zone-label" });
+      zonePoly.on("click", () => { onSelectZone(z.id); map.flyToBounds(L.latLngBounds(zg.polygon), { maxZoom: 17, duration: 0.6, padding: [10, 10] }); });
+    });
+
+    // 3) Chỉ hiện viền + tên LÔ của vùng đang chọn (hoặc đang lọc)
+    const activeZone = selectedZone ?? (filterZone !== "all" ? filterZone : null);
+    if (activeZone) {
+      plots.filter((p) => p.zoneId === activeZone).forEach((p) => {
         const pg = plotGeo[p.id];
         if (!pg) return;
         const selP = selectedPlot === p.id;
         const pp = L.polygon(pg.polygon, {
-          color: "#ffffff", weight: selP ? 3 : 1.5, fillColor: plotColor(p), fillOpacity: 0.75,
+          color: "#ffffff", weight: selP ? 3 : 1.2, opacity: 0.9, fill: true, fillOpacity: 0,
         }).addTo(plotLayer);
         pp.bindTooltip(p.name, { permanent: true, direction: "center", className: "akf-plot-label" });
         pp.on("click", () => onSelectPlot(p.id));
       });
-    });
+    }
 
-    // Canh khung nhìn
-    const focus = filterZone !== "all" ? zoneGeo[filterZone]?.polygon : shownZones.flatMap((z) => zoneGeo[z.id]?.polygon || []);
-    if (focus && focus.length) map.fitBounds(L.latLngBounds(focus as L.LatLngExpression[]), { padding: [20, 20], maxZoom: filterZone !== "all" ? 17 : 15 });
-    updatePlotVisibility();
+    // Canh khung nhìn theo bộ lọc vùng (không tự fit khi chỉ chọn để tránh giật)
+    if (filterZone !== "all" && zoneGeo[filterZone]) {
+      map.fitBounds(L.latLngBounds(zoneGeo[filterZone].polygon), { padding: [10, 10], maxZoom: 17 });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterZone, filterCrop, selectedPlot, selectedZone]);
 
