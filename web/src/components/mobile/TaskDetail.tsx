@@ -1,12 +1,25 @@
 import React from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle } from "lucide-react";
-import { tasks, plots } from "../../lib/mockData";
+import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Play } from "lucide-react";
+import { tasks, plotName } from "../../lib/mockData";
+
+type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
+
+const STATUS_META: Record<TaskStatus, { label: string; cls: string }> = {
+  pending: { label: "Chưa bắt đầu", cls: "bg-gray-100 text-gray-700" },
+  "in-progress": { label: "Đang làm", cls: "bg-blue-100 text-blue-800" },
+  completed: { label: "Hoàn thành", cls: "bg-green-100 text-green-800" },
+  overdue: { label: "Quá hạn", cls: "bg-red-100 text-red-800" },
+};
 
 export function TaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const task = tasks.find(t => t.id === id);
+  const task = tasks.find((t) => t.id === id);
+
+  const [status, setStatus] = React.useState<TaskStatus>(
+    (task?.status as TaskStatus) || "pending"
+  );
   const [hasPhoto, setHasPhoto] = React.useState(false);
   const [showConfirmation, setShowConfirmation] = React.useState(false);
 
@@ -14,9 +27,18 @@ export function TaskDetail() {
     return <div className="p-4">Không tìm thấy công việc</div>;
   }
 
-  const plot = plots.find(p => p.id === task.plotId);
+  // "Bắt đầu" chỉ bấm được khi đang ở pending/overdue (chưa bắt đầu)
+  const canStart = status === "pending" || status === "overdue";
+  // "Hoàn thành" chỉ bấm được khi đã bắt đầu (in-progress)
+  const canComplete = status === "in-progress";
+
+  const handleStart = () => {
+    if (!canStart) return;
+    setStatus("in-progress");
+  };
 
   const handleComplete = () => {
+    if (!canComplete) return;
     if (task.requirePhoto && !hasPhoto) {
       alert("Bạn cần chụp ảnh trước khi hoàn thành!");
       return;
@@ -25,14 +47,13 @@ export function TaskDetail() {
   };
 
   const confirmCompletion = () => {
-    // In real app, this would update the task status
+    setStatus("completed");
+    setShowConfirmation(false);
+    // Trong app thật sẽ lưu trạng thái rồi điều hướng
     navigate("/mobile/tasks");
   };
 
-  const handleStart = () => {
-    // In real app, this would update the task status to in-progress
-    alert("Đã bắt đầu công việc!");
-  };
+  const statusMeta = STATUS_META[status];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -42,6 +63,13 @@ export function TaskDetail() {
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <h1 className="text-2xl font-bold">{task.title}</h1>
+        <div className="mt-3">
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${statusMeta.cls}`}
+          >
+            {statusMeta.label}
+          </span>
+        </div>
       </div>
 
       {/* Content */}
@@ -52,7 +80,7 @@ export function TaskDetail() {
             <MapPin className="w-5 h-5 text-gray-600" />
             <div>
               <p className="text-sm text-gray-600">Lô</p>
-              <p className="font-bold text-gray-900">{plot?.name}</p>
+              <p className="font-bold text-gray-900">{plotName(task.plotId)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -142,30 +170,51 @@ export function TaskDetail() {
 
         {/* Action Buttons */}
         <div className="space-y-3 pt-4">
-          {task.status === "pending" && (
-            <button
-              onClick={handleStart}
-              className="w-full bg-blue-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-blue-700 transition-colors"
-            >
-              Bắt đầu làm việc
-            </button>
-          )}
-          
-          {(task.status === "in-progress" || task.status === "pending") && (
-            <button
-              onClick={handleComplete}
-              className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors"
-            >
-              Hoàn thành
-            </button>
-          )}
-
-          {task.status === "completed" && (
+          {status === "completed" ? (
             <div className="bg-green-100 border-2 border-green-600 rounded-xl p-4 text-center">
               <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-2" />
               <p className="text-lg font-bold text-green-900">Đã hoàn thành</p>
             </div>
+          ) : (
+            <>
+              {/* Nút Bắt đầu: disable khi đã in-progress/completed */}
+              <button
+                onClick={handleStart}
+                disabled={!canStart}
+                className={`w-full py-4 rounded-xl text-lg font-bold transition-colors flex items-center justify-center gap-2 ${
+                  canStart
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-blue-600 text-white opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <Play className="w-5 h-5" />
+                Bắt đầu làm việc
+              </button>
+
+              {/* Nút Hoàn thành: disable khi chưa bắt đầu */}
+              <button
+                onClick={handleComplete}
+                disabled={!canComplete}
+                className={`w-full py-4 rounded-xl text-lg font-bold transition-colors flex items-center justify-center gap-2 ${
+                  canComplete
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-green-600 text-white opacity-50 cursor-not-allowed"
+                }`}
+              >
+                <CheckCircle className="w-5 h-5" />
+                Hoàn thành
+              </button>
+            </>
           )}
+
+          {/* Nút Yêu cầu hỗ trợ */}
+          <button
+            onClick={() => navigate("/mobile/support")}
+            className="w-full bg-white border-2 border-gray-300 text-gray-800 py-4 rounded-xl text-lg font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <LifeBuoy className="w-5 h-5" />
+            Yêu cầu hỗ trợ
+          </button>
         </div>
       </div>
 

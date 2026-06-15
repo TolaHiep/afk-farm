@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router";
-import { CheckSquare, Calendar, Bell, User } from "lucide-react";
+import { CheckSquare, Calendar, ClipboardList, Bell, User } from "lucide-react";
 
 export function MobileLayout() {
   const location = useLocation();
@@ -8,6 +8,7 @@ export function MobileLayout() {
   const navItems = [
     { path: "/mobile/tasks", icon: CheckSquare, label: "Hôm nay" },
     { path: "/mobile/upcoming", icon: Calendar, label: "Sắp tới" },
+    { path: "/mobile/history", icon: ClipboardList, label: "Lịch sử BC" },
     { path: "/mobile/notifications", icon: Bell, label: "Thông báo" },
   ];
 
@@ -17,10 +18,10 @@ export function MobileLayout() {
       <header className="bg-green-600 text-white p-4 shadow">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold">Farm Mobile</h1>
-          <div className="flex items-center gap-2">
+          <Link to="/mobile/account" className="flex items-center gap-2">
             <User className="w-5 h-5" />
             <span className="text-sm">Tổ trưởng</span>
-          </div>
+          </Link>
         </div>
       </header>
 

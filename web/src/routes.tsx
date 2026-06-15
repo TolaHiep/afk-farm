@@ -24,6 +24,9 @@ import { DailyReport } from "./components/mobile/DailyReport";
 import { ReportSuccess } from "./components/mobile/ReportSuccess";
 import { OfflineSync } from "./components/mobile/OfflineSync";
 import { MobileNotifications } from "./components/mobile/MobileNotifications";
+import { MobileSupport } from "./components/mobile/MobileSupport";
+import { MobileReportHistory } from "./components/mobile/MobileReportHistory";
+import { MobileAccount } from "./components/mobile/MobileAccount";
 
 export const router = createBrowserRouter([
   {
@@ -64,6 +67,9 @@ export const router = createBrowserRouter([
       { path: "success", element: <ReportSuccess /> },
       { path: "offline", element: <OfflineSync /> },
       { path: "notifications", element: <MobileNotifications /> },
+      { path: "support", element: <MobileSupport /> },
+      { path: "history", element: <MobileReportHistory /> },
+      { path: "account", element: <MobileAccount /> },
     ],
   },
   {
