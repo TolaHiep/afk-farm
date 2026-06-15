@@ -112,8 +112,10 @@ export function WorkCalendar() {
         )}
       </div>
 
+      {/* Lịch + chi tiết cạnh nhau trên màn lớn */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       {/* Lịch tháng */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sm:p-6">
+      <div className="lg:col-span-2 bg-white rounded-lg shadow border border-gray-200 p-3 sm:p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
             <Calendar className="w-5 h-5 text-green-600" /> {monthLabel}
@@ -148,7 +150,7 @@ export function WorkCalendar() {
               <button
                 key={d.toISOString()}
                 onClick={() => setSelectedDay(new Date(d))}
-                className={`min-h-[58px] sm:min-h-[80px] rounded-lg border p-1 sm:p-2 text-left transition flex flex-col
+                className={`min-h-[44px] sm:min-h-[52px] lg:min-h-[60px] rounded-lg border p-1 sm:p-1.5 text-left transition flex flex-col
                   ${inMonth ? "bg-white" : "bg-gray-50"}
                   ${isSel ? "border-green-500 ring-2 ring-green-500" : isToday ? "border-green-400" : "border-gray-200"}
                   hover:border-green-400`}
@@ -174,9 +176,9 @@ export function WorkCalendar() {
         </div>
       </div>
 
-      {/* Chi tiết ngày đang chọn */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+      {/* Chi tiết ngày đang chọn — cột bên, dính theo cuộn trên màn lớn */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 lg:sticky lg:top-4 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg sticky top-0">
           <h3 className="text-base font-semibold text-gray-900">
             {selectedDay.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" })}
             {sameDay(selectedDay, TODAY) && <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Hôm nay</span>}
@@ -225,6 +227,7 @@ export function WorkCalendar() {
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );
