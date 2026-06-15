@@ -1,6 +1,6 @@
 import React from "react";
 import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import {
   tasks,

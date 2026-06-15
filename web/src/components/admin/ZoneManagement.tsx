@@ -9,7 +9,7 @@ import {
   PauseCircle,
   Layers,
 } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { zones as zonesData, plots as plotsData } from "../../lib/mockData";
 

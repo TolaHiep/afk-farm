@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, MapPin, Calendar, User, Image as ImageIcon } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { anomalies, plots } from "../../lib/mockData";
 

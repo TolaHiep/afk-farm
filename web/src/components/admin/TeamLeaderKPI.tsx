@@ -1,6 +1,6 @@
 import React from "react";
 import { Filter, Download, ClipboardCheck, ClipboardX, AlertTriangle, LifeBuoy } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { KPICard } from "../ui/KPICard";
 import { StatusBadge } from "../ui/StatusBadge";
 import { kpiData, teamLeaders, teamLeaderReports, supportRequests } from "../../lib/mockData";

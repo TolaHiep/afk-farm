@@ -29,7 +29,25 @@ Các bản trình bày cho khách (docx) nằm ở thư mục `Downloads/` (Tổ
 
 Xem `docs/TECH-STACK.md`. Frontend chuẩn: **Vite + React 18 + TS + React Router 7 + Tailwind v4 + shadcn/ui + Recharts** tại `web/` (đã gom về một bản, bỏ Next.js và HTML tĩnh). Backend đang chờ chốt (ERPNext headless / NestJS / FastAPI).
 
-## Chạy frontend
+## Chạy bằng Docker (khuyến nghị — để xem/demo)
+
+Cần cài Docker Desktop. Tại thư mục gốc dự án:
+
+```
+docker compose up -d --build     # build + chạy nền
+```
+
+Mở trình duyệt: **http://localhost:8080**
+
+```
+docker compose down              # dừng
+docker compose up -d             # bật lại (không cần build nếu code không đổi)
+docker compose up -d --build     # build lại sau khi sửa code
+```
+
+Cấu hình Docker: `web/Dockerfile` (build tĩnh bằng Node rồi phục vụ bằng Nginx), `web/nginx.conf` (SPA fallback + gzip), `docker-compose.yml` (cổng 8080 → 80). Đổi cổng: sửa `8080:80` trong `docker-compose.yml`.
+
+## Chạy frontend (chế độ phát triển, có live-reload)
 
 ```
 cd web

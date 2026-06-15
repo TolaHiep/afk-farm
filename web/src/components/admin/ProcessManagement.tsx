@@ -1,6 +1,6 @@
 import React from "react";
 import { Plus, Upload, Edit2, Trash2 } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { processes } from "../../lib/mockData";
 
 export function ProcessManagement() {

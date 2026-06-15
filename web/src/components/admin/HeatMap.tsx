@@ -1,6 +1,6 @@
 import React from "react";
 import { Filter, Calendar, MapPin } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { plots, tasks, anomalies, zoneName } from "../../lib/mockData";
 
 export function HeatMap() {

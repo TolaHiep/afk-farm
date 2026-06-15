@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 import { Sprout } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 
 export function AdminLogin() {
   return (

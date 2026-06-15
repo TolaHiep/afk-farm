@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { ArrowLeft, MapPin } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { zones, teamLeaders } from "../../lib/mockData";
 
 export function PlotForm() {

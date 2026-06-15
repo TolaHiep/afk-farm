@@ -1,0 +1,17 @@
+# Đóng gói & chạy phần mềm AKF bằng Docker.
+# Khởi động:  docker compose up -d --build
+# Mở trình duyệt: http://localhost:8080
+# Dừng:        docker compose down
+
+services:
+  web:
+    build:
+      context: ./web
+    image: akf-farm-web:latest
+    container_name: akf-web
+    ports:
+      - "8080:80"   # máy của anh: 8080  ->  trong container: 80
+    restart: unless-stopped
+
+# Ghi chú cho giai đoạn thật (ERPNext): khi triển khai backend,
+# thêm các service erpnext / mariadb / redis vào đây để chạy chung 1 lệnh.
