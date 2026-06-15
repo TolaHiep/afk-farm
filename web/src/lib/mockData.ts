@@ -98,13 +98,14 @@ export const notifications = [
   { id: "n4", type: "anomaly", title: "Bất thường đang xử lý", description: "Hỏng giàn tại Lô D1 đang được sửa chữa", date: "2026-06-12", read: true, anomalyId: "a2" },
 ];
 
+// completed = số việc đã hoàn thành; notDone = số việc chưa hoàn thành (còn lại trong kỳ)
 export const kpiData = [
-  { teamLeaderId: "tl1", name: "Nguyễn Văn A", onTime: 45, overdue: 3, completed: 48, fullReport: 46, anomalies: 1, totalWork: 480 },
-  { teamLeaderId: "tl2", name: "Trần Thị B", onTime: 50, overdue: 2, completed: 52, fullReport: 52, anomalies: 0, totalWork: 520 },
-  { teamLeaderId: "tl3", name: "Lê Văn C", onTime: 38, overdue: 7, completed: 45, fullReport: 40, anomalies: 3, totalWork: 450 },
-  { teamLeaderId: "tl4", name: "Phạm Thị D", onTime: 42, overdue: 4, completed: 46, fullReport: 44, anomalies: 2, totalWork: 460 },
-  { teamLeaderId: "tl5", name: "Hoàng Văn E", onTime: 48, overdue: 1, completed: 49, fullReport: 49, anomalies: 0, totalWork: 490 },
-  { teamLeaderId: "tl6", name: "Vũ Thị F", onTime: 35, overdue: 8, completed: 43, fullReport: 38, anomalies: 4, totalWork: 430 },
+  { teamLeaderId: "tl1", name: "Nguyễn Văn A", onTime: 45, overdue: 3, completed: 48, notDone: 5, fullReport: 46, anomalies: 1, totalWork: 480 },
+  { teamLeaderId: "tl2", name: "Trần Thị B", onTime: 50, overdue: 2, completed: 52, notDone: 2, fullReport: 52, anomalies: 0, totalWork: 520 },
+  { teamLeaderId: "tl3", name: "Lê Văn C", onTime: 38, overdue: 7, completed: 45, notDone: 9, fullReport: 40, anomalies: 3, totalWork: 450 },
+  { teamLeaderId: "tl4", name: "Phạm Thị D", onTime: 42, overdue: 4, completed: 46, notDone: 6, fullReport: 44, anomalies: 2, totalWork: 460 },
+  { teamLeaderId: "tl5", name: "Hoàng Văn E", onTime: 48, overdue: 1, completed: 49, notDone: 3, fullReport: 49, anomalies: 0, totalWork: 490 },
+  { teamLeaderId: "tl6", name: "Vũ Thị F", onTime: 35, overdue: 8, completed: 43, notDone: 11, fullReport: 38, anomalies: 4, totalWork: 430 },
 ];
 
 export const mobileNotifications = [

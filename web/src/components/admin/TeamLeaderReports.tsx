@@ -1,6 +1,6 @@
 import React from "react";
 import { ClipboardList, ImageIcon, AlertTriangle } from "lucide-react";
-import { teamLeaderReports, teamLeaders, plots, plotName, zoneName } from "../../lib/mockData";
+import { teamLeaderReports, teamLeaders, plots, zones, plotName, zoneName } from "../../lib/mockData";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Chờ xem", cls: "bg-yellow-100 text-yellow-800" },
@@ -11,13 +11,23 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 export function TeamLeaderReports() {
   const [leader, setLeader] = React.useState("all");
   const [plot, setPlot] = React.useState("all");
+  const [zone, setZone] = React.useState("all");
+  const [crop, setCrop] = React.useState("all");
+  const [status, setStatus] = React.useState("all");
   const [abnormal, setAbnormal] = React.useState("all");
   const [date, setDate] = React.useState("");
   const [detail, setDetail] = React.useState<string | null>(null);
 
+  // Danh sách loại cây có thật trong dữ liệu báo cáo
+  const crops = Array.from(new Set(teamLeaderReports.map((r) => r.crop)));
+
   const rows = teamLeaderReports.filter((r) => {
+    const p = plots.find((x) => x.id === r.plotId);
     if (leader !== "all" && r.teamLeaderId !== leader) return false;
     if (plot !== "all" && r.plotId !== plot) return false;
+    if (zone !== "all" && p?.zoneId !== zone) return false;
+    if (crop !== "all" && r.crop !== crop) return false;
+    if (status !== "all" && r.status !== status) return false;
     if (abnormal === "yes" && !r.abnormal) return false;
     if (abnormal === "no" && r.abnormal) return false;
     if (date && r.date !== date) return false;
@@ -42,9 +52,21 @@ export function TeamLeaderReports() {
           <option value="all">Tất cả tổ trưởng</option>
           {teamLeaders.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
+        <select value={zone} onChange={(e) => setZone(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          <option value="all">Tất cả vùng</option>
+          {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+        </select>
         <select value={plot} onChange={(e) => setPlot(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
           <option value="all">Tất cả lô</option>
           {plots.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        <select value={crop} onChange={(e) => setCrop(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          <option value="all">Tất cả loại cây</option>
+          {crops.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          <option value="all">Tất cả trạng thái</option>
+          {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
         <select value={abnormal} onChange={(e) => setAbnormal(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
           <option value="all">Bất thường: tất cả</option>

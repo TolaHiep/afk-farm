@@ -1,10 +1,10 @@
 import React from "react";
 import { Link } from "react-router";
-import { Users, AlertCircle, AlertTriangle, LifeBuoy, Sprout, MapPin } from "lucide-react";
+import { Users, AlertCircle, AlertTriangle, LifeBuoy, Sprout, MapPin, ChevronRight } from "lucide-react";
 import { KPICard } from "../ui/KPICard";
 import { StatusBadge } from "../ui/StatusBadge";
 import {
-  tasks, plots, zones, supportRequests, areaStats, teamCompletionToday, plotName,
+  tasks, plots, zones, teamLeaders, leaderPlots, supportRequests, areaStats, teamCompletionToday, plotName,
 } from "../../lib/mockData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -22,6 +22,15 @@ export function Dashboard() {
   const team = teamCompletionToday();
   const area = areaStats();
   const pendingSupport = supportRequests.filter((s) => s.status === "pending");
+
+  // Zone đang mở để xem danh sách block bên trong (mục 3.1.1)
+  const [openZone, setOpenZone] = React.useState<string | null>(null);
+  // Modal danh sách tổ chưa hoàn thành việc hôm nay (mục 3.1.3)
+  const [showUnfinished, setShowUnfinished] = React.useState(false);
+  const unfinishedTeams = teamLeaders
+    .filter((t) => t.status === "active" && leaderPlots(t.id).length)
+    .map((t) => ({ leader: t, plots: leaderPlots(t.id).filter((p) => p.done < p.total) }))
+    .filter((x) => x.plots.length > 0);
 
   const chartData = [
     { name: "Vùng A", tasks: 8, completed: 6 },
@@ -42,26 +51,76 @@ export function Dashboard() {
           {zones.map((z) => {
             const c = ZONE_COLOR[z.status] || ZONE_COLOR.inactive;
             return (
-              <Link key={z.id} to="/admin/zones" className={`block rounded-lg border p-4 hover:shadow-sm transition ${c.ring}`}>
+              <button key={z.id} onClick={() => setOpenZone(openZone === z.id ? null : z.id)}
+                className={`text-left rounded-lg border p-4 hover:shadow-sm transition ${c.ring} ${openZone === z.id ? "ring-2 ring-green-500" : ""}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-gray-900">{z.name}</span>
                   <span className={`w-3 h-3 rounded-full ${c.dot}`} />
                 </div>
                 <div className="text-xs text-gray-500 mt-1">{z.plots} lô · {c.label}</div>
-              </Link>
+              </button>
             );
           })}
         </div>
+
+        {/* Danh sách block/lô bên trong zone đang chọn (mục 3.1.1) */}
+        {openZone && (
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <div className="text-sm font-medium text-gray-700 mb-2">
+              Lô trong {zones.find((z) => z.id === openZone)?.name}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {plots.filter((p) => p.zoneId === openZone).map((p) => (
+                <Link key={p.id} to={`/admin/zones?plot=${p.id}`}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                  <div>
+                    <div className="font-medium text-gray-900 text-sm">{p.name} · {p.crop}</div>
+                    <div className="text-xs text-gray-500">{p.teamLeader} · {p.done}/{p.total} việc</div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </Link>
+              ))}
+              {plots.filter((p) => p.zoneId === openZone).length === 0 && (
+                <p className="text-sm text-gray-400">Chưa có lô trong vùng này</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard title="Tổ đã hoàn thành việc hôm nay" value={`${team.done}/${team.total}`} icon={Users}
-          trend={`${team.pending} tổ chưa xong`} color="green" />
+        <button onClick={() => setShowUnfinished(true)} className="text-left">
+          <KPICard title="Tổ đã hoàn thành việc hôm nay" value={`${team.done}/${team.total}`} icon={Users}
+            trend={`${team.pending} tổ chưa xong · bấm để xem`} color="green" />
+        </button>
         <KPICard title="Việc quá hạn" value={overdueCount} icon={AlertCircle} trend="Cần xử lý ngay" color="red" />
         <KPICard title="Vùng cảnh báo" value={warningZones} icon={AlertTriangle} trend="Vàng / Đỏ" color="yellow" />
         <KPICard title="Yêu cầu hỗ trợ mới" value={pendingSupport.length} icon={LifeBuoy} trend="Chờ xử lý" color="blue" />
       </div>
+
+      {/* Modal: danh sách tổ chưa hoàn thành việc hôm nay (mục 3.1.3) */}
+      {showUnfinished && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowUnfinished(false)}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Tổ chưa hoàn thành việc hôm nay</h3>
+              <button onClick={() => setShowUnfinished(false)} className="text-gray-400 text-xl leading-none">×</button>
+            </div>
+            {unfinishedTeams.length === 0 && <p className="text-sm text-gray-500">Tất cả các tổ đã hoàn thành việc hôm nay.</p>}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {unfinishedTeams.map(({ leader, plots: ps }) => (
+                <div key={leader.id} className="p-3 bg-yellow-50 rounded-lg">
+                  <div className="font-medium text-gray-900 text-sm">{leader.name}</div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {ps.map((p) => `${p.name} (${p.done}/${p.total})`).join(" · ")}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Area stats */}
       <div className="bg-white rounded-lg shadow border border-gray-200 p-5">

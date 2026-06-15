@@ -179,7 +179,6 @@ export function TeamLeaderKPI() {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Việc chưa hoàn thành</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Đúng hạn</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Quá hạn</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Hoàn thành</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Báo cáo đầy đủ</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Bất thường</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tổng công</th>
@@ -198,10 +197,9 @@ export function TeamLeaderKPI() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-right text-blue-600 font-medium">{kpi.completed}</td>
-                  <td className="px-6 py-4 text-sm text-right text-red-600 font-medium">{kpi.overdue}</td>
+                  <td className="px-6 py-4 text-sm text-right text-yellow-600 font-medium">{kpi.notDone}</td>
                   <td className="px-6 py-4 text-sm text-right text-green-600 font-medium">{kpi.onTime}</td>
                   <td className="px-6 py-4 text-sm text-right text-red-600 font-medium">{kpi.overdue}</td>
-                  <td className="px-6 py-4 text-sm text-right text-gray-900">{kpi.completed}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900">{kpi.fullReport}</td>
                   <td className="px-6 py-4 text-sm text-right text-yellow-600 font-medium">{kpi.anomalies}</td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900 font-medium">{kpi.totalWork}</td>
