@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "../ui/button";
+import { BoundaryMap } from "./BoundaryMap";
 import { zones, teamLeaders } from "../../lib/mockData";
 
 export function PlotForm() {
@@ -129,44 +130,20 @@ export function PlotForm() {
 
         {/* Map Drawing */}
         <div className="lg:col-span-2 bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Vẽ ranh giới trên bản đồ</h3>
-            <Button variant="secondary" size="sm">
-              <MapPin className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Vẽ ranh giới trên bản đồ (ảnh vệ tinh)</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Bấm lần lượt lên các góc của {isZone ? "vùng" : "lô"} trên ảnh vệ tinh — hệ thống tự nối ranh giới và tính diện tích thực theo GPS.
+            </p>
           </div>
 
-          {/* Map Canvas */}
-          <div className="relative w-full h-[500px] bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-            <div className="text-center text-gray-500">
-              <MapPin className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="font-medium">Click để đánh dấu các điểm ranh giới</p>
-              <p className="text-sm mt-1">Khu vực sẽ tự động được tính diện tích</p>
-            </div>
-
-            {/* Sample polygon if area is set */}
-            {area > 0 && (
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                <polygon
-                  points="20,20 40,20 40,40 20,40"
-                  fill="rgba(34, 197, 94, 0.2)"
-                  stroke="#16a34a"
-                  strokeWidth="0.5"
-                />
-                <circle cx="20" cy="20" r="1" fill="#16a34a" />
-                <circle cx="40" cy="20" r="1" fill="#16a34a" />
-                <circle cx="40" cy="40" r="1" fill="#16a34a" />
-                <circle cx="20" cy="40" r="1" fill="#16a34a" />
-              </svg>
-            )}
-          </div>
+          <BoundaryMap onChange={(a) => setArea(a)} />
 
           {/* Instructions */}
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Hướng dẫn:</strong> Click trên bản đồ để đánh dấu các góc của {isZone ? "vùng" : "lô"}. 
-              Click vào điểm đầu tiên để hoàn thành đa giác. Diện tích sẽ được tự động tính toán.
+              <strong>Hướng dẫn:</strong> Cuộn/kéo bản đồ tới khu đất, bấm lần lượt các góc để tạo ranh giới (cần ít nhất 3 điểm).
+              Diện tích được tính tự động và điền vào ô bên trái. Dùng "Hoàn tác" để bỏ điểm cuối, "Xóa hết" để vẽ lại.
             </p>
           </div>
         </div>
