@@ -229,13 +229,22 @@ export function ZoneManagement() {
                   </span>
                   <StatusBadge status={zoneMeta.badge}>{zoneMeta.label}</StatusBadge>
                 </button>
-                <button
-                  onClick={() => askDeleteZone(zone)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Xóa vùng
-                </button>
+                <div className="flex items-center gap-1">
+                  <Link
+                    to={`/admin/zones/add?type=plot&zone=${zone.id}`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 rounded-lg"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Thêm lô
+                  </Link>
+                  <button
+                    onClick={() => askDeleteZone(zone)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Xóa vùng
+                  </button>
+                </div>
               </div>
 
               {/* Plot list */}

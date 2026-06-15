@@ -10,6 +10,9 @@ export function PlotForm() {
   const type = searchParams.get("type") || "plot";
   const isZone = type === "zone";
 
+  // Vùng cha đã chọn sẵn khi bấm "Thêm lô" từ thẻ vùng
+  const presetZone = zones.find((z) => z.id === searchParams.get("zone"));
+
   const [area, setArea] = React.useState<number>(0);
 
   return (
@@ -23,7 +26,7 @@ export function PlotForm() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h2 className="text-2xl font-bold text-gray-900">
-          {isZone ? "Thêm vùng mới" : "Thêm lô mới"}
+          {isZone ? "Thêm vùng mới" : presetZone ? `Thêm lô vào ${presetZone.name}` : "Thêm lô mới"}
         </h2>
       </div>
 
@@ -48,12 +51,19 @@ export function PlotForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Vùng cha
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                  <option>Chọn vùng</option>
-                  {zones.map(zone => (
-                    <option key={zone.id} value={zone.id}>{zone.name}</option>
-                  ))}
-                </select>
+                {presetZone ? (
+                  <div className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-between">
+                    <span className="font-medium text-gray-800">{presetZone.name}</span>
+                    <span className="text-xs text-green-600">Đã chọn từ thẻ vùng</span>
+                  </div>
+                ) : (
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" defaultValue="">
+                    <option value="">Chọn vùng</option>
+                    {zones.map(zone => (
+                      <option key={zone.id} value={zone.id}>{zone.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             )}
 
