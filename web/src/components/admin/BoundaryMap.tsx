@@ -63,8 +63,14 @@ export function BoundaryMap({ onChange }: { onChange?: (area: number, points: Pt
     } else if (points.length === 2) {
       L.polyline(latlngs, { color: "#16a34a", weight: 2, dashArray: "4" }).addTo(layer);
     }
-    points.forEach((p) => {
-      L.circleMarker([p.lat, p.lng], { radius: 5, color: "#fff", weight: 2, fillColor: "#16a34a", fillOpacity: 1 }).addTo(layer);
+    const dotIcon = L.divIcon({ className: "akf-vertex", iconSize: [14, 14] });
+    points.forEach((p, idx) => {
+      const mk = L.marker([p.lat, p.lng], { draggable: true, icon: dotIcon }).addTo(layer);
+      // Kéo thả để chỉnh lại vị trí góc — cập nhật khi thả chuột
+      mk.on("dragend", () => {
+        const ll = mk.getLatLng();
+        setPoints((prev) => prev.map((q, i) => (i === idx ? { lat: ll.lat, lng: ll.lng } : q)));
+      });
     });
     const a = Math.round(geodesicArea(points));
     setArea(a);

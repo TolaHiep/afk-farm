@@ -273,3 +273,54 @@ export function teamCompletionToday() {
   const withSupport = new Set(supportRequests.filter((s) => s.status === "pending").map((s) => s.teamLeaderId)).size;
   return { total: active.length, done, pending: active.length - done, withSupport };
 }
+
+// ===== Tọa độ GPS demo cho bản đồ vệ tinh (mock quanh khu Đà Lạt) =====
+// Mỗi vùng là 1 ô vuông trong lưới 2x2; các lô là ô nhỏ bên trong vùng.
+export type LatLng = [number, number];
+const GEO_ORIGIN = { lat: 11.9600, lng: 108.4360 }; // góc Tây-Bắc của khu trại
+const ZONE_DEG = 0.013;   // cạnh vùng (~1.4km)
+const ZONE_GAP = 0.0025;  // khoảng cách giữa các vùng
+const ZONE_CELL: Record<string, [number, number]> = { z1: [0, 0], z2: [1, 0], z3: [0, 1], z4: [1, 1] };
+
+function zoneBox(zoneId: string) {
+  const [col, row] = ZONE_CELL[zoneId] ?? [0, 0];
+  const north = GEO_ORIGIN.lat - row * (ZONE_DEG + ZONE_GAP);
+  const west = GEO_ORIGIN.lng + col * (ZONE_DEG + ZONE_GAP);
+  return { north, south: north - ZONE_DEG, west, east: west + ZONE_DEG };
+}
+function rectPolygon(north: number, south: number, east: number, west: number): LatLng[] {
+  return [[north, west], [north, east], [south, east], [south, west]];
+}
+
+export const zoneGeo: Record<string, { polygon: LatLng[]; center: LatLng }> = {};
+zones.forEach((z) => {
+  const b = zoneBox(z.id);
+  zoneGeo[z.id] = {
+    polygon: rectPolygon(b.north, b.south, b.east, b.west),
+    center: [(b.north + b.south) / 2, (b.east + b.west) / 2],
+  };
+});
+
+export const plotGeo: Record<string, { polygon: LatLng[]; center: LatLng }> = {};
+zones.forEach((z) => {
+  const b = zoneBox(z.id);
+  const zonePlots = plots.filter((p) => p.zoneId === z.id);
+  const n = zonePlots.length || 1;
+  const cols = Math.ceil(Math.sqrt(n));
+  const rows = Math.ceil(n / cols);
+  const cellW = (b.east - b.west) / cols;
+  const cellH = (b.north - b.south) / rows;
+  const pad = 0.14; // chừa lề trong mỗi ô lô
+  zonePlots.forEach((p, i) => {
+    const c = i % cols;
+    const r = Math.floor(i / cols);
+    const west = b.west + c * cellW + cellW * pad;
+    const east = b.west + (c + 1) * cellW - cellW * pad;
+    const north = b.north - r * cellH - cellH * pad;
+    const south = b.north - (r + 1) * cellH + cellH * pad;
+    plotGeo[p.id] = { polygon: rectPolygon(north, south, east, west), center: [(north + south) / 2, (east + west) / 2] };
+  });
+});
+
+// Tâm toàn khu (để bản đồ tự canh giữa)
+export const farmCenter: LatLng = [GEO_ORIGIN.lat - (ZONE_DEG + ZONE_GAP) / 2, GEO_ORIGIN.lng + (ZONE_DEG + ZONE_GAP) / 2];

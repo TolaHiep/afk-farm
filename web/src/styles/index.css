@@ -1,3 +1,29 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* ===== Bản đồ (Leaflet) — nhãn vùng/lô & điểm vẽ ranh giới ===== */
+.akf-zone-label,
+.akf-plot-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  padding: 0;
+}
+.akf-zone-label { font-size: 14px; }
+.akf-plot-label { font-size: 11px; font-weight: 600; }
+.akf-zone-label::before,
+.akf-plot-label::before { display: none !important; }
+
+/* Điểm vẽ ranh giới có thể kéo */
+.akf-vertex {
+  background: #16a34a;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+}
+.akf-vertex:active { cursor: grabbing; }

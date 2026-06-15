@@ -142,8 +142,8 @@ export function PlotForm() {
           {/* Instructions */}
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Hướng dẫn:</strong> Cuộn/kéo bản đồ tới khu đất, bấm lần lượt các góc để tạo ranh giới (cần ít nhất 3 điểm).
-              Diện tích được tính tự động và điền vào ô bên trái. Dùng "Hoàn tác" để bỏ điểm cuối, "Xóa hết" để vẽ lại.
+              <strong>Hướng dẫn:</strong> Tìm khu vực hoặc nhập tọa độ để tới khu đất, bấm lần lượt các góc để tạo ranh giới (cần ít nhất 3 điểm).
+              <strong> Kéo các điểm</strong> để chỉnh lại ranh giới — diện tích tự cập nhật. Dùng "Hoàn tác" để bỏ điểm cuối, "Xóa hết" để vẽ lại.
             </p>
           </div>
         </div>
