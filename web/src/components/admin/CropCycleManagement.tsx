@@ -72,57 +72,45 @@ export function CropCycleManagement() {
   const plotReports = reportPlotId ? teamLeaderReports.filter((r) => r.plotId === reportPlotId) : [];
   const hasFilter = fZone !== "all" || fCrop !== "all" || fStatus !== "all";
 
-  // ----- Thẻ một lô (dùng chung cho cả Danh sách & Lưới) -----
+  // ----- Thẻ một lô (gọn): 2 cây Gấc/Sâm mỗi cây 1 dòng -----
   const PlotCard = ({ plot, plotCycles }: { plot: typeof plots[number]; plotCycles: Cycle[] }) => {
     const reportCount = teamLeaderReports.filter((r) => r.plotId === plot.id).length;
     return (
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="bg-green-50/70 border-l-4 border-green-400 px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-          <div className="min-w-0">
-            <button type="button" onClick={() => goToPlot(plot.id)} className="text-green-800 hover:underline font-semibold">{plot.name}</button>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500">
-              <span>{(plot.area / 10000).toFixed(1)} ha</span><span className="text-gray-300">·</span>
-              <span>{plot.teamLeader || "—"}</span><span className="text-gray-300">·</span>
-              <span className="text-green-700 font-medium">Xen canh {plotCycles.length} tầng</span>
-            </div>
+        {/* Header lô gọn 1 dòng */}
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50/60">
+          <div className="min-w-0 flex items-baseline gap-2">
+            <button type="button" onClick={() => goToPlot(plot.id)} className="font-semibold text-gray-900 hover:text-green-700 truncate">{plot.name}</button>
+            <span className="text-xs text-gray-500 shrink-0">{(plot.area / 10000).toFixed(1)} ha · {plot.teamLeader || "—"}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => setReportPlotId(plot.id)} title="Xem báo cáo tổ trưởng">
-            <FileText className="w-4 h-4 mr-1" /> Báo cáo
-            {reportCount > 0 && <span className="ml-1 inline-flex items-center justify-center px-1.5 h-5 min-w-[20px] rounded-full bg-green-100 text-green-800 text-xs font-medium">{reportCount}</span>}
-          </Button>
+          <button onClick={() => setReportPlotId(plot.id)} className="shrink-0 inline-flex items-center gap-1 text-xs text-green-700 hover:bg-green-50 rounded-md px-2 py-1" title="Xem báo cáo tổ trưởng">
+            <FileText className="w-4 h-4" /> Báo cáo{reportCount > 0 && <span className="inline-flex items-center justify-center px-1.5 h-4 min-w-[18px] rounded-full bg-green-100 text-green-800 text-[10px] font-medium">{reportCount}</span>}
+          </button>
         </div>
-        <div className="p-3 space-y-2">
+        {/* 2 dòng cây */}
+        <div className="divide-y divide-gray-100">
           {plotCycles.map((cycle) => {
             const process = processes.find((p) => p.id === cycle.processId);
             const cs = CYCLE_STATUS[cycle.status] ?? CYCLE_STATUS.active;
             const progress = cycleProgress(cycle);
             const isGac = cycle.crop === "Gấc";
             return (
-              <div key={cycle.id} className="border border-gray-200 rounded-lg p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block w-1.5 h-8 rounded-full ${isGac ? "bg-emerald-500" : "bg-amber-500"}`} />
-                    <div>
-                      <div className="font-medium text-gray-900">{cycle.crop}</div>
-                      <div className="text-xs text-gray-400">{isGac ? "Giàn trên" : "Dưới tán"}</div>
-                    </div>
-                  </div>
-                  <StatusBadge status={cs.badge}>{cs.label}</StatusBadge>
+              <div key={cycle.id} className="flex items-center gap-2 sm:gap-3 px-3 py-2"
+                title={`${process?.name || ""} · Bắt đầu ${new Date(cycle.startDate).toLocaleDateString("vi-VN")}`}>
+                <span className={`shrink-0 inline-block w-2 h-2 rounded-full ${isGac ? "bg-emerald-500" : "bg-amber-500"}`} />
+                <div className="w-[88px] shrink-0">
+                  <div className="text-sm font-medium text-gray-900 leading-tight">{cycle.crop}</div>
+                  <div className="text-[11px] text-gray-400 leading-tight">{isGac ? "Giàn trên" : "Dưới tán"}</div>
                 </div>
-                <div className="mt-2 flex items-center gap-2 text-xs text-gray-600">
-                  <Calendar className="w-3.5 h-3.5 text-gray-400" /> {new Date(cycle.startDate).toLocaleDateString("vi-VN")}
-                  <span className="text-gray-300">·</span> {process?.name}
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <StatusBadge status={cs.badge}>{cs.label}</StatusBadge>
+                <div className="flex-1 min-w-[48px] flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${isGac ? "bg-emerald-600" : "bg-amber-500"}`} style={{ width: `${progress}%` }} />
                   </div>
-                  <span className="text-xs text-gray-600 w-10 text-right">{progress}%</span>
+                  <span className="text-xs text-gray-500 w-8 text-right">{progress}%</span>
                 </div>
-                <div className="mt-2 flex items-center gap-1 pt-2 border-t border-gray-100">
-                  <Button variant="ghost" size="sm" onClick={() => setCycleModal({ mode: "edit", data: { ...cycle } })}><Edit2 className="w-4 h-4 mr-1" /> Sửa</Button>
-                  <Button variant="ghost" size="sm" onClick={() => setConfirmId(cycle.id)}><Trash2 className="w-4 h-4 mr-1 text-red-600" /><span className="text-red-600">Xóa</span></Button>
-                </div>
+                <button onClick={() => setCycleModal({ mode: "edit", data: { ...cycle } })} className="shrink-0 p-1.5 text-gray-500 hover:bg-gray-100 rounded" title="Sửa chu kỳ"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => setConfirmId(cycle.id)} className="shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded" title="Xóa chu kỳ"><Trash2 className="w-4 h-4" /></button>
               </div>
             );
           })}
@@ -174,10 +162,10 @@ export function CropCycleManagement() {
         </div>
       </div>
 
-      {/* Accordion theo VÙNG */}
-      <div className="space-y-4">
+      {/* Vùng — dạng Lưới thì các vùng nằm trên cùng hàng, dạng Danh sách thì xếp dọc */}
+      <div className={view === "grid" ? "grid grid-cols-1 xl:grid-cols-2 gap-4 items-start" : "space-y-4"}>
         {zoneGroups.length === 0 && (
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-10 text-center text-gray-400">Không có chu kỳ phù hợp bộ lọc.</div>
+          <div className="xl:col-span-2 bg-white rounded-lg shadow border border-gray-200 p-10 text-center text-gray-400">Không có chu kỳ phù hợp bộ lọc.</div>
         )}
         {zoneGroups.map(({ zone, zonePlots, cycleCount }) => {
           const open = openZones.has(zone.id);
@@ -196,12 +184,10 @@ export function CropCycleManagement() {
                 </StatusBadge>
               </button>
 
-              {/* Lô trong vùng */}
+              {/* Lô trong vùng — xếp dọc gọn (mỗi lô đã rất nhỏ) */}
               {open && (
-                <div className="p-4">
-                  <div className={view === "grid" ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3" : "space-y-3"}>
-                    {zonePlots.map(({ plot, plotCycles }) => <PlotCard key={plot.id} plot={plot} plotCycles={plotCycles} />)}
-                  </div>
+                <div className="p-3 sm:p-4 space-y-2.5">
+                  {zonePlots.map(({ plot, plotCycles }) => <PlotCard key={plot.id} plot={plot} plotCycles={plotCycles} />)}
                 </div>
               )}
             </div>
