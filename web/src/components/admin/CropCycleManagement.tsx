@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
-import { Plus, Calendar, FileText, X, AlertTriangle, MapPin } from "lucide-react";
+import { Plus, Calendar, FileText, X, AlertTriangle, MapPin, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
+import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import {
-  cropCycles,
+  cropCycles as cycleSeed,
   plots,
   processes,
   teamLeaderReports,
@@ -12,10 +13,37 @@ import {
   zoneName,
 } from "../../lib/mockData";
 
+interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
+
+const CYCLE_STATUS: Record<string, { label: string; badge: "active" | "pending" | "completed" }> = {
+  active: { label: "Đang hoạt động", badge: "active" },
+  paused: { label: "Tạm dừng", badge: "pending" },
+  done: { label: "Kết thúc", badge: "completed" },
+};
+const emptyCycle = (): Cycle => ({ id: "", plotId: plots[0]?.id ?? "", crop: "Gấc", startDate: "2026-06-14", processId: processes[0]?.id ?? "", status: "active" });
+
 export function CropCycleManagement() {
   const navigate = useNavigate();
   // Lô đang được mở để xem báo cáo tổ trưởng (null = không mở panel nào)
   const [reportPlotId, setReportPlotId] = useState<string | null>(null);
+
+  // State CRUD chu kỳ (prototype)
+  const [cycles, setCycles] = useState<Cycle[]>(() => cycleSeed.map((c) => ({ ...c })));
+  const [cycleModal, setCycleModal] = useState<{ mode: "add" | "edit"; data: Cycle } | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const seq = React.useRef(100);
+
+  const saveCycle = (data: Cycle) => {
+    if (!data.plotId) return;
+    setCycles((prev) =>
+      data.id ? prev.map((c) => (c.id === data.id ? data : c)) : [...prev, { ...data, id: `cc${++seq.current}` }]
+    );
+    setCycleModal(null);
+  };
+  const deleteCycle = (id: string) => {
+    setCycles((prev) => prev.filter((c) => c.id !== id));
+    setConfirmId(null);
+  };
 
   // Khi bấm vào tên Lô: điều hướng tới trang quản lý vùng để xem chi tiết lô.
   // Truyền plotId qua query để trang /admin/zones có thể mở/scroll đúng vị trí lô tương ứng.
@@ -37,7 +65,7 @@ export function CropCycleManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Quản lý chu kỳ cây trồng</h2>
           <p className="text-gray-600 mt-1">Khai báo và theo dõi chu kỳ canh tác của từng lô</p>
         </div>
-        <Button variant="primary">
+        <Button variant="primary" onClick={() => setCycleModal({ mode: "add", data: emptyCycle() })}>
           <Plus className="w-4 h-4 mr-2" />
           Thêm chu kỳ mới
         </Button>
@@ -61,9 +89,10 @@ export function CropCycleManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {cropCycles.map((cycle) => {
+              {cycles.map((cycle) => {
                 const plot = plots.find((p) => p.id === cycle.plotId);
                 const process = processes.find((p) => p.id === cycle.processId);
+                const cycleStatus = CYCLE_STATUS[cycle.status] ?? CYCLE_STATUS.active;
                 const startDate = new Date(cycle.startDate);
                 const today = new Date("2026-06-14");
                 const daysElapsed = Math.floor(
@@ -107,7 +136,7 @@ export function CropCycleManagement() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{process?.name}</td>
                     <td className="px-6 py-4">
-                      <StatusBadge status="active">Đang hoạt động</StatusBadge>
+                      <StatusBadge status={cycleStatus.badge}>{cycleStatus.label}</StatusBadge>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -136,7 +165,12 @@ export function CropCycleManagement() {
                             </span>
                           )}
                         </Button>
-                        <Button variant="ghost" size="sm">Chi tiết</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setCycleModal({ mode: "edit", data: { ...cycle } })} title="Sửa chu kỳ">
+                          <Edit2 className="w-4 h-4 mr-1" /> Sửa
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setConfirmId(cycle.id)} title="Xóa chu kỳ">
+                          <Trash2 className="w-4 h-4 mr-1 text-red-600" /> <span className="text-red-600">Xóa</span>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -280,6 +314,58 @@ export function CropCycleManagement() {
           </div>
         </div>
       )}
+
+      {/* Modal thêm/sửa chu kỳ */}
+      {cycleModal && (
+        <CycleForm modal={cycleModal} onClose={() => setCycleModal(null)} onSave={saveCycle} />
+      )}
+
+      {/* Xác nhận xóa chu kỳ */}
+      {confirmId && (
+        <ConfirmDialog
+          title="Xóa chu kỳ cây trồng?"
+          message="Bạn có chắc muốn xóa chu kỳ này? Công việc đã sinh từ chu kỳ có thể bị ảnh hưởng."
+          onCancel={() => setConfirmId(null)}
+          onConfirm={() => deleteCycle(confirmId)}
+        />
+      )}
     </div>
+  );
+}
+
+function CycleForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Cycle }; onClose: () => void; onSave: (d: Cycle) => void; }) {
+  const [form, setForm] = React.useState<Cycle>(modal.data);
+  return (
+    <Modal title={modal.mode === "add" ? "Thêm chu kỳ cây trồng" : "Sửa chu kỳ cây trồng"} onClose={onClose}>
+      <Field label="Lô *">
+        <select value={form.plotId} onChange={(e) => setForm({ ...form, plotId: e.target.value })} className={inputCls}>
+          {plots.map((p) => <option key={p.id} value={p.id}>{zoneName(p.zoneId)} · {p.name}</option>)}
+        </select>
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Loại cây">
+          <select value={form.crop} onChange={(e) => setForm({ ...form, crop: e.target.value })} className={inputCls}>
+            <option value="Gấc">Gấc</option>
+            <option value="Sâm">Sâm</option>
+          </select>
+        </Field>
+        <Field label="Ngày bắt đầu">
+          <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={inputCls} />
+        </Field>
+      </div>
+      <Field label="Quy trình">
+        <select value={form.processId} onChange={(e) => setForm({ ...form, processId: e.target.value })} className={inputCls}>
+          {processes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </Field>
+      <Field label="Trạng thái">
+        <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={inputCls}>
+          <option value="active">Đang hoạt động</option>
+          <option value="paused">Tạm dừng</option>
+          <option value="done">Kết thúc</option>
+        </select>
+      </Field>
+      <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.plotId} />
+    </Modal>
   );
 }
