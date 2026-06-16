@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Plus, Calendar, FileText, X, AlertTriangle, MapPin, Edit2, Trash2, ChevronDown, ChevronRight, Filter, LayoutGrid, List, Layers } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import {
-  cropCycles as cycleSeed, plots, zones, processes, teamLeaderReports, plotName, zoneName, plotCrops,
+  plots, zones, processes, teamLeaderReports, plotName, zoneName, plotCrops,
 } from "../../lib/mockData";
+import { getCropCycles } from "../../lib/queries";
 
 interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
 
@@ -21,10 +22,26 @@ const cropOrder = (crop: string) => (crop === "Gấc" ? 0 : crop === "Sâm" ? 1 
 export function CropCycleManagement() {
   const navigate = useNavigate();
   const [reportPlotId, setReportPlotId] = useState<string | null>(null);
-  const [cycles, setCycles] = useState<Cycle[]>(() => cycleSeed.map((c) => ({ ...c })));
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [loading, setLoading] = useState(true);
   const [cycleModal, setCycleModal] = useState<{ mode: "add" | "edit"; data: Cycle } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const seq = React.useRef(100);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getCropCycles();
+        setCycles(data || []);
+      } catch (error) {
+        console.error("Failed to fetch crop cycles:", error);
+        setCycles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Bộ lọc + chế độ xem + accordion vùng
   const [fZone, setFZone] = useState("all");
@@ -118,6 +135,8 @@ export function CropCycleManagement() {
       </div>
     );
   };
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
 
   return (
     <div className="space-y-6">

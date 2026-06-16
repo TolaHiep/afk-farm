@@ -1,6 +1,7 @@
 import React from "react";
 import { LifeBuoy, Mail, Check, X, MessageSquare, MapPin } from "lucide-react";
-import { supportRequests, plotName, plots, zoneName } from "../../lib/mockData";
+import { plotName, plots, zoneName } from "../../lib/mockData";
+import { getSupport } from "../../lib/queries";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Chờ xử lý", cls: "bg-yellow-100 text-yellow-800" },
@@ -11,10 +12,19 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 };
 
 export function SupportRequests() {
-  const [items, setItems] = React.useState(supportRequests);
-  const [selected, setSelected] = React.useState<string | null>(items[0]?.id ?? null);
+  const [items, setItems] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selected, setSelected] = React.useState<string | null>(null);
   const [reply, setReply] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
+
+  React.useEffect(() => {
+    getSupport().then((data) => {
+      setItems(data);
+      setSelected(data[0]?.id ?? null);
+      setLoading(false);
+    });
+  }, []);
 
   const filtered = items.filter((i) => statusFilter === "all" || i.status === statusFilter);
   const current = items.find((i) => i.id === selected);
@@ -26,6 +36,16 @@ export function SupportRequests() {
     const p = plots.find((x) => x.id === plotId);
     return p ? `${zoneName(p.zoneId)} · ${p.name}` : plotName(plotId);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="p-8 text-center text-gray-400 text-sm bg-white rounded-lg border border-gray-200">
+          Đang tải...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -97,9 +117,9 @@ export function SupportRequests() {
 
               <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-700">{current.content}</div>
 
-              {current.photos.length > 0 && (
+              {(current.photos ?? []).length > 0 && (
                 <div className="flex gap-3">
-                  {current.photos.map((src, idx) => (
+                  {(current.photos ?? []).map((src: string, idx: number) => (
                     <img key={idx} src={src} alt="ảnh hỗ trợ" className="w-28 h-28 object-cover rounded-lg border border-gray-200" />
                   ))}
                 </div>

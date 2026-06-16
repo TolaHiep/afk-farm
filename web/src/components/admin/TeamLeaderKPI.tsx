@@ -3,7 +3,8 @@ import { Filter, Download, ClipboardCheck, ClipboardX, AlertTriangle, LifeBuoy }
 import { Button } from "../ui/button";
 import { KPICard } from "../ui/KPICard";
 import { StatusBadge } from "../ui/StatusBadge";
-import { kpiData, teamLeaders, teamLeaderReports, supportRequests } from "../../lib/mockData";
+import { teamLeaders, teamLeaderReports, supportRequests } from "../../lib/mockData";
+import { getTeamKpi } from "../../lib/queries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const REPORT_DATE = "2026-06-14";
@@ -14,8 +15,18 @@ export function TeamLeaderKPI() {
   // Bộ lọc theo cây (mô hình xen canh: mỗi lô có Gấc + Sâm)
   const [cropFilter, setCropFilter] = React.useState<CropFilter>("all");
 
+  // Dữ liệu KPI lấy từ backend
+  const [kpiData, setKpiData] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    getTeamKpi()
+      .then((data) => setKpiData(data ?? []))
+      .finally(() => setLoading(false));
+  }, []);
+
   // Lấy số liệu của 1 tổ theo cây đang chọn: nếu chọn cây thì đọc byCrop, else đọc tổng
-  const val = (row: (typeof kpiData)[number], field: string): number =>
+  const val = (row: any, field: string): number =>
     cropFilter === "all"
       ? ((row as unknown as Record<string, number>)[field] ?? 0)
       : (row.byCrop?.[cropFilter]?.[field] ?? 0);
@@ -63,6 +74,10 @@ export function TeamLeaderKPI() {
     onTime: val(k, "onTime"),
     overdue: val(k, "overdue"),
   }));
+
+  if (loading) {
+    return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
+  }
 
   return (
     <div className="space-y-6">
