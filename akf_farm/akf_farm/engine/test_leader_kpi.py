@@ -25,3 +25,9 @@ class TestKpi(unittest.TestCase):
         self.assertEqual(k["on_time_pct"], 0.0)
         self.assertEqual(k["full_report_pct"], 0.0)
         self.assertEqual(k["total_work"], 0)
+
+    def test_none_mandays_is_treated_as_zero(self):
+        tasks = [{"status": "completed", "on_time": True, "mandays": None},
+                 {"status": "completed", "on_time": True}]  # missing mandays
+        k = compute_kpi(tasks, {}, anomaly_count=0)
+        self.assertEqual(k["total_work"], 0)

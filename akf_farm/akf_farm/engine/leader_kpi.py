@@ -9,5 +9,5 @@ def compute_kpi(tasks, report_days, anomaly_count=0):
     return {
         "completed": len(completed), "overdue": len(overdue), "not_done": len(not_done),
         "on_time_pct": on_time_pct, "full_report_pct": full_report_pct,
-        "anomalies": anomaly_count, "total_work": sum(int(t.get("mandays", 0)) for t in tasks),
+        "anomalies": anomaly_count, "total_work": sum(int(t.get("mandays") or 0) for t in tasks),
     }
