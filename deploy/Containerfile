@@ -44,6 +44,7 @@ RUN useradd -ms /bin/bash frappe \
     && ln -sf /dev/stdout /var/log/nginx/access.log && ln -sf /dev/stderr /var/log/nginx/error.log \
     && touch /run/nginx.pid \
     && chown -R frappe:frappe /etc/nginx/conf.d /etc/nginx/nginx.conf /etc/nginx/snippets /var/log/nginx /var/lib/nginx /run/nginx.pid \
+    && sed -i 's/\r$//' /usr/local/bin/nginx-entrypoint.sh \
     && chmod 755 /usr/local/bin/nginx-entrypoint.sh
 
 FROM base AS builder
@@ -92,7 +93,8 @@ VOLUME [ "/home/frappe/frappe-bench/sites", "/home/frappe/frappe-bench/logs" ]
 USER root
 COPY deploy/resources/core/main-entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY deploy/resources/core/start.sh /usr/local/bin/start.sh
-RUN chmod 755 /usr/local/bin/entrypoint.sh /usr/local/bin/start.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh /usr/local/bin/start.sh \
+  && chmod 755 /usr/local/bin/entrypoint.sh /usr/local/bin/start.sh
 
 USER frappe
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
