@@ -1,0 +1,8 @@
+.git
+.playwright-mcp
+docs
+frontend/node_modules
+frontend/dist
+backend/akf_farm/.pytest_cache
+**/__pycache__
+**/*.pyc
