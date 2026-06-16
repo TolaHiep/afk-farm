@@ -1,8 +1,8 @@
 import React from "react";
 import { useNavigate, Link } from "react-router";
 import { ArrowLeft, Camera, CheckCircle, Send, HelpCircle, MessageSquare } from "lucide-react";
-import { supportTypes, leaderPlots, plotName } from "../../lib/mockData";
-import { submitSupport, getMySupport } from "../../lib/queries";
+import { supportTypes, plotName } from "../../lib/mockData";
+import { submitSupport, getMySupport, getMyPlots } from "../../lib/queries";
 
 type SupportRequest = {
   id: string;
@@ -19,9 +19,8 @@ type SupportRequest = {
 
 export function MobileSupport() {
   const navigate = useNavigate();
-  const myPlots = leaderPlots("tl1");
-
-  const [plotId, setPlotId] = React.useState(myPlots[0]?.id ?? "");
+  const [myPlots, setMyPlots] = React.useState<any[]>([]);
+  const [plotId, setPlotId] = React.useState("");
   const [type, setType] = React.useState(supportTypes[0] ?? "");
   const [content, setContent] = React.useState("");
   const [hasPhoto, setHasPhoto] = React.useState(false);
@@ -41,6 +40,18 @@ export function MobileSupport() {
   };
 
   React.useEffect(() => {
+    const loadPlots = async () => {
+      try {
+        const plots = await getMyPlots();
+        setMyPlots(plots);
+        if (plots.length > 0 && !plotId) {
+          setPlotId(plots[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load my plots:", err);
+      }
+    };
+    loadPlots();
     loadRequests();
   }, []);
 

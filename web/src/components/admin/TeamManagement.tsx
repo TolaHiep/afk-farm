@@ -2,7 +2,6 @@ import React from "react";
 import { Search, ChevronDown, ChevronRight, Phone, Mail, MapPin, Users, Plus, Pencil, Trash2, UserPlus } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { leaderPlots, zoneName } from "../../lib/mockData";
 import { getTeamLeaders, getTeamMembers } from "../../lib/queries";
 
 interface Leader { id: string; name: string; phone: string; email: string; plotId: string; plotIds: string[]; status: string; }
@@ -105,7 +104,7 @@ export function TeamManagement() {
         {filteredLeaders.map((leader) => {
           const isOpen = !!openIds[leader.id];
           const myMembers = members.filter((m) => m.teamLeaderId === leader.id);
-          const myPlots = leaderPlots(leader.id);
+          const myPlots = leader.plotIds ?? [];
 
           return (
             <div key={leader.id} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
@@ -155,9 +154,9 @@ export function TeamManagement() {
                       <p className="text-sm text-gray-400">Chưa được giao lô</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
-                        {myPlots.map((p) => (
-                          <span key={p.id} className="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-gray-200 text-xs text-gray-700">
-                            {zoneName(p.zoneId)} · {p.name} ({p.crop})
+                        {myPlots.map((plotId) => (
+                          <span key={plotId} className="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-gray-200 text-xs text-gray-700">
+                            {plotId}
                           </span>
                         ))}
                       </div>

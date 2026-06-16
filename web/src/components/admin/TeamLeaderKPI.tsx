@@ -3,8 +3,7 @@ import { Filter, Download, ClipboardCheck, ClipboardX, AlertTriangle, LifeBuoy }
 import { Button } from "../ui/button";
 import { KPICard } from "../ui/KPICard";
 import { StatusBadge } from "../ui/StatusBadge";
-import { teamLeaders, teamLeaderReports, supportRequests } from "../../lib/mockData";
-import { getTeamKpi } from "../../lib/queries";
+import { getTeamKpi, getTeamLeaders, getReports, getSupport } from "../../lib/queries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const REPORT_DATE = "2026-06-14";
@@ -15,13 +14,21 @@ export function TeamLeaderKPI() {
   // Bộ lọc theo cây (mô hình xen canh: mỗi lô có Gấc + Sâm)
   const [cropFilter, setCropFilter] = React.useState<CropFilter>("all");
 
-  // Dữ liệu KPI lấy từ backend
+  // Dữ liệu lấy từ backend
   const [kpiData, setKpiData] = React.useState<any[]>([]);
+  const [teamLeaders, setTeamLeaders] = React.useState<any[]>([]);
+  const [teamLeaderReports, setTeamLeaderReports] = React.useState<any[]>([]);
+  const [supportRequests, setSupportRequests] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    getTeamKpi()
-      .then((data) => setKpiData(data ?? []))
+    Promise.all([getTeamKpi(), getTeamLeaders(), getReports(), getSupport()])
+      .then(([kpi, leaders, reports, support]) => {
+        setKpiData(kpi ?? []);
+        setTeamLeaders(leaders ?? []);
+        setTeamLeaderReports(reports ?? []);
+        setSupportRequests(support ?? []);
+      })
       .finally(() => setLoading(false));
   }, []);
 

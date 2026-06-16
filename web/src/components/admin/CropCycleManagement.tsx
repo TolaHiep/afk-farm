@@ -5,9 +5,9 @@ import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import {
-  plots, zones, processes, teamLeaderReports, plotName, zoneName, plotCrops,
+  plotName, zoneName, plotCrops,
 } from "../../lib/mockData";
-import { getCropCycles } from "../../lib/queries";
+import { getCropCycles, getZones, getPlots, getProcesses, getReports } from "../../lib/queries";
 
 interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
 
@@ -16,13 +16,17 @@ const CYCLE_STATUS: Record<string, { label: string; badge: "active" | "pending" 
   paused: { label: "Tạm dừng", badge: "pending" },
   done: { label: "Kết thúc", badge: "completed" },
 };
-const emptyCycle = (): Cycle => ({ id: "", plotId: plots[0]?.id ?? "", crop: "Gấc", startDate: "2026-06-14", processId: processes[0]?.id ?? "", status: "active" });
+const emptyCycle = (firstPlotId = "", firstProcessId = ""): Cycle => ({ id: "", plotId: firstPlotId, crop: "Gấc", startDate: "2026-06-14", processId: firstProcessId, status: "active" });
 const cropOrder = (crop: string) => (crop === "Gấc" ? 0 : crop === "Sâm" ? 1 : 2);
 
 export function CropCycleManagement() {
   const navigate = useNavigate();
   const [reportPlotId, setReportPlotId] = useState<string | null>(null);
   const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [zones, setZones] = useState<any[]>([]);
+  const [plots, setPlots] = useState<any[]>([]);
+  const [processes, setProcesses] = useState<any[]>([]);
+  const [teamLeaderReports, setTeamLeaderReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cycleModal, setCycleModal] = useState<{ mode: "add" | "edit"; data: Cycle } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -31,11 +35,26 @@ export function CropCycleManagement() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getCropCycles();
-        setCycles(data || []);
+        const [cyclesData, zonesData, plotsData, processesData, reportsData] = await Promise.all([
+          getCropCycles(),
+          getZones(),
+          getPlots(),
+          getProcesses(),
+          getReports(),
+        ]);
+        setCycles(cyclesData || []);
+        setZones(zonesData || []);
+        setPlots(plotsData || []);
+        setProcesses(processesData || []);
+        setTeamLeaderReports(reportsData || []);
+        setOpenZones(new Set((zonesData || []).map((z: any) => z.id)));
       } catch (error) {
-        console.error("Failed to fetch crop cycles:", error);
+        console.error("Failed to fetch crop cycle data:", error);
         setCycles([]);
+        setZones([]);
+        setPlots([]);
+        setProcesses([]);
+        setTeamLeaderReports([]);
       } finally {
         setLoading(false);
       }
@@ -48,7 +67,7 @@ export function CropCycleManagement() {
   const [fCrop, setFCrop] = useState("all");
   const [fStatus, setFStatus] = useState("all");
   const [view, setView] = useState<"list" | "grid">("list");
-  const [openZones, setOpenZones] = useState<Set<string>>(() => new Set(zones.map((z) => z.id)));
+  const [openZones, setOpenZones] = useState<Set<string>>(() => new Set());
   const toggleZone = (id: string) => setOpenZones((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const saveCycle = (data: Cycle) => {
@@ -146,7 +165,7 @@ export function CropCycleManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Quản lý chu kỳ cây trồng</h2>
           <p className="text-gray-600 mt-1">Khai báo và theo dõi chu kỳ canh tác của từng lô</p>
         </div>
-        <Button variant="primary" onClick={() => setCycleModal({ mode: "add", data: emptyCycle() })}>
+        <Button variant="primary" onClick={() => setCycleModal({ mode: "add", data: emptyCycle(plots[0]?.id ?? "", processes[0]?.id ?? "") })}>
           <Plus className="w-4 h-4 mr-2" /> Thêm chu kỳ mới
         </Button>
       </div>
@@ -262,7 +281,7 @@ export function CropCycleManagement() {
                     <p className="text-sm text-gray-700">{report.content}</p>
                     {report.photos && report.photos.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {report.photos.map((photo, idx) => (
+                        {report.photos.map((photo: string, idx: number) => (
                           <a key={idx} href={photo} target="_blank" rel="noopener noreferrer" className="block">
                             <img src={photo} alt={`Ảnh ${idx + 1}`} className="w-20 h-20 object-cover rounded-md border border-gray-200 hover:opacity-90" />
                           </a>
@@ -287,7 +306,7 @@ export function CropCycleManagement() {
       )}
 
       {/* Modal thêm/sửa chu kỳ */}
-      {cycleModal && <CycleForm modal={cycleModal} onClose={() => setCycleModal(null)} onSave={saveCycle} />}
+      {cycleModal && <CycleForm modal={cycleModal} zones={zones} plots={plots} processes={processes} onClose={() => setCycleModal(null)} onSave={saveCycle} />}
 
       {/* Xác nhận xóa */}
       {confirmId && (
@@ -303,7 +322,7 @@ export function CropCycleManagement() {
 }
 
 // Form: chọn VÙNG trước → rồi chọn LÔ trong vùng đó
-function CycleForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Cycle }; onClose: () => void; onSave: (d: Cycle) => void; }) {
+function CycleForm({ modal, zones, plots, processes, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Cycle }; zones: any[]; plots: any[]; processes: any[]; onClose: () => void; onSave: (d: Cycle) => void; }) {
   const [form, setForm] = React.useState<Cycle>(modal.data);
   const [zoneId, setZoneId] = React.useState<string>(
     plots.find((p) => p.id === modal.data.plotId)?.zoneId ?? zones[0]?.id ?? ""

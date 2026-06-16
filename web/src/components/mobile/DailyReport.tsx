@@ -1,8 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList } from "lucide-react";
-import { leaderPlots } from "../../lib/mockData";
-import { submitReport } from "../../lib/queries";
+import { submitReport, getMyPlots } from "../../lib/queries";
 
 const ANOMALY_TYPES = [
   { value: "ung", label: "Úng nước" },
@@ -31,18 +30,25 @@ function getCropChip(crop: string): string {
 export function DailyReport() {
   const navigate = useNavigate();
 
-  // Danh sách mục báo cáo (Lô × Cây) do tổ trưởng tl1 phụ trách
+  // Fetch logged-in leader's plots from API
+  const [myPlots, setMyPlots] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    getMyPlots().then(setMyPlots);
+  }, []);
+
+  // Danh sách mục báo cáo (Lô × Cây) do tổ trưởng phụ trách
   const reportItems = React.useMemo<ReportItem[]>(
     () =>
-      leaderPlots("tl1").flatMap((plot) =>
-        plot.crops.map((c) => ({
-          id: `${plot.id}__${c.crop}`,
+      myPlots.flatMap((plot) =>
+        (plot.crops as string[]).map((c: string) => ({
+          id: `${plot.id}__${c}`,
           plotId: plot.id,
           plotName: plot.name,
-          crop: c.crop,
+          crop: c,
         }))
       ),
-    []
+    [myPlots]
   );
 
   // State cục bộ: mục (lô×cây) nào đã báo cáo
