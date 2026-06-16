@@ -41,3 +41,48 @@ def dedupe_shared(rows):
             r = {**r, "crop": "Chung"}
         out.append(r)
     return out
+
+
+def generate_tasks(from_date=None, days=10):
+    """Sinh Farm Task cho horizon `days` ngày từ các Crop Cycle active. Idempotent.
+
+    Import frappe CỤC BỘ để các hàm thuần phía trên vẫn test được không cần Frappe.
+    """
+    import frappe
+    from frappe.utils import add_days, getdate
+
+    from_d = getdate(from_date) if from_date else getdate()
+    to_d = getdate(add_days(from_d, days - 1))
+    created = 0
+    cycles = frappe.get_all(
+        "Crop Cycle",
+        filters={"status": "active"},
+        fields=["name", "block", "crop", "cultivation_process", "start_date"],
+    )
+    rows = []
+    for c in cycles:
+        if not c.cultivation_process:
+            continue
+        proc = frappe.get_doc("Cultivation Process", c.cultivation_process)
+        for s in proc.steps:
+            freq = (s.frequency_type, s.frequency_value) if s.frequency_type else ("one_time", 1)
+            for d in due_dates(getdate(c.start_date), freq, from_d, to_d):
+                rows.append({
+                    "cycle": c.name, "block": c.block, "crop": c.crop, "date": d,
+                    "description": s.description, "scope": s.scope, "require_photo": s.require_photo,
+                })
+    for r in dedupe_shared(rows):
+        # idempotent: khóa theo (block, crop, ngày, tên việc)
+        exists = frappe.db.exists("Farm Task", {
+            "block": r["block"], "crop": r["crop"],
+            "task_date": str(r["date"]), "title": r["description"],
+        })
+        if exists:
+            continue
+        frappe.get_doc({
+            "doctype": "Farm Task", "title": r["description"], "block": r["block"],
+            "crop": r["crop"], "cycle": r.get("cycle"), "task_date": str(r["date"]),
+            "status": "pending", "require_photo": r.get("require_photo") or 0,
+        }).insert()
+        created += 1
+    return created

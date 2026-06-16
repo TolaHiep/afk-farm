@@ -148,23 +148,11 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"akf_farm.tasks.all"
-# 	],
-# 	"daily": [
-# 		"akf_farm.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"akf_farm.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"akf_farm.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"akf_farm.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"akf_farm.engine.task_generator.generate_tasks"
+	],
+}
 
 # Testing
 # -------

@@ -59,9 +59,10 @@ quote-style = "double"
 indent-style = "tab"
 docstring-code-format = true
 
-# Chạy test engine thuần (không cần Frappe): cd akf_farm && python -m pytest akf_farm/engine
-# pythonpath="." để package akf_farm (thư mục con) import được như trong bench.
+# Chạy test engine THUẦN (không cần Frappe): cd akf_farm && python -m pytest
+# Chỉ quét thư mục engine; test cần Frappe (doctype, tests/) chạy trong container bằng
+# bench run-tests. pythonpath="." để package akf_farm (thư mục con) import được như trong bench.
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["akf_farm"]
+testpaths = ["akf_farm/engine"]
 python_files = ["test_*.py"]
