@@ -1,0 +1,12 @@
+[project]
+name = "akf_farm"
+version = "0.0.1"
+description = "AKF farm production management — custom Frappe app"
+requires-python = ">=3.10"
+
+# Cho phép chạy test engine thuần (không cần Frappe) bằng: cd akf_farm && python -m pytest
+# pythonpath="." để package `akf_farm` (thư mục con) import được như trong bench.
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["akf_farm"]
+python_files = ["test_*.py"]
