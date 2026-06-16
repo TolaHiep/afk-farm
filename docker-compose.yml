@@ -1,7 +1,12 @@
-# Đóng gói & chạy phần mềm AKF bằng Docker.
+# Đóng gói & chạy phần mềm AKF bằng Docker (chế độ demo same-origin).
 # Khởi động:  docker compose up -d --build
-# Mở trình duyệt: http://localhost:8080
+# Mở trình duyệt: http://localhost:8080  (React + API chung một cổng)
 # Dừng:        docker compose down
+#
+# Backend: hiện dùng stack Frappe dev (frappe_docker, project "akf") chạy `bench serve`
+# nghe ở cổng 8000 trên máy host. nginx trong container web proxy /api,/files về đó qua
+# "akf-backend" (map tới host-gateway). Khi lên VPS thật: thay bằng service Frappe đóng
+# gói cùng compose (mariadb/redis/frappe gunicorn) và trỏ akf-backend vào service đó.
 
 services:
   web:
@@ -11,7 +16,6 @@ services:
     container_name: akf-web
     ports:
       - "8080:80"   # máy của anh: 8080  ->  trong container: 80
+    extra_hosts:
+      - "akf-backend:host-gateway"   # akf-backend -> máy host (nơi bench serve cổng 8000)
     restart: unless-stopped
-
-# Ghi chú cho giai đoạn thật (ERPNext): khi triển khai backend,
-# thêm các service erpnext / mariadb / redis vào đây để chạy chung 1 lệnh.
