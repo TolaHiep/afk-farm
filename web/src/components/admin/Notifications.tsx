@@ -1,10 +1,33 @@
 import React from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { AlertCircle, AlertTriangle, FileText, Circle } from "lucide-react";
 import { StatusBadge } from "../ui/StatusBadge";
-import { notifications } from "../../lib/mockData";
+import { getNotifications } from "../../lib/queries";
 
 export function Notifications() {
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await getNotifications();
+        setNotifications(data);
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  if (loading) {
+    return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
+  }
+
   const getIcon = (type: string) => {
     switch (type) {
       case "overdue": return <AlertCircle className="w-5 h-5 text-red-600" />;

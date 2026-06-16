@@ -1,0 +1,44 @@
+{
+ "actions": [],
+ "creation": "2026-06-16 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "app_name",
+  "company_name",
+  "contact",
+  "logo_text",
+  "email_section",
+  "smtp_host",
+  "smtp_port",
+  "from_email",
+  "from_name",
+  "email_enabled"
+ ],
+ "fields": [
+  {"fieldname": "app_name", "fieldtype": "Data", "label": "Tên ứng dụng"},
+  {"fieldname": "company_name", "fieldtype": "Data", "label": "Tên công ty"},
+  {"fieldname": "contact", "fieldtype": "Data", "label": "Liên hệ"},
+  {"fieldname": "logo_text", "fieldtype": "Data", "label": "Logo (chữ)"},
+  {"fieldname": "email_section", "fieldtype": "Section Break", "label": "Email"},
+  {"fieldname": "smtp_host", "fieldtype": "Data", "label": "SMTP Host"},
+  {"fieldname": "smtp_port", "fieldtype": "Data", "label": "SMTP Port"},
+  {"fieldname": "from_email", "fieldtype": "Data", "label": "From Email"},
+  {"fieldname": "from_name", "fieldtype": "Data", "label": "From Name"},
+  {"default": "0", "fieldname": "email_enabled", "fieldtype": "Check", "label": "Bật email"}
+ ],
+ "issingle": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-16 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Akf Farm",
+ "name": "AKF Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

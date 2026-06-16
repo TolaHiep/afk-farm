@@ -1,0 +1,120 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-06-16 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "block",
+  "crop",
+  "cycle",
+  "task_date",
+  "team_leader",
+  "status",
+  "priority",
+  "require_photo",
+  "client_uuid",
+  "photos"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Tên việc",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "block",
+   "fieldtype": "Link",
+   "label": "Lô",
+   "options": "Farm Block",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "crop",
+   "fieldtype": "Select",
+   "label": "Cây",
+   "options": "Gấc\nSâm\nChung",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cycle",
+   "fieldtype": "Link",
+   "label": "Chu kỳ",
+   "options": "Crop Cycle"
+  },
+  {
+   "fieldname": "task_date",
+   "fieldtype": "Date",
+   "label": "Ngày",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "team_leader",
+   "fieldtype": "Link",
+   "label": "Tổ trưởng",
+   "options": "User"
+  },
+  {
+   "default": "pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Trạng thái",
+   "options": "pending\nin-progress\ncompleted\noverdue",
+   "in_list_view": 1
+  },
+  {
+   "default": "normal",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Ưu tiên",
+   "options": "normal\nhigh\nurgent"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_photo",
+   "fieldtype": "Check",
+   "label": "Bắt buộc ảnh"
+  },
+  {
+   "fieldname": "client_uuid",
+   "fieldtype": "Data",
+   "label": "Client UUID",
+   "unique": 1
+  },
+  {
+   "fieldname": "photos",
+   "fieldtype": "Table",
+   "label": "Ảnh",
+   "options": "Farm Task Photo"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-16 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Akf Farm",
+ "name": "Farm Task",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

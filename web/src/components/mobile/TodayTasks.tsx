@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
   Calendar,
@@ -15,9 +15,9 @@ import {
   Send,
   TrendingUp,
 } from "lucide-react";
-import { tasks, plots } from "../../lib/mockData";
+import { plots } from "../../lib/mockData";
+import { getTodayTasks } from "../../lib/queries";
 
-const TEAM_LEADER_ID = "tl1";
 const TODAY = "2026-06-14";
 
 // Định dạng ngày kiểu Việt Nam (Thứ X, dd tháng MM, yyyy)
@@ -79,11 +79,24 @@ const CROP_ORDER = ["Gấc", "Sâm"];
 export function TodayTasks() {
   const navigate = useNavigate();
   const [viewDate, setViewDate] = useState(TODAY);
+  const [dayTasks, setDayTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const isToday = viewDate === TODAY;
 
-  const dayTasks = tasks.filter(
-    (t) => t.date === viewDate && t.teamLeaderId === TEAM_LEADER_ID
-  );
+  useEffect(() => {
+    setLoading(true);
+    getTodayTasks(viewDate).then((tasks) => {
+      setDayTasks(tasks);
+      setLoading(false);
+    }).catch(() => {
+      setDayTasks([]);
+      setLoading(false);
+    });
+  }, [viewDate]);
+
+  if (loading) {
+    return <div className="p-6 text-center text-gray-400">Đang tải…</div>;
+  }
 
   // Nhóm việc theo lô, rồi trong mỗi lô nhóm tiếp theo cây (Gấc / Sâm) — mô hình xen canh
   const plotGroups = Array.from(new Set(dayTasks.map((t) => t.plotId))).map((plotId) => {

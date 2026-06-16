@@ -1,14 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, MapPin, Calendar, User, Image as ImageIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { anomalies, plots } from "../../lib/mockData";
+import { plots } from "../../lib/mockData";
+import { getAnomalies } from "../../lib/queries";
 
 export function AnomalyDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const anomaly = anomalies.find(a => a.id === id);
+  const [anomaly, setAnomaly] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnomaly = async () => {
+      try {
+        const data = await getAnomalies();
+        const found = data.find(a => a.id === id);
+        setAnomaly(found);
+      } catch (error) {
+        console.error("Error fetching anomaly:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnomaly();
+  }, [id]);
+
+  if (loading) {
+    return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
+  }
 
   if (!anomaly) {
     return <div>Không tìm thấy báo cáo bất thường</div>;
@@ -105,10 +126,10 @@ export function AnomalyDetail() {
           <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
             <div className="flex items-center gap-2 mb-4">
               <ImageIcon className="w-5 h-5 text-gray-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Hình ảnh ({anomaly.photos.length})</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Hình ảnh ({(anomaly.photos ?? []).length})</h3>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {anomaly.photos.map((photo, idx) => (
+              {(anomaly.photos ?? []).map((photo: string, idx: number) => (
                 <img
                   key={idx}
                   src={photo}

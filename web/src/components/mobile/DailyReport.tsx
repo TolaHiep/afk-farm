@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList } from "lucide-react";
-import { leaderPlots } from "../../lib/mockData";
+import { submitReport, getMyPlots } from "../../lib/queries";
 
 const ANOMALY_TYPES = [
   { value: "ung", label: "Úng nước" },
@@ -30,18 +30,25 @@ function getCropChip(crop: string): string {
 export function DailyReport() {
   const navigate = useNavigate();
 
-  // Danh sách mục báo cáo (Lô × Cây) do tổ trưởng tl1 phụ trách
+  // Fetch logged-in leader's plots from API
+  const [myPlots, setMyPlots] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    getMyPlots().then(setMyPlots);
+  }, []);
+
+  // Danh sách mục báo cáo (Lô × Cây) do tổ trưởng phụ trách
   const reportItems = React.useMemo<ReportItem[]>(
     () =>
-      leaderPlots("tl1").flatMap((plot) =>
-        plot.crops.map((c) => ({
-          id: `${plot.id}__${c.crop}`,
+      myPlots.flatMap((plot) =>
+        (plot.crops as string[]).map((c: string) => ({
+          id: `${plot.id}__${c}`,
           plotId: plot.id,
           plotName: plot.name,
-          crop: c.crop,
+          crop: c,
         }))
       ),
-    []
+    [myPlots]
   );
 
   // State cục bộ: mục (lô×cây) nào đã báo cáo
@@ -56,6 +63,7 @@ export function DailyReport() {
   const [anomalyType, setAnomalyType] = React.useState("");
   const [anomalyDesc, setAnomalyDesc] = React.useState("");
   const [anomalyPhoto, setAnomalyPhoto] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const total = reportItems.length;
   const doneCount = reportedIds.length;
@@ -80,9 +88,9 @@ export function DailyReport() {
     resetForm();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeItem) return;
+    if (!activeItem || submitting) return;
 
     if (hasAnomaly && !anomalyType) {
       alert("Vui lòng chọn loại bất thường!");
@@ -97,11 +105,43 @@ export function DailyReport() {
       return;
     }
 
-    setReportedIds((prev) =>
-      prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]
-    );
-    alert(`Đã gửi báo cáo cho ${activeItem.plotName} · ${activeItem.crop}!`);
-    backToList();
+    // Soạn nội dung báo cáo từ các trường của form
+    const lines = [
+      work ? `Số công làm việc: ${work}` : "",
+      area ? `Diện tích hoàn thành (m²): ${area}` : "",
+      hasAnomaly ? `Bất thường (${anomalyType}): ${anomalyDesc.trim()}` : "",
+    ].filter(Boolean);
+    const content = lines.join("\n");
+
+    // Ảnh: khi có bất thường, người dùng bắt buộc đính kèm ảnh
+    const photos = hasAnomaly && anomalyPhoto
+      ? ["https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=400"]
+      : undefined;
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const now = new Date();
+    const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+    setSubmitting(true);
+    try {
+      await submitReport({
+        block: activeItem.plotId, // map lô -> block
+        crop: activeItem.crop,
+        date,
+        content,
+        photos,
+        abnormal: hasAnomaly ? 1 : 0,
+        client_uuid: `${activeItem.id}-${Date.now()}`,
+      });
+      setReportedIds((prev) =>
+        prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]
+      );
+      navigate("/mobile/success");
+    } catch (err: any) {
+      alert(err?.message || "Gửi báo cáo thất bại. Vui lòng thử lại.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ===== Màn hình form nhập báo cáo cho 1 mục (lô × cây) =====
@@ -242,9 +282,10 @@ export function DailyReport() {
           {/* Nút gửi */}
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg"
+            disabled={submitting}
+            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg disabled:opacity-60"
           >
-            Gửi báo cáo lô này
+            {submitting ? "Đang gửi..." : "Gửi báo cáo lô này"}
           </button>
         </form>
       </div>

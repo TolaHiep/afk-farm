@@ -1,6 +1,30 @@
 import React from "react";
 import { Settings as SettingsIcon, Mail, Building2, Send } from "lucide-react";
-import { appSettings, emailSettings } from "../../lib/mockData";
+import { getSettings, saveSettings } from "../../lib/queries";
+
+type SettingsState = {
+  appName: string;
+  companyName: string;
+  contact: string;
+  logoText: string;
+  smtpHost: string;
+  smtpPort: string;
+  fromEmail: string;
+  fromName: string;
+  emailEnabled: boolean;
+};
+
+const EMPTY: SettingsState = {
+  appName: "",
+  companyName: "",
+  contact: "",
+  logoText: "",
+  smtpHost: "",
+  smtpPort: "",
+  fromEmail: "",
+  fromName: "",
+  emailEnabled: false,
+};
 
 function Field({ label, value, onChange, type = "text", placeholder = "" }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
@@ -16,8 +40,41 @@ function Field({ label, value, onChange, type = "text", placeholder = "" }: {
 
 export function Settings() {
   const [tab, setTab] = React.useState<"app" | "email">("app");
-  const [app, setApp] = React.useState(appSettings);
-  const [mail, setMail] = React.useState(emailSettings);
+  const [data, setData] = React.useState<SettingsState>(EMPTY);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let alive = true;
+    getSettings()
+      .then((s: any) => {
+        if (!alive) return;
+        setData({
+          appName: s?.appName ?? "",
+          companyName: s?.companyName ?? "",
+          contact: s?.contact ?? "",
+          logoText: s?.logoText ?? "",
+          smtpHost: s?.smtpHost ?? "",
+          smtpPort: s?.smtpPort != null ? String(s.smtpPort) : "",
+          fromEmail: s?.fromEmail ?? "",
+          fromName: s?.fromName ?? "",
+          emailEnabled: !!s?.emailEnabled,
+        });
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (loading) {
+    return <div className="text-sm text-gray-500 p-6">Đang tải cài đặt…</div>;
+  }
+
+  const save = (msg: string) => {
+    saveSettings(data).then(() => alert(msg));
+  };
 
   return (
     <div className="space-y-4 max-w-3xl">
@@ -41,17 +98,17 @@ export function Settings() {
 
       {tab === "app" && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-          <Field label="Tên phần mềm" value={app.appName} onChange={(v) => setApp({ ...app, appName: v })} />
-          <Field label="Tên trang trại / công ty" value={app.companyName} onChange={(v) => setApp({ ...app, companyName: v })} />
-          <Field label="Thông tin liên hệ" value={app.contact} onChange={(v) => setApp({ ...app, contact: v })} />
+          <Field label="Tên phần mềm" value={data.appName} onChange={(v) => setData({ ...data, appName: v })} />
+          <Field label="Tên trang trại / công ty" value={data.companyName} onChange={(v) => setData({ ...data, companyName: v })} />
+          <Field label="Thông tin liên hệ" value={data.contact} onChange={(v) => setData({ ...data, contact: v })} />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-green-600 text-white grid place-items-center font-bold">{app.logoText}</div>
+              <div className="w-12 h-12 rounded-lg bg-green-600 text-white grid place-items-center font-bold">{data.logoText}</div>
               <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Tải logo lên</button>
             </div>
           </div>
-          <button onClick={() => alert("(Demo) Đã lưu cài đặt phần mềm")}
+          <button onClick={() => save("Đã lưu cài đặt phần mềm")}
             className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Lưu thay đổi</button>
         </div>
       )}
@@ -59,19 +116,19 @@ export function Settings() {
       {tab === "email" && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="SMTP host" value={mail.smtpHost} onChange={(v) => setMail({ ...mail, smtpHost: v })} placeholder="smtp.gmail.com" />
-            <Field label="SMTP port" value={mail.smtpPort} onChange={(v) => setMail({ ...mail, smtpPort: v })} placeholder="587" />
-            <Field label="Email gửi" value={mail.fromEmail} onChange={(v) => setMail({ ...mail, fromEmail: v })} type="email" />
-            <Field label="Tên người gửi" value={mail.fromName} onChange={(v) => setMail({ ...mail, fromName: v })} />
+            <Field label="SMTP host" value={data.smtpHost} onChange={(v) => setData({ ...data, smtpHost: v })} placeholder="smtp.gmail.com" />
+            <Field label="SMTP port" value={data.smtpPort} onChange={(v) => setData({ ...data, smtpPort: v })} placeholder="587" />
+            <Field label="Email gửi" value={data.fromEmail} onChange={(v) => setData({ ...data, fromEmail: v })} type="email" />
+            <Field label="Tên người gửi" value={data.fromName} onChange={(v) => setData({ ...data, fromName: v })} />
             <Field label="Mật khẩu / App password" value={""} onChange={() => {}} type="password" placeholder="••••••••" />
           </div>
           <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={mail.enabled} onChange={(e) => setMail({ ...mail, enabled: e.target.checked })}
+            <input type="checkbox" checked={data.emailEnabled} onChange={(e) => setData({ ...data, emailEnabled: e.target.checked })}
               className="w-4 h-4 rounded border-gray-300" />
             Bật gửi email
           </label>
           <div className="flex gap-2">
-            <button onClick={() => alert("(Demo) Đã lưu cấu hình email")}
+            <button onClick={() => save("Đã lưu cấu hình email")}
               className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Lưu cấu hình</button>
             <button onClick={() => alert("(Demo) Đã gửi email thử nghiệm")}
               className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">

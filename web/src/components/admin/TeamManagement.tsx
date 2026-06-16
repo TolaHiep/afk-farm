@@ -2,7 +2,7 @@ import React from "react";
 import { Search, ChevronDown, ChevronRight, Phone, Mail, MapPin, Users, Plus, Pencil, Trash2, UserPlus } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { teamLeaders as leadersSeed, teamMembers as membersSeed, leaderPlots, zoneName } from "../../lib/mockData";
+import { getTeamLeaders, getTeamMembers } from "../../lib/queries";
 
 interface Leader { id: string; name: string; phone: string; email: string; plotId: string; plotIds: string[]; status: string; }
 interface Member { id: string; name: string; phone: string; teamLeaderId: string; status: string; }
@@ -18,8 +18,9 @@ const emptyLeader = (): Leader => ({ id: "", name: "", phone: "", email: "", plo
 const emptyMember = (leaderId: string): Member => ({ id: "", name: "", phone: "", teamLeaderId: leaderId, status: "active" });
 
 export function TeamManagement() {
-  const [leaders, setLeaders] = React.useState<Leader[]>(() => leadersSeed.map((l) => ({ ...l })));
-  const [members, setMembers] = React.useState<Member[]>(() => membersSeed.map((m) => ({ ...m })));
+  const [leaders, setLeaders] = React.useState<Leader[]>([]);
+  const [members, setMembers] = React.useState<Member[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
   const [openIds, setOpenIds] = React.useState<Record<string, boolean>>({});
   const [leaderModal, setLeaderModal] = React.useState<LeaderModal>(null);
@@ -28,7 +29,18 @@ export function TeamManagement() {
   const seq = React.useRef(100);
   const nextId = (prefix: string) => `${prefix}${++seq.current}`;
 
+  React.useEffect(() => {
+    Promise.all([getTeamLeaders(), getTeamMembers()])
+      .then(([l, m]) => {
+        setLeaders(l);
+        setMembers(m);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const toggle = (id: string) => setOpenIds((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
 
   const q = query.trim().toLowerCase();
   const filteredLeaders = leaders.filter((l) =>
@@ -92,7 +104,7 @@ export function TeamManagement() {
         {filteredLeaders.map((leader) => {
           const isOpen = !!openIds[leader.id];
           const myMembers = members.filter((m) => m.teamLeaderId === leader.id);
-          const myPlots = leaderPlots(leader.id);
+          const myPlots = leader.plotIds ?? [];
 
           return (
             <div key={leader.id} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
@@ -142,9 +154,9 @@ export function TeamManagement() {
                       <p className="text-sm text-gray-400">Chưa được giao lô</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
-                        {myPlots.map((p) => (
-                          <span key={p.id} className="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-gray-200 text-xs text-gray-700">
-                            {zoneName(p.zoneId)} · {p.name} ({p.crop})
+                        {myPlots.map((plotId) => (
+                          <span key={plotId} className="inline-flex items-center px-2.5 py-1 rounded-full bg-white border border-gray-200 text-xs text-gray-700">
+                            {plotId}
                           </span>
                         ))}
                       </div>

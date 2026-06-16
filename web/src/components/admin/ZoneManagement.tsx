@@ -11,11 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import {
-  zones as zonesData,
-  plots as plotsData,
-  type CropOnPlot,
-} from "../../lib/mockData";
+import { getZones, getPlots, deleteZone, deletePlot, updatePlot } from "../../lib/queries";
+import { type CropOnPlot } from "../../lib/mockData";
 
 // Kiểu trạng thái chi tiết của lô/vùng
 type PlotStatus = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
@@ -70,17 +67,23 @@ type ConfirmTarget =
 export function ZoneManagement() {
   const navigate = useNavigate();
 
-  // State cục bộ (prototype) cho phép xóa / ngưng hoạt động
-  const [zones, setZones] = React.useState<ZoneItem[]>(() =>
-    zonesData.map((z) => ({ ...z }))
-  );
-  const [plots, setPlots] = React.useState<PlotItem[]>(() =>
-    plotsData.map((p) => ({ ...p }))
-  );
+  // Dữ liệu nạp từ API backend; xóa/ngưng vẫn là thao tác cục bộ (prototype) cho tới khi có endpoint
+  const [zones, setZones] = React.useState<ZoneItem[]>([]);
+  const [plots, setPlots] = React.useState<PlotItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState("");
 
-  const [expandedZones, setExpandedZones] = React.useState<Set<string>>(
-    new Set(["z1"])
-  );
+  React.useEffect(() => {
+    Promise.all([getZones(), getPlots()])
+      .then(([z, p]) => {
+        setZones(z as ZoneItem[]);
+        setPlots(p as PlotItem[]);
+      })
+      .catch(() => setLoadError("Không tải được dữ liệu vùng/lô từ máy chủ"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const [expandedZones, setExpandedZones] = React.useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [confirm, setConfirm] = React.useState<ConfirmTarget | null>(null);
@@ -131,18 +134,21 @@ export function ZoneManagement() {
 
   const closeConfirm = () => setConfirm(null);
 
-  const doDeleteZone = (zoneId: string) => {
+  const doDeleteZone = async (zoneId: string) => {
+    await deleteZone(zoneId).catch(() => {});
     setZones((prev) => prev.filter((z) => z.id !== zoneId));
     setPlots((prev) => prev.filter((p) => p.zoneId !== zoneId));
     closeConfirm();
   };
 
-  const doDeletePlot = (plotId: string) => {
+  const doDeletePlot = async (plotId: string) => {
+    await deletePlot(plotId).catch(() => {});
     setPlots((prev) => prev.filter((p) => p.id !== plotId));
     closeConfirm();
   };
 
-  const doDeactivatePlot = (plotId: string) => {
+  const doDeactivatePlot = async (plotId: string) => {
+    await updatePlot(plotId, { status: "inactive" }).catch(() => {});
     setPlots((prev) =>
       prev.map((p) => (p.id === plotId ? { ...p, status: "inactive" } : p))
     );
@@ -151,6 +157,13 @@ export function ZoneManagement() {
 
   const statusMeta = (status: string) =>
     STATUS_META[(status as PlotStatus)] ?? STATUS_META.pending;
+
+  if (loading) {
+    return <div className="p-10 text-center text-gray-400">Đang tải dữ liệu vùng/lô…</div>;
+  }
+  if (loadError) {
+    return <div className="p-10 text-center text-red-600">{loadError}</div>;
+  }
 
   return (
     <div className="space-y-6">

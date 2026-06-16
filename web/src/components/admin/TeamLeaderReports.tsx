@@ -1,6 +1,7 @@
 import React from "react";
 import { ClipboardList, ImageIcon, AlertTriangle } from "lucide-react";
-import { teamLeaderReports, teamLeaders, plots, zones, plotName, zoneName } from "../../lib/mockData";
+import { teamLeaders, plots, zones, plotName, zoneName } from "../../lib/mockData";
+import { getReports } from "../../lib/queries";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Chờ xem", cls: "bg-yellow-100 text-yellow-800" },
@@ -17,6 +18,21 @@ export function TeamLeaderReports() {
   const [abnormal, setAbnormal] = React.useState("all");
   const [date, setDate] = React.useState("");
   const [detail, setDetail] = React.useState<string | null>(null);
+  const [teamLeaderReports, setTeamLeaderReports] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    getReports().then((data) => {
+      setTeamLeaderReports(data);
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
+  }
 
   // Danh sách loại cây có thật trong dữ liệu báo cáo
   const crops = Array.from(new Set(teamLeaderReports.map((r) => r.crop)));
@@ -96,7 +112,7 @@ export function TeamLeaderReports() {
                   <td className="px-4 py-3 text-sm text-gray-600">{r.crop}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{r.content}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">
-                    {r.photos.length > 0 ? <span className="inline-flex items-center gap-1"><ImageIcon className="w-4 h-4" />{r.photos.length}</span> : "—"}
+                    {(r.photos ?? []).length > 0 ? <span className="inline-flex items-center gap-1"><ImageIcon className="w-4 h-4" />{r.photos.length}</span> : "—"}
                   </td>
                   <td className="px-4 py-3">
                     {r.abnormal
@@ -140,7 +156,7 @@ export function TeamLeaderReports() {
               <p className="text-sm text-gray-600 line-clamp-2">{r.content}</p>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">
-                  {r.photos.length > 0
+                  {(r.photos ?? []).length > 0
                     ? <span className="inline-flex items-center gap-1"><ImageIcon className="w-4 h-4" />{r.photos.length} ảnh</span>
                     : "Không có ảnh"}
                 </span>
@@ -164,7 +180,7 @@ export function TeamLeaderReports() {
             </div>
             <div className="text-sm text-gray-500">{current.reporter} · {plotName(current.plotId)} · {current.crop}</div>
             <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">{current.content}</div>
-            {current.photos.length > 0 && (
+            {(current.photos ?? []).length > 0 && (
               <img src={current.photos[0]} alt="ảnh báo cáo" className="w-full h-48 object-cover rounded-lg border border-gray-200" />
             )}
             {current.abnormal && (

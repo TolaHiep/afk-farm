@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import {
   User,
   Phone,
@@ -12,21 +12,25 @@ import {
   LogOut,
   Sprout,
 } from "lucide-react";
-import { teamLeaders, teamMembers, leaderPlots } from "../../lib/mockData";
-
-const TEAM_LEADER_ID = "tl1";
+import { teamMembers, leaderPlots } from "../../lib/mockData";
+import { useAuth } from "../../lib/auth";
 
 export function MobileAccount() {
-  const leader =
-    teamLeaders.find((t) => t.id === TEAM_LEADER_ID) || teamLeaders[0];
-  const myPlots = leaderPlots(TEAM_LEADER_ID);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  if (!user) {
+    return <div className="p-4 text-center text-gray-500">Vui lòng đăng nhập</div>;
+  }
+
+  const myPlots = leaderPlots(user.email);
   const memberCount = teamMembers.filter(
-    (m) => m.teamLeaderId === TEAM_LEADER_ID
+    (m) => m.teamLeaderId === user.email
   ).length;
 
   // Form thông tin liên hệ
-  const [phone, setPhone] = useState(leader.phone);
-  const [email, setEmail] = useState(leader.email);
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState(user.email);
 
   // Form đổi mật khẩu
   const [curPass, setCurPass] = useState("");
@@ -62,9 +66,9 @@ export function MobileAccount() {
           </div>
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-gray-900 truncate">
-              {leader.name}
+              {user.full_name}
             </h2>
-            <p className="text-sm text-gray-500">Tổ trưởng</p>
+            <p className="text-sm text-gray-500">{user.email}</p>
           </div>
         </div>
 
@@ -210,13 +214,16 @@ export function MobileAccount() {
       </div>
 
       {/* Đăng xuất */}
-      <Link
-        to="/mobile/login"
+      <button
+        onClick={async () => {
+          await logout();
+          navigate("/mobile/login");
+        }}
         className="w-full bg-white border border-red-300 text-red-600 rounded-xl py-3.5 flex items-center justify-center gap-2 font-semibold shadow active:bg-red-50"
       >
         <LogOut className="w-5 h-5" />
         Đăng xuất
-      </Link>
+      </button>
     </div>
   );
 }

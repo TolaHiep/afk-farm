@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate, Link } from "react-router";
 import { ArrowLeft, Camera, CheckCircle, Send, HelpCircle, MessageSquare } from "lucide-react";
-import { supportRequests, supportTypes, leaderPlots, plotName } from "../../lib/mockData";
+import { supportTypes, plotName } from "../../lib/mockData";
+import { submitSupport, getMySupport, getMyPlots } from "../../lib/queries";
 
 type SupportRequest = {
   id: string;
@@ -18,20 +19,43 @@ type SupportRequest = {
 
 export function MobileSupport() {
   const navigate = useNavigate();
-  const myPlots = leaderPlots("tl1");
-
-  const [plotId, setPlotId] = React.useState(myPlots[0]?.id ?? "");
+  const [myPlots, setMyPlots] = React.useState<any[]>([]);
+  const [plotId, setPlotId] = React.useState("");
   const [type, setType] = React.useState(supportTypes[0] ?? "");
   const [content, setContent] = React.useState("");
   const [hasPhoto, setHasPhoto] = React.useState(false);
-  const [localRequests, setLocalRequests] = React.useState<SupportRequest[]>([]);
+  const [myRequests, setMyRequests] = React.useState<SupportRequest[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const myRequests: SupportRequest[] = [
-    ...localRequests,
-    ...supportRequests.filter((s) => s.teamLeaderId === "tl1"),
-  ];
+  const loadRequests = async () => {
+    setLoading(true);
+    try {
+      const data = await getMySupport();
+      setMyRequests(data);
+    } catch (err) {
+      console.error("Failed to load support requests:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    const loadPlots = async () => {
+      try {
+        const plots = await getMyPlots();
+        setMyPlots(plots);
+        if (plots.length > 0 && !plotId) {
+          setPlotId(plots[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load my plots:", err);
+      }
+    };
+    loadPlots();
+    loadRequests();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!plotId) {
       alert("Vui lòng chọn lô!");
@@ -46,27 +70,20 @@ export function MobileSupport() {
       return;
     }
 
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const sentAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
-    const newReq: SupportRequest = {
-      id: `sr-local-${Date.now()}`,
-      teamLeaderId: "tl1",
-      reporter: "Nguyễn Văn A",
-      plotId,
-      type,
-      content: content.trim(),
-      photos: hasPhoto ? ["https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=400"] : [],
-      sentAt,
-      status: "pending",
-      reply: "",
-    };
-
-    setLocalRequests((prev) => [newReq, ...prev]);
-    setContent("");
-    setHasPhoto(false);
-    alert("(Demo) Đã gửi yêu cầu hỗ trợ");
+    try {
+      await submitSupport({
+        block: plotId,
+        type,
+        content: content.trim(),
+      });
+      setContent("");
+      setHasPhoto(false);
+      alert("Đã gửi yêu cầu hỗ trợ");
+      await loadRequests();
+    } catch (err) {
+      console.error("Failed to submit support request:", err);
+      alert("Gửi yêu cầu thất bại");
+    }
   };
 
   const statusInfo = (status: string) => {
@@ -191,43 +208,47 @@ export function MobileSupport() {
         <div className="space-y-3">
           <h2 className="font-bold text-gray-900 text-lg px-1">Yêu cầu đã gửi</h2>
 
-          {myRequests.length === 0 && (
+          {loading ? (
+            <div className="bg-white rounded-xl shadow p-6 text-center text-gray-600">
+              Đang tải...
+            </div>
+          ) : myRequests.length === 0 ? (
             <div className="bg-white rounded-xl shadow p-6 text-center text-gray-600">
               Chưa có yêu cầu nào.
             </div>
-          )}
-
-          {myRequests.map((req) => {
-            const st = statusInfo(req.status);
-            return (
-              <div key={req.id} className="bg-white rounded-xl shadow p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <p className="text-sm text-gray-500">{req.sentAt}</p>
-                    <p className="font-bold text-gray-900">
-                      {plotName(req.plotId)}
-                      <span className="ml-2 text-sm font-normal text-gray-600">· {req.type}</span>
-                    </p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${st.cls}`}>
-                    {st.label}
-                  </span>
-                </div>
-
-                <p className="text-gray-800 text-sm">{req.content}</p>
-
-                {req.reply && (
-                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MessageSquare className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-semibold text-blue-900">Phản hồi từ Admin</span>
+          ) : (
+            myRequests.map((req) => {
+              const st = statusInfo(req.status);
+              return (
+                <div key={req.id} className="bg-white rounded-xl shadow p-4">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <p className="text-sm text-gray-500">{req.sentAt}</p>
+                      <p className="font-bold text-gray-900">
+                        {plotName(req.plotId)}
+                        <span className="ml-2 text-sm font-normal text-gray-600">· {req.type}</span>
+                      </p>
                     </div>
-                    <p className="text-sm text-blue-900">{req.reply}</p>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${st.cls}`}>
+                      {st.label}
+                    </span>
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  <p className="text-gray-800 text-sm">{req.content}</p>
+
+                  {req.reply && (
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MessageSquare className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-semibold text-blue-900">Phản hồi từ Admin</span>
+                      </div>
+                      <p className="text-sm text-blue-900">{req.reply}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Quay lại */}

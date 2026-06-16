@@ -4,7 +4,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Filter, Calendar, MapPin, Sprout, User, AlertTriangle, CheckCircle2, Clock, CircleDashed, Layers } from "lucide-react";
 import { Button } from "../ui/button";
-import { plots, zones, tasks, anomalies, zoneName, zoneGeo, plotGeo, farmCenter } from "../../lib/mockData";
+import { getHeatmap, getAnomalies, getCalendar } from "../../lib/queries";
+import { computeGeo, type GeoEntry, type LatLng } from "../../lib/geo";
 
 type StatusKey = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
 
@@ -38,9 +39,12 @@ function mixColors(items: { hex: string; weight: number }[]): string {
 // ===== Bản đồ vệ tinh kiểu "nhiệt thời tiết": lớp màu nền blur tạo gradient mượt =====
 function SatelliteMap({
   filterZone, filterCrop, selectedPlot, selectedZone, onSelectZone, onSelectPlot,
+  plots, zones, zoneGeo, plotGeo, farmCenter,
 }: {
   filterZone: string; filterCrop: string; selectedPlot: string | null; selectedZone: string | null;
   onSelectZone: (id: string) => void; onSelectPlot: (id: string) => void;
+  plots: any[]; zones: any[];
+  zoneGeo: Record<string, GeoEntry>; plotGeo: Record<string, GeoEntry>; farmCenter: LatLng;
 }) {
   const elRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<L.Map | null>(null);
@@ -51,10 +55,10 @@ function SatelliteMap({
   // Màu tô của lô trên bản đồ nhiệt:
   // - Khi lọc 1 cây: dùng đúng màu trạng thái cây đó.
   // - Khi xem tất cả: TRỘN màu trạng thái của các cây theo tỉ lệ số việc (total) của từng cây.
-  const plotHeatColor = (p: typeof plots[number]) => {
-    if (filterCrop !== "all") return st(p.crops.find((c) => c.crop === filterCrop)?.status ?? p.status).hex;
+  const plotHeatColor = (p: any) => {
+    if (filterCrop !== "all") return st(p.crops.find((c: any) => c.crop === filterCrop)?.status ?? p.status).hex;
     if (!p.crops.length) return st(p.status).hex;
-    return mixColors(p.crops.map((c) => ({ hex: st(c.status).hex, weight: c.total || 1 })));
+    return mixColors(p.crops.map((c: any) => ({ hex: st(c.status).hex, weight: c.total || 1 })));
   };
 
   // Khởi tạo bản đồ 1 lần
@@ -144,27 +148,58 @@ export function HeatMap() {
   const [filterZone, setFilterZone] = React.useState("all");
   const [filterCrop, setFilterCrop] = React.useState("all");
 
-  const selectedPlotData = plots.find((p) => p.id === selectedPlot);
-  const selectedZoneData = zones.find((z) => z.id === selectedZone);
+  const [zones, setZones] = React.useState<any[]>([]);
+  const [plots, setPlots] = React.useState<any[]>([]);
+  const [anomalies, setAnomalies] = React.useState<any[]>([]);
+  const [tasks, setTasks] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [geo, setGeo] = React.useState<ReturnType<typeof computeGeo>>({ zoneGeo: {}, plotGeo: {}, farmCenter: [0, 0] });
 
-  const visiblePlots = plots.filter((p) => {
+  const zoneName = (zoneId: string) => zones.find((z) => z.id === zoneId)?.name ?? zoneId;
+
+  React.useEffect(() => {
+    let alive = true;
+    Promise.all([getHeatmap(), getAnomalies()])
+      .then(([hm, an]) => {
+        if (!alive) return;
+        const z = hm?.zones ?? [];
+        const p = hm?.plots ?? [];
+        setZones(z);
+        setPlots(p);
+        setAnomalies(an ?? []);
+        setGeo(computeGeo(z, p));
+      })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
+
+  React.useEffect(() => {
+    let alive = true;
+    getCalendar(filterDate, 1).then((t) => { if (alive) setTasks(t ?? []); }).catch(() => { if (alive) setTasks([]); });
+    return () => { alive = false; };
+  }, [filterDate]);
+
+  const selectedPlotData = (plots ?? []).find((p) => p.id === selectedPlot);
+  const selectedZoneData = (zones ?? []).find((z) => z.id === selectedZone);
+
+  const visiblePlots = (plots ?? []).filter((p) => {
     if (filterZone !== "all" && p.zoneId !== filterZone) return false;
     if (filterCrop !== "all" && !p.crop.includes(filterCrop)) return false;
     return true;
   });
-  const cropsOf = (p: typeof plots[number]) => (filterCrop === "all" ? p.crops : p.crops.filter((c) => c.crop === filterCrop));
+  const cropsOf = (p: any) => (filterCrop === "all" ? p.crops : p.crops.filter((c: any) => c.crop === filterCrop));
   const allShownCrops = visiblePlots.flatMap(cropsOf);
   const summary = {
-    good: allShownCrops.filter((c) => c.status === "good" || c.status === "done").length,
-    warning: allShownCrops.filter((c) => c.status === "warning" || c.status === "pending").length,
-    danger: allShownCrops.filter((c) => c.status === "danger").length,
+    good: allShownCrops.filter((c: any) => c.status === "good" || c.status === "done").length,
+    warning: allShownCrops.filter((c: any) => c.status === "warning" || c.status === "pending").length,
+    danger: allShownCrops.filter((c: any) => c.status === "danger").length,
   };
 
-  const onSelectPlot = (id: string) => { setSelectedPlot(id); setSelectedZone(plots.find((p) => p.id === id)?.zoneId ?? null); };
+  const onSelectPlot = (id: string) => { setSelectedPlot(id); setSelectedZone((plots ?? []).find((p) => p.id === id)?.zoneId ?? null); };
   const onSelectZone = (id: string) => { setSelectedZone(id); setSelectedPlot(null); };
 
   // ----- dữ liệu cho panel chi tiết lô -----
-  const plotTasks = tasks.filter((t) => t.plotId === selectedPlot && t.date === filterDate && (filterCrop === "all" || t.crop === filterCrop));
+  const plotTasks = (tasks ?? []).filter((t) => t.plotId === selectedPlot && t.date === filterDate && (filterCrop === "all" || t.crop === filterCrop));
   const TASK_STATUS: Record<string, { title: string; text: string; Icon: typeof CheckCircle2 }> = {
     completed: { title: "Đã hoàn thành", text: "text-green-700", Icon: CheckCircle2 },
     "in-progress": { title: "Đang làm", text: "text-blue-700", Icon: Clock },
@@ -172,12 +207,14 @@ export function HeatMap() {
     overdue: { title: "Quá hạn", text: "text-red-700", Icon: AlertTriangle },
   };
   const TASK_ORDER = ["completed", "in-progress", "pending", "overdue"];
-  const detailCrops = selectedPlotData ? (filterCrop === "all" ? selectedPlotData.crops : selectedPlotData.crops.filter((c) => c.crop === filterCrop)) : [];
-  const tasksByCrop = detailCrops.map((c) => ({
+  const detailCrops: any[] = selectedPlotData ? (filterCrop === "all" ? selectedPlotData.crops : selectedPlotData.crops.filter((c: any) => c.crop === filterCrop)) : [];
+  const tasksByCrop = detailCrops.map((c: any) => ({
     crop: c,
     items: plotTasks.filter((t) => t.crop === c.crop).sort((a, b) => TASK_ORDER.indexOf(a.status) - TASK_ORDER.indexOf(b.status)),
   }));
-  const plotAnomalies = anomalies.filter((a) => a.plotId === selectedPlot && (filterCrop === "all" || a.crop === filterCrop));
+  const plotAnomalies = (anomalies ?? []).filter((a) => a.plotId === selectedPlot && (filterCrop === "all" || a.crop === filterCrop));
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Đang tải bản đồ…</div>;
 
   return (
     <div className="space-y-6">
@@ -232,6 +269,7 @@ export function HeatMap() {
           <SatelliteMap
             filterZone={filterZone} filterCrop={filterCrop} selectedPlot={selectedPlot} selectedZone={selectedZone}
             onSelectZone={onSelectZone} onSelectPlot={onSelectPlot}
+            plots={plots} zones={zones} zoneGeo={geo.zoneGeo} plotGeo={geo.plotGeo} farmCenter={geo.farmCenter}
           />
         </div>
 

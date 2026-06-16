@@ -2,7 +2,7 @@ import React from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
-import { processes as processSeed } from "../../lib/mockData";
+import { getProcesses } from "../../lib/queries";
 
 interface Step { step: number; description: string; workPerHa: number; frequency: string; scope: string; requirePhoto: boolean; }
 interface Process { id: string; name: string; crop: string; steps: Step[]; }
@@ -15,12 +15,21 @@ type StepModal = { mode: "add" | "edit"; procId: string; index: number; data: St
 type Confirm = { kind: "process"; id: string; name: string } | { kind: "step"; procId: string; index: number; name: string } | null;
 
 export function ProcessManagement() {
-  const [procs, setProcs] = React.useState<Process[]>(() => processSeed.map((p) => ({ ...p, steps: p.steps.map((s) => ({ ...s })) })));
-  const [selectedId, setSelectedId] = React.useState<string>(processSeed[0]?.id ?? "");
+  const [procs, setProcs] = React.useState<Process[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selectedId, setSelectedId] = React.useState<string>("");
   const [procModal, setProcModal] = React.useState<ProcModal>(null);
   const [stepModal, setStepModal] = React.useState<StepModal>(null);
   const [confirm, setConfirm] = React.useState<Confirm>(null);
   const seq = React.useRef(100);
+
+  React.useEffect(() => {
+    getProcesses().then(setProcs).catch(() => setProcs([])).finally(() => setLoading(false));
+    const firstId = procs[0]?.id;
+    if (firstId) setSelectedId(firstId);
+  }, []);
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
 
   const selected = procs.find((p) => p.id === selectedId) || procs[0];
 

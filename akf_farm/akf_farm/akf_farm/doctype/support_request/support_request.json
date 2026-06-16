@@ -1,0 +1,40 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-06-16 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "team_leader",
+  "block",
+  "type",
+  "content",
+  "sent_at",
+  "status",
+  "reply",
+  "photos"
+ ],
+ "fields": [
+  {"fieldname": "team_leader", "fieldtype": "Link", "label": "Tổ trưởng", "options": "User"},
+  {"fieldname": "block", "fieldtype": "Link", "label": "Lô", "options": "Farm Block"},
+  {"fieldname": "type", "fieldtype": "Select", "label": "Loại", "options": "\nVật tư\nNhân lực\nKỹ thuật\nThiết bị\nKhác"},
+  {"fieldname": "content", "fieldtype": "Text", "label": "Nội dung", "reqd": 1},
+  {"fieldname": "sent_at", "fieldtype": "Datetime", "label": "Thời điểm gửi"},
+  {"default": "pending", "fieldname": "status", "fieldtype": "Select", "label": "Trạng thái", "options": "pending\napproved\nrejected\nreplied\ndone"},
+  {"fieldname": "reply", "fieldtype": "Small Text", "label": "Phản hồi"},
+  {"fieldname": "photos", "fieldtype": "Table", "label": "Ảnh", "options": "Farm Task Photo"}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-16 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Akf Farm",
+ "name": "Support Request",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

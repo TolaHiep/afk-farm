@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router";
+import { RequireAuth } from "./components/RequireAuth";
 import { AdminLayout } from "./components/layouts/AdminLayout";
 import { MobileLayout } from "./components/layouts/MobileLayout";
 import { AdminLogin } from "./components/admin/AdminLogin";
@@ -35,8 +36,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: <RequireAuth role="admin" />,
     children: [
+      {
+        element: <AdminLayout />,
+        children: [
       { index: true, element: <Dashboard /> },
       { path: "dashboard", element: <Dashboard /> },
       { path: "heatmap", element: <HeatMap /> },
@@ -52,13 +56,18 @@ export const router = createBrowserRouter([
       { path: "support", element: <SupportRequests /> },
       { path: "notifications", element: <Notifications /> },
       { path: "settings", element: <Settings /> },
-      { path: "anomaly/:id", element: <AnomalyDetail /> },
+          { path: "anomaly/:id", element: <AnomalyDetail /> },
+        ],
+      },
     ],
   },
   {
     path: "/mobile",
-    element: <MobileLayout />,
+    element: <RequireAuth role="team_leader" />,
     children: [
+      {
+        element: <MobileLayout />,
+        children: [
       { index: true, element: <TodayTasks /> },
       { path: "tasks", element: <TodayTasks /> },
       { path: "upcoming", element: <UpcomingTasks /> },
@@ -69,7 +78,9 @@ export const router = createBrowserRouter([
       { path: "notifications", element: <MobileNotifications /> },
       { path: "support", element: <MobileSupport /> },
       { path: "history", element: <MobileReportHistory /> },
-      { path: "account", element: <MobileAccount /> },
+          { path: "account", element: <MobileAccount /> },
+        ],
+      },
     ],
   },
   {

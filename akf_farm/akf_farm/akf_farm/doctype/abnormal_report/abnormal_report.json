@@ -1,0 +1,44 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-06-16 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "type",
+  "block",
+  "crop",
+  "reporter",
+  "report_date",
+  "description",
+  "status",
+  "reply",
+  "client_uuid",
+  "photos"
+ ],
+ "fields": [
+  {"fieldname": "type", "fieldtype": "Data", "label": "Loại bất thường"},
+  {"fieldname": "block", "fieldtype": "Link", "label": "Lô", "options": "Farm Block", "reqd": 1},
+  {"fieldname": "crop", "fieldtype": "Select", "label": "Cây", "options": "\nGấc\nSâm"},
+  {"fieldname": "reporter", "fieldtype": "Link", "label": "Người báo", "options": "User"},
+  {"fieldname": "report_date", "fieldtype": "Date", "label": "Ngày"},
+  {"fieldname": "description", "fieldtype": "Text", "label": "Mô tả", "reqd": 1},
+  {"default": "pending", "fieldname": "status", "fieldtype": "Select", "label": "Trạng thái", "options": "pending\nin-progress\nresolved"},
+  {"fieldname": "reply", "fieldtype": "Small Text", "label": "Phản hồi"},
+  {"fieldname": "client_uuid", "fieldtype": "Data", "label": "Client UUID", "unique": 1},
+  {"fieldname": "photos", "fieldtype": "Table", "label": "Ảnh", "options": "Farm Task Photo"}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-16 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Akf Farm",
+ "name": "Abnormal Report",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
