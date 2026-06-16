@@ -1,21 +1,159 @@
-# Đóng gói & chạy phần mềm AKF bằng Docker (chế độ demo same-origin).
-# Khởi động:  docker compose up -d --build
-# Mở trình duyệt: http://localhost:8080  (React + API chung một cổng)
-# Dừng:        docker compose down
-#
-# Backend: hiện dùng stack Frappe dev (frappe_docker, project "akf") chạy `bench serve`
-# nghe ở cổng 8000 trên máy host. nginx trong container web proxy /api,/files về đó qua
-# "akf-backend" (map tới host-gateway). Khi lên VPS thật: thay bằng service Frappe đóng
-# gói cùng compose (mariadb/redis/frappe gunicorn) và trỏ akf-backend vào service đó.
+# Stack AKF hop nhat (mot lenh): docker compose up -d --build
+# Frontend React (cong ${HTTP_PORT:-80}) + Frappe v15 backend + akf_farm.
+# Tao .env tu .env.example truoc khi chay.
+
+x-backend-defaults: &backend-defaults
+  image: akf-farm-backend:latest
+  build:
+    context: .
+    dockerfile: deploy/Containerfile
+    args:
+      FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-15}
+  restart: unless-stopped
+  depends_on:
+    create-site:
+      condition: service_completed_successfully
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+  environment:
+    FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+    FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
 
 services:
-  web:
+  frontend:
     build:
-      context: ./web
+      context: ./frontend
     image: akf-farm-web:latest
-    container_name: akf-web
-    ports:
-      - "8080:80"   # máy của anh: 8080  ->  trong container: 80
-    extra_hosts:
-      - "akf-backend:host-gateway"   # akf-backend -> máy host (nơi bench serve cổng 8000)
     restart: unless-stopped
+    depends_on:
+      - backend
+      - websocket
+    ports:
+      - "${HTTP_PORT:-80}:80"
+
+  backend:
+    <<: *backend-defaults
+    # CMD mac dinh = start.sh (gunicorn)
+
+  websocket:
+    <<: *backend-defaults
+    command:
+      - node
+      - /home/frappe/frappe-bench/apps/frappe/socketio.js
+
+  scheduler:
+    <<: *backend-defaults
+    command: ["bench", "schedule"]
+
+  queue-short:
+    <<: *backend-defaults
+    command: ["bench", "worker", "--queue", "short,default"]
+
+  queue-long:
+    <<: *backend-defaults
+    command: ["bench", "worker", "--queue", "long,default,short"]
+
+  configurator:
+    image: akf-farm-backend:latest
+    build:
+      context: .
+      dockerfile: deploy/Containerfile
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+
+  create-site:
+    image: akf-farm-backend:latest
+    build:
+      context: .
+      dockerfile: deploy/Containerfile
+    restart: "no"
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+    environment:
+      SITE_NAME: ${SITE_NAME:-akf.localhost}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-akf-root-pass}
+      SEED_DEMO: ${SEED_DEMO:-0}
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        wait-for-it -t 120 db:3306;
+        wait-for-it -t 120 redis-cache:6379;
+        wait-for-it -t 120 redis-queue:6379;
+        if [ ! -d "sites/$$SITE_NAME" ]; then
+          bench new-site "$$SITE_NAME"
+            --mariadb-user-host-login-scope='%'
+            --admin-password="$$ADMIN_PASSWORD"
+            --db-root-username=root
+            --db-root-password="$$DB_ROOT_PASSWORD"
+            --install-app akf_farm --set-default;
+          if [ "$$SEED_DEMO" = "1" ]; then
+            echo "import akf_farm.seed as s; s.run()" | bench --site "$$SITE_NAME" console;
+          fi;
+        fi;
+        bench --site "$$SITE_NAME" migrate;
+
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-akf-root-pass}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-akf-root-pass}
+    volumes:
+      - db-data:/var/lib/mysql
+
+  redis-cache:
+    image: redis:alpine
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+
+volumes:
+  sites:
+  logs:
+  db-data:
+  redis-queue-data:
