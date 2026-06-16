@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ArrowLeft, MapPin, Calendar } from "lucide-react";
-import { tasks, plotName } from "../../lib/mockData";
+import { plotName } from "../../lib/mockData";
+import { getUpcomingTasks } from "../../lib/queries";
 
 const TODAY = "2026-06-14";
 
@@ -61,18 +62,26 @@ function cropOrder(crop: string): number {
 
 export function UpcomingTasks() {
   const [range, setRange] = useState<RangeKey>("10");
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    getUpcomingTasks(TODAY, Number(range))
+      .then((data) => setTasks(data))
+      .finally(() => setLoading(false));
+  }, [range]);
+
+  if (loading) {
+    return <div className="p-6 text-center text-gray-400">Đang tải…</div>;
+  }
 
   // Giới hạn cuối theo khoảng đã chọn (tối đa 10 ngày tới)
   const rangeEnd = addDays(TODAY, Number(range));
 
-  // Lọc: công việc của tl1, date > hôm nay và <= giới hạn khoảng
+  // Lọc: date > hôm nay và <= giới hạn khoảng (backend scopes to session user)
   const filtered = tasks
-    .filter(
-      (t) =>
-        t.teamLeaderId === "tl1" &&
-        t.date > TODAY &&
-        t.date <= rangeEnd
-    )
+    .filter((t) => t.date > TODAY && t.date <= rangeEnd)
     .sort((a, b) => a.date.localeCompare(b.date));
 
   // Nhóm theo ngày -> theo lô

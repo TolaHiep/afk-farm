@@ -1,9 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Bell, Calendar, UserCircle, CheckCircle, Circle } from "lucide-react";
-import { mobileNotifications } from "../../lib/mockData";
+import { getMobileNotifications } from "../../lib/queries";
 
 export function MobileNotifications() {
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getMobileNotifications()
+      .then((data) => {
+        setNotifications(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to load notifications:", error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div className="p-6 text-center text-gray-400">Đang tải…</div>;
+  }
+
   const getIcon = (type: string) => {
     switch (type) {
       case "new-task": return <Bell className="w-5 h-5 text-blue-600" />;
@@ -38,7 +57,7 @@ export function MobileNotifications() {
 
       {/* Notifications List */}
       <div className="space-y-3">
-        {mobileNotifications.map((notification) => (
+        {notifications.map((notification) => (
           <div
             key={notification.id}
             className={`bg-white rounded-lg shadow border border-gray-200 p-4 ${
@@ -75,7 +94,7 @@ export function MobileNotifications() {
         ))}
       </div>
 
-      {mobileNotifications.length === 0 && (
+      {notifications.length === 0 && (
         <div className="text-center py-12">
           <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-lg font-semibold text-gray-900 mb-1">

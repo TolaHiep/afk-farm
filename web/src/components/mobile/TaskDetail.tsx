@@ -1,7 +1,8 @@
 import React from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Play } from "lucide-react";
-import { tasks, plotName } from "../../lib/mockData";
+import { plotName } from "../../lib/mockData";
+import { getTaskDetail, completeTask } from "../../lib/queries";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 
@@ -27,13 +28,35 @@ function cropMeta(crop: string) {
 export function TaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const task = tasks.find((t) => t.id === id);
 
-  const [status, setStatus] = React.useState<TaskStatus>(
-    (task?.status as TaskStatus) || "pending"
-  );
+  const [task, setTask] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [status, setStatus] = React.useState<TaskStatus>("pending");
   const [hasPhoto, setHasPhoto] = React.useState(false);
   const [showConfirmation, setShowConfirmation] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!id) return;
+    let alive = true;
+    setLoading(true);
+    getTaskDetail(id)
+      .then((data) => {
+        if (!alive) return;
+        setTask(data);
+        setStatus((data?.status as TaskStatus) || "pending");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
+  if (loading) {
+    return <div className="p-6 text-center text-gray-400">Đang tải…</div>;
+  }
 
   if (!task) {
     return <div className="p-4">Không tìm thấy công việc</div>;
@@ -58,11 +81,18 @@ export function TaskDetail() {
     setShowConfirmation(true);
   };
 
-  const confirmCompletion = () => {
-    setStatus("completed");
-    setShowConfirmation(false);
-    // Trong app thật sẽ lưu trạng thái rồi điều hướng
-    navigate("/mobile/tasks");
+  const confirmCompletion = async () => {
+    if (!id) return;
+    setError(null);
+    try {
+      const photos = task.photos ?? [];
+      await completeTask(id, undefined, photos);
+      setStatus("completed");
+      setShowConfirmation(false);
+      navigate("/mobile/success");
+    } catch (e: any) {
+      setError(e?.message || "Không thể hoàn thành công việc. Vui lòng thử lại.");
+    }
   };
 
   const statusMeta = STATUS_META[status];
@@ -255,6 +285,9 @@ export function TaskDetail() {
                 Bạn chắc chắn đã hoàn thành công việc "{task.title}"?
               </p>
             </div>
+            {error && (
+              <p className="mb-3 text-sm text-red-600 text-center">{error}</p>
+            )}
             <div className="space-y-3">
               <button
                 onClick={confirmCompletion}

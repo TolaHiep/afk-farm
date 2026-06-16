@@ -2,20 +2,50 @@ import React from "react";
 import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { tasks, plots, zones, teamLeaders, plotName, zoneName, leaderPlots } from "../../lib/mockData";
+import { getCalendar, getPlots, getZones, getTeamLeaders } from "../../lib/queries";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
+type Task = { id: string; title: string; plotId: string; crop: string; date: string; status: string; teamLeaderId: string; requirePhoto?: boolean; priority?: string };
 
 const TODAY = new Date("2026-06-14");
+const FROM_DATE = "2026-06-14";
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 const fmtYMD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const sameDay = (a: Date, b: Date) => a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
 const statusLabel = (s: string) =>
   s === "completed" ? "Hoàn thành" : s === "in-progress" ? "Đang làm" : s === "overdue" ? "Quá hạn" : "Chưa làm";
-const leaderName = (id: string) => teamLeaders.find((t) => t.id === id)?.name || "—";
 
 export function WorkCalendar() {
+  const [tasks, setTasks] = React.useState<Task[]>([]);
+  const [plots, setPlots] = React.useState<any[]>([]);
+  const [zones, setZones] = React.useState<any[]>([]);
+  const [teamLeaders, setTeamLeaders] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState("");
+
+  React.useEffect(() => {
+    Promise.all([getCalendar(FROM_DATE, 10), getPlots(), getZones(), getTeamLeaders()])
+      .then(([t, p, z, tl]) => {
+        setTasks((t as Task[]) ?? []);
+        setPlots((p as any[]) ?? []);
+        setZones((z as any[]) ?? []);
+        setTeamLeaders((tl as any[]) ?? []);
+      })
+      .catch(() => setLoadError("Không tải được lịch công việc từ máy chủ"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Helpers dựa trên dữ liệu đã tải (thay cho helper trong mockData)
+  const plotName = (plotId: string) => plots.find((p) => p.id === plotId)?.name || plotId;
+  const zoneName = (zoneId: string) => zones.find((z) => z.id === zoneId)?.name || zoneId;
+  const leaderName = (id: string) => teamLeaders.find((t) => t.id === id)?.name || "—";
+  const leaderPlots = (leaderId: string) => {
+    const l = teamLeaders.find((t) => t.id === leaderId);
+    const ids: string[] = l?.plotIds && l.plotIds.length ? l.plotIds : l?.plotId ? [l.plotId] : [];
+    return plots.filter((p) => ids.includes(p.id));
+  };
+
   const [filterPlot, setFilterPlot] = React.useState("all");
   const [filterLeader, setFilterLeader] = React.useState("all");
   const [filterZone, setFilterZone] = React.useState("all");
@@ -34,7 +64,7 @@ export function WorkCalendar() {
         }
         return true;
       }),
-    [filterPlot, filterLeader, filterZone]
+    [tasks, plots, filterPlot, filterLeader, filterZone]
   );
 
   const tasksOn = (d: Date) => filteredTasks.filter((t) => t.date === fmtYMD(d));
@@ -52,12 +82,12 @@ export function WorkCalendar() {
     });
   }, [viewMonth]);
 
-  const groupByPlot = (dayTasks: typeof tasks) => {
-    const map = new Map<string, typeof tasks>();
+  const groupByPlot = (dayTasks: Task[]) => {
+    const map = new Map<string, Task[]>();
     dayTasks.forEach((t) => { const a = map.get(t.plotId) || []; a.push(t); map.set(t.plotId, a); });
     return Array.from(map.entries());
   };
-  const summarize = (items: typeof tasks) => ({
+  const summarize = (items: Task[]) => ({
     total: items.length,
     done: items.filter((t) => t.status === "completed").length,
     overdue: items.filter((t) => t.status === "overdue").length,
@@ -75,11 +105,18 @@ export function WorkCalendar() {
       return t.length > 0 && t.every((x) => x.status === "completed");
     }).length;
     return { name: leaderName(filterLeader), totalPlots: myPlots.length, donePlotsToday };
-  }, [filterLeader]);
+  }, [filterLeader, tasks, plots, teamLeaders]);
 
   const monthLabel = `Tháng ${viewMonth.getMonth() + 1}/${viewMonth.getFullYear()}`;
   const selTasks = tasksOn(selectedDay);
   const selGrouped = groupByPlot(selTasks);
+
+  if (loading) {
+    return <div className="p-10 text-center text-gray-400">Đang tải lịch công việc…</div>;
+  }
+  if (loadError) {
+    return <div className="p-10 text-center text-red-600">{loadError}</div>;
+  }
 
   return (
     <div className="space-y-6">

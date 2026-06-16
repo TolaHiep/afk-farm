@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FileText,
   Calendar,
@@ -9,9 +9,8 @@ import {
   ImageIcon,
   Filter,
 } from "lucide-react";
-import { teamLeaderReports, plotName, leaderPlots } from "../../lib/mockData";
-
-const TEAM_LEADER_ID = "tl1";
+import { plotName } from "../../lib/mockData";
+import { getMyReports } from "../../lib/queries";
 
 // Định dạng ngày kiểu Việt Nam (dd/MM/yyyy)
 function formatVNDate(iso: string) {
@@ -21,16 +20,47 @@ function formatVNDate(iso: string) {
 
 export function MobileReportHistory() {
   const [plotFilter, setPlotFilter] = useState<string>("all");
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Các lô do tổ trưởng phụ trách (để làm chip lọc)
-  const myPlots = leaderPlots(TEAM_LEADER_ID);
+  // Fetch reports from API
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      try {
+        const data = await getMyReports();
+        // Sort by date descending
+        const sorted = (data ?? [])
+          .slice()
+          .sort((a: any, b: any) => (b.date ?? "").localeCompare(a.date ?? ""));
+        setReports(sorted);
+      } catch (error) {
+        console.error("Failed to fetch reports:", error);
+        setReports([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReports();
+  }, []);
 
-  // Báo cáo của tổ trưởng tl1, sắp theo ngày mới nhất
-  const reports = teamLeaderReports
-    .filter((r) => r.teamLeaderId === TEAM_LEADER_ID)
-    .filter((r) => plotFilter === "all" || r.plotId === plotFilter)
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date));
+  // Get unique plots from reports for filtering
+  const myPlots = Array.from(
+    new Map(
+      reports.map((r: any) => [
+        r.plotId,
+        { id: r.plotId, name: plotName(r.plotId) },
+      ])
+    ).values()
+  );
+
+  // Filter reports by plot
+  const filteredReports = reports
+    .filter((r: any) => plotFilter === "all" || r.plotId === plotFilter);
+
+  if (loading) {
+    return <div className="p-6 text-center text-gray-400">Đang tải…</div>;
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -80,7 +110,7 @@ export function MobileReportHistory() {
 
       {/* Danh sách báo cáo */}
       <div className="space-y-3">
-        {reports.map((r) => (
+        {filteredReports.map((r) => (
           <div key={r.id} className="bg-white rounded-xl shadow overflow-hidden">
             <div className="p-4">
               {/* Hàng đầu: ngày + cờ bất thường */}
@@ -113,9 +143,9 @@ export function MobileReportHistory() {
               <p className="text-sm text-gray-800 leading-relaxed">{r.content}</p>
 
               {/* Ảnh */}
-              {r.photos && r.photos.length > 0 && (
+              {(r.photos ?? []).length > 0 && (
                 <div className="flex gap-2 mt-3 overflow-x-auto">
-                  {r.photos.map((src, i) => (
+                  {(r.photos ?? []).map((src: string, i: number) => (
                     <img
                       key={i}
                       src={src}
@@ -144,7 +174,7 @@ export function MobileReportHistory() {
           </div>
         ))}
 
-        {reports.length === 0 && (
+        {filteredReports.length === 0 && (
           <div className="bg-white rounded-xl shadow text-center py-12">
             <ImageIcon className="w-14 h-14 text-gray-300 mx-auto mb-3" />
             <p className="text-lg font-semibold text-gray-900">Chưa có báo cáo nào</p>

@@ -3,9 +3,7 @@ import { Link } from "react-router";
 import { Users, AlertCircle, AlertTriangle, LifeBuoy, Sprout, MapPin, ChevronRight } from "lucide-react";
 import { KPICard } from "../ui/KPICard";
 import { StatusBadge } from "../ui/StatusBadge";
-import {
-  tasks, plots, zones, teamLeaders, leaderPlots, supportRequests, areaStats, teamCompletionToday, plotName,
-} from "../../lib/mockData";
+import { getDashboard, getPlots, getTeamLeaders, getAnomalies } from "../../lib/queries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const ZONE_COLOR: Record<string, { ring: string; dot: string; label: string }> = {
@@ -15,29 +13,95 @@ const ZONE_COLOR: Record<string, { ring: string; dot: string; label: string }> =
   inactive: { ring: "border-gray-200 bg-gray-50", dot: "bg-gray-400", label: "Nghỉ" },
 };
 
+const STATUS_ORDER: Record<string, number> = { danger: 4, warning: 3, pending: 2, good: 1, done: 1, inactive: 0 };
+
+type Plot = {
+  id: string; name: string; zoneId: string; area?: number; teamLeader?: string; teamLeaderId?: string;
+  crop?: string; crops?: any[]; done?: number; total?: number; status?: string;
+};
+type Leader = { id: string; name: string; phone?: string; email?: string; plotId?: string; plotIds?: string[]; status?: string };
+type Anomaly = { id: string; type?: string; plotId?: string; crop?: string; reporter?: string; date?: string; description?: string; status?: string; reply?: string };
+type ZoneAgg = { id: string; name: string; plots: number; status: string };
+
 export function Dashboard() {
-  const today = tasks.filter((t) => t.date === "2026-06-14");
-  const overdueCount = tasks.filter((t) => t.status === "overdue").length;
-  const warningZones = zones.filter((z) => z.status === "warning" || z.status === "danger").length;
-  const team = teamCompletionToday();
-  const area = areaStats();
-  const pendingSupport = supportRequests.filter((s) => s.status === "pending");
+  const [loading, setLoading] = React.useState(true);
+  const [dashboard, setDashboard] = React.useState<any>(null);
+  const [plots, setPlots] = React.useState<Plot[]>([]);
+  const [leaders, setLeaders] = React.useState<Leader[]>([]);
+  const [anomalies, setAnomalies] = React.useState<Anomaly[]>([]);
+
+  React.useEffect(() => {
+    let alive = true;
+    Promise.all([getDashboard(), getPlots(), getTeamLeaders(), getAnomalies()])
+      .then(([d, p, l, a]) => {
+        if (!alive) return;
+        setDashboard(d ?? null);
+        setPlots((p as Plot[]) ?? []);
+        setLeaders((l as Leader[]) ?? []);
+        setAnomalies((a as Anomaly[]) ?? []);
+      })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
 
   // Zone đang mở để xem danh sách block bên trong (mục 3.1.1)
   const [openZone, setOpenZone] = React.useState<string | null>(null);
   // Modal danh sách tổ chưa hoàn thành việc hôm nay (mục 3.1.3)
   const [showUnfinished, setShowUnfinished] = React.useState(false);
-  const unfinishedTeams = teamLeaders
-    .filter((t) => t.status === "active" && leaderPlots(t.id).length)
-    .map((t) => ({ leader: t, plots: leaderPlots(t.id).filter((p) => p.done < p.total) }))
+
+  if (loading) return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
+
+  const area = dashboard?.areaStats ?? { totalHa: 0, gacHa: 0, samHa: 0, zones: 0, plots: 0 };
+  const overdueCount = dashboard?.overdue ?? 0;
+  const warningZones = (dashboard?.redPlots ?? 0) + (dashboard?.yellowPlots ?? 0);
+
+  // Suy ra danh sách vùng từ các lô (gom theo zoneId, trạng thái = lô xấu nhất trong vùng)
+  const zoneMap = new Map<string, ZoneAgg>();
+  for (const p of plots) {
+    const zid = p.zoneId ?? "?";
+    const cur = zoneMap.get(zid) ?? { id: zid, name: zid, plots: 0, status: "good" };
+    cur.plots += 1;
+    const st = p.status ?? "good";
+    if ((STATUS_ORDER[st] ?? 0) > (STATUS_ORDER[cur.status] ?? 0)) cur.status = st;
+    zoneMap.set(zid, cur);
+  }
+  const zones = Array.from(zoneMap.values());
+
+  // Tỉ lệ tổ hoàn thành việc hôm nay (tính từ tổ trưởng + lô)
+  const plotsOf = (ld: Leader): Plot[] => {
+    const ids = ld.plotIds ?? (ld.plotId ? [ld.plotId] : []);
+    return plots.filter((p) => ids.includes(p.id));
+  };
+  const activeLeaders = leaders.filter((l) => (l.status ?? "active") === "active");
+  const teamTotal = activeLeaders.length;
+  const teamDone = activeLeaders.filter((l) => {
+    const ps = plotsOf(l);
+    return ps.length > 0 && ps.every((p) => (p.done ?? 0) >= (p.total ?? 0));
+  }).length;
+  const team = { total: teamTotal, done: teamDone, pending: teamTotal - teamDone, withSupport: 0 };
+
+  const unfinishedTeams = activeLeaders
+    .map((l) => ({ leader: l, plots: plotsOf(l).filter((p) => (p.done ?? 0) < (p.total ?? 0)) }))
     .filter((x) => x.plots.length > 0);
 
-  const chartData = [
-    { name: "Vùng A", tasks: 8, completed: 6 },
-    { name: "Vùng B", tasks: 7, completed: 4 },
-    { name: "Vùng C", tasks: 6, completed: 5 },
-    { name: "Vùng D", tasks: 5, completed: 2 },
-  ];
+  const newAnomalyCount = dashboard?.newAnomalies ?? 0;
+  // Bất thường mới nhất hiển thị trong widget bên phải
+  const recentAnomalies = anomalies
+    .filter((a) => (a.status ?? "") !== "resolved" && (a.status ?? "") !== "closed")
+    .slice(0, 5);
+  const plotName = (id?: string) => plots.find((p) => p.id === id)?.name ?? id ?? "";
+
+  // Công việc hôm nay: suy ra từ các lô chưa hoàn thành (mô phỏng danh sách việc theo lô)
+  const today = plots.filter((p) => (p.done ?? 0) < (p.total ?? 0));
+
+  const chartData = zones.map((z) => {
+    const zp = plots.filter((p) => p.zoneId === z.id);
+    return {
+      name: z.name,
+      tasks: zp.reduce((s, p) => s + (p.total ?? 0), 0),
+      completed: zp.reduce((s, p) => s + (p.done ?? 0), 0),
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -96,7 +160,7 @@ export function Dashboard() {
         </button>
         <KPICard title="Việc quá hạn" value={overdueCount} icon={AlertCircle} trend="Cần xử lý ngay" color="red" />
         <KPICard title="Vùng cảnh báo" value={warningZones} icon={AlertTriangle} trend="Vàng / Đỏ" color="yellow" />
-        <KPICard title="Yêu cầu hỗ trợ mới" value={pendingSupport.length} icon={LifeBuoy} trend="Chờ xử lý" color="blue" />
+        <KPICard title="Yêu cầu hỗ trợ mới" value={newAnomalyCount} icon={LifeBuoy} trend="Chờ xử lý" color="blue" />
       </div>
 
       {/* Modal: danh sách tổ chưa hoàn thành việc hôm nay (mục 3.1.3) */}
@@ -136,11 +200,11 @@ export function Dashboard() {
           Gấc và Sâm trồng xen trên cùng diện tích nên tổng diện tích phủ của 2 cây có thể trùng nhau.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Stat label="Tổng diện tích đất" value={`${area.totalHa} ha`} big />
-          <Stat label="Diện tích phủ Gấc (giàn)" value={`${area.gacHa} ha`} />
-          <Stat label="Diện tích phủ Sâm (dưới tán)" value={`${area.samHa} ha`} />
-          <Stat label="Zone hoạt động" value={area.zones} />
-          <Stat label="Lô hoạt động" value={area.plots} />
+          <Stat label="Tổng diện tích đất" value={`${area.totalHa ?? 0} ha`} big />
+          <Stat label="Diện tích phủ Gấc (giàn)" value={`${area.gacHa ?? 0} ha`} />
+          <Stat label="Diện tích phủ Sâm (dưới tán)" value={`${area.samHa ?? 0} ha`} />
+          <Stat label="Zone hoạt động" value={area.zones ?? 0} />
+          <Stat label="Lô hoạt động" value={area.plots ?? 0} />
         </div>
       </div>
 
@@ -163,12 +227,12 @@ export function Dashboard() {
 
         <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Yêu cầu hỗ trợ mới</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Bất thường mới</h3>
             <Link to="/admin/support" className="text-sm text-green-600 hover:underline">Tất cả →</Link>
           </div>
           <div className="space-y-3">
-            {pendingSupport.length === 0 && <p className="text-sm text-gray-400">Không có yêu cầu mới</p>}
-            {pendingSupport.map((s) => (
+            {recentAnomalies.length === 0 && <p className="text-sm text-gray-400">Không có yêu cầu mới</p>}
+            {recentAnomalies.map((s) => (
               <Link key={s.id} to="/admin/support" className="block p-3 bg-blue-50 rounded-lg hover:bg-blue-100">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-medium text-gray-900">{s.reporter}</span>
@@ -177,7 +241,7 @@ export function Dashboard() {
                 <p className="text-sm text-gray-600 flex items-center gap-1">
                   <MapPin className="w-3 h-3" /> {plotName(s.plotId)}
                 </p>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-1">{s.content}</p>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-1">{s.description}</p>
               </Link>
             ))}
           </div>
@@ -195,65 +259,59 @@ export function Dashboard() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                {["Công việc", "Lô", "Cây", "Tổ trưởng", "Trạng thái"].map((h) => (
+                {["Lô", "Cây", "Tổ trưởng", "Tiến độ", "Trạng thái"].map((h) => (
                   <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {today.map((task) => {
-                const plot = plots.find((p) => p.id === task.plotId);
-                return (
-                  <tr key={task.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{task.title}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{plot?.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{task.crop}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{plot?.teamLeader}</td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={task.status as any}>
-                        {task.status === "completed" ? "Xong" :
-                         task.status === "in-progress" ? "Đang làm" :
-                         task.status === "overdue" ? "Quá hạn" : "Chưa làm"}
-                      </StatusBadge>
-                    </td>
-                  </tr>
-                );
-              })}
+              {today.map((p) => (
+                <tr key={p.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{p.name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{p.crop}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{p.teamLeader}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{p.done}/{p.total}</td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={(p.status as any) ?? "pending"}>
+                      {p.status === "good" || p.status === "done" ? "Tốt" :
+                       p.status === "warning" ? "Cần chú ý" :
+                       p.status === "danger" ? "Có vấn đề" : "Chưa xong"}
+                    </StatusBadge>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
         {/* Dạng thẻ cho màn nhỏ: xếp dọc, không cuộn ngang */}
         <div className="md:hidden p-4 space-y-3">
-          {today.map((task) => {
-            const plot = plots.find((p) => p.id === task.plotId);
-            return (
-              <div key={task.id} className="rounded-lg border border-gray-200 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="font-medium text-gray-900 text-sm break-words">{task.title}</div>
-                  <StatusBadge status={task.status as any}>
-                    {task.status === "completed" ? "Xong" :
-                     task.status === "in-progress" ? "Đang làm" :
-                     task.status === "overdue" ? "Quá hạn" : "Chưa làm"}
-                  </StatusBadge>
+          {today.map((p) => (
+            <div key={p.id} className="rounded-lg border border-gray-200 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="font-medium text-gray-900 text-sm break-words">{p.name}</div>
+                <StatusBadge status={(p.status as any) ?? "pending"}>
+                  {p.status === "good" || p.status === "done" ? "Tốt" :
+                   p.status === "warning" ? "Cần chú ý" :
+                   p.status === "danger" ? "Có vấn đề" : "Chưa xong"}
+                </StatusBadge>
+              </div>
+              <div className="mt-2 space-y-1 text-xs text-gray-600">
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500">Cây</span>
+                  <span className="text-right break-words">{p.crop}</span>
                 </div>
-                <div className="mt-2 space-y-1 text-xs text-gray-600">
-                  <div className="flex justify-between gap-2">
-                    <span className="text-gray-500">Lô</span>
-                    <span className="text-right break-words">{plot?.name}</span>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <span className="text-gray-500">Cây</span>
-                    <span className="text-right break-words">{task.crop}</span>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <span className="text-gray-500">Tổ trưởng</span>
-                    <span className="text-right break-words">{plot?.teamLeader}</span>
-                  </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500">Tổ trưởng</span>
+                  <span className="text-right break-words">{p.teamLeader}</span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500">Tiến độ</span>
+                  <span className="text-right break-words">{p.done}/{p.total}</span>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
