@@ -1,6 +1,6 @@
 import unittest
 import datetime as dt
-from akf_farm.engine.task_generator import compute_mandays, due_dates
+from akf_farm.engine.task_generator import compute_mandays, due_dates, dedupe_shared
 
 
 class TestComputeMandays(unittest.TestCase):
@@ -31,3 +31,19 @@ class TestDueDates(unittest.TestCase):
     def test_one_time_before_window(self):
         out = due_dates(self.d("2025-12-01"), ("one_time", 1), self.d("2026-01-01"), self.d("2026-02-01"))
         self.assertEqual(out, [])
+
+
+class TestDedupeShared(unittest.TestCase):
+    def test_shared_same_block_day_merged(self):
+        rows = [
+            {"block": "B1", "date": "2026-01-01", "description": "Kiểm tra tưới", "scope": "shared", "crop": "Gấc"},
+            {"block": "B1", "date": "2026-01-01", "description": "Kiểm tra tưới", "scope": "shared", "crop": "Sâm"},
+            {"block": "B1", "date": "2026-01-01", "description": "Tưới nước", "scope": "per_crop", "crop": "Gấc"},
+            {"block": "B1", "date": "2026-01-01", "description": "Tưới nước", "scope": "per_crop", "crop": "Sâm"},
+        ]
+        out = dedupe_shared(rows)
+        # 1 shared gộp + 2 per_crop riêng = 3
+        self.assertEqual(len(out), 3)
+        shared = [r for r in out if r["scope"] == "shared"]
+        self.assertEqual(len(shared), 1)
+        self.assertEqual(shared[0]["crop"], "Chung")

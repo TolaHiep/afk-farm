@@ -26,3 +26,18 @@ def due_dates(start, freq, from_date, to_date):
             out.append(cur)
         cur += dt.timedelta(days=step)
     return out
+
+
+def dedupe_shared(rows):
+    """Gộp việc scope=shared trùng (block, date, description). per_crop giữ nguyên."""
+    seen = set()
+    out = []
+    for r in rows:
+        if r.get("scope") == "shared":
+            key = (r["block"], str(r["date"]), r["description"])
+            if key in seen:
+                continue
+            seen.add(key)
+            r = {**r, "crop": "Chung"}
+        out.append(r)
+    return out
