@@ -13,6 +13,7 @@
   "team_leader",
   "status",
   "priority",
+  "mandays",
   "require_photo",
   "client_uuid",
   "photos"
@@ -73,6 +74,11 @@
    "fieldtype": "Select",
    "label": "Ưu tiên",
    "options": "normal\nhigh\nurgent"
+  },
+  {
+   "fieldname": "mandays",
+   "fieldtype": "Float",
+   "label": "Số công"
   },
   {
    "default": "0",

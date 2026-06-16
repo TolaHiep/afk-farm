@@ -150,8 +150,15 @@ permission_query_conditions = {
 
 scheduler_events = {
 	"daily": [
+		"akf_farm.engine.task_generator.mark_overdue",
 		"akf_farm.engine.task_generator.generate_tasks"
 	],
+}
+
+doc_events = {
+	"User": {
+		"on_update": "akf_farm.events.user_on_update"
+	},
 }
 
 # Testing

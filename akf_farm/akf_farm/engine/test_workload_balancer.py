@@ -16,3 +16,11 @@ class TestBalancer(unittest.TestCase):
         from collections import Counter
         c = Counter(out.values())
         self.assertEqual(c["A"], c["B"])  # 2-2
+
+    def test_initial_load_skews_assignment(self):
+        # A đã có tải sẵn 10 -> 2 việc mới dồn cho B
+        out = assign_leaders([{"id": "1", "block": "B", "mandays": 1},
+                              {"id": "2", "block": "B", "mandays": 1}],
+                             {}, ["A", "B"], initial_load={"A": 10})
+        self.assertEqual(out["1"], "B")
+        self.assertEqual(out["2"], "B")
