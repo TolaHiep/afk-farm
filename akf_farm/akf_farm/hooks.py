@@ -83,7 +83,7 @@ app_license = "mit"
 # ------------
 
 # before_install = "akf_farm.install.before_install"
-# after_install = "akf_farm.install.after_install"
+after_install = "akf_farm.install.after_install"
 
 # Uninstallation
 # ------------
@@ -117,9 +117,9 @@ app_license = "mit"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
+permission_query_conditions = {
+	"Farm Task": "akf_farm.permissions.farm_task_query",
+}
 #
 # has_permission = {
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
