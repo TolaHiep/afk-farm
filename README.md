@@ -31,28 +31,37 @@ Các bản trình bày cho khách (docx) nằm ở thư mục `Downloads/` (Tổ
 
 Frontend: **Vite + React 18 + TS + React Router 7 + Tailwind v4 + shadcn/ui + Recharts** tại `frontend/`. Backend: **Frappe v15 + ERPNext headless**, custom app `akf_farm` tại `backend/akf_farm/`.
 
-## Chạy toàn bộ bằng một lệnh (deploy)
+## Chạy DEV (mặc định — live-edit, một lệnh)
 
-    cp .env.example .env   # đổi mật khẩu khi deploy thật
+    cp .env.example .env
     docker compose up -d --build
 
-Mở http://localhost (cổng 80). Stack gồm: frontend (React/nginx) + Frappe v15
-backend (gunicorn, scheduler, workers, websocket) + MariaDB + Redis. Site
-`akf.localhost` được tạo & cài app `akf_farm` tự động lần đầu; dữ liệu lưu ở
-Docker volume (bền qua restart). Cấu hình qua `.env` (xem `.env.example`:
-SITE_NAME, ADMIN_PASSWORD, DB_ROOT_PASSWORD, HTTP_PORT, SEED_DEMO).
+Mở http://localhost (cổng 80). `docker compose` tự gộp `docker-compose.yml` +
+`docker-compose.override.yml` → ra **bản dev live-edit**:
+- **Backend** chạy `bench serve` + bind-mount `backend/akf_farm` → sửa `.py` auto-reload (không cần build lại).
+- **Frontend** chạy Vite dev server (service `web-dev`) bind-mount `frontend/` → sửa React hot-reload ngay trên trình duyệt.
+- Kèm MariaDB + Redis + scheduler + workers + websocket. Site `akf.localhost`
+  tạo & cài `akf_farm` + migrate tự động lần đầu; dữ liệu ở Docker volume (bền qua restart).
+
+Đăng nhập admin: `Administrator` / `admin` (= `ADMIN_PASSWORD` trong `.env`). Muốn có
+dữ liệu mẫu: đặt `SEED_DEMO=1` rồi `docker compose down -v && docker compose up -d`,
+hoặc seed thủ công: `docker compose exec backend bash -lc 'echo "import akf_farm.seed as s; s.run()" | bench --site akf.localhost console'`.
 
 Dừng: `docker compose down` (giữ dữ liệu) — `docker compose down -v` xoá luôn volume.
-Nếu lần đầu báo container thừa từ bản cũ: `docker compose down -v --remove-orphans`.
+
+## Chạy như PRODUCTION (không live-edit)
+
+Bỏ qua file override, dùng riêng compose base (image nướng code, gunicorn, nginx tĩnh):
+
+    docker compose -f docker-compose.yml up -d --build
+
+(Khi triển khai VPS thật sẽ tách thành nhánh git riêng — không kèm `docker-compose.override.yml`.)
 
 ### Cấu trúc repo
 - `backend/akf_farm/` — Frappe app (DocTypes, engine, API).
-- `frontend/` — React SPA (Vite), nginx reverse-proxy `/api`,`/files`,`/socket.io` về backend.
+- `frontend/` — React SPA (Vite); nginx (production) reverse-proxy `/api`,`/files`,`/socket.io` về backend.
 - `deploy/` — Containerfile + resources build image backend.
-
-### Dev (live-edit)
-Vẫn dùng devcontainer frappe_docker (project `akf`, cổng 8000). App symlink ở
-`backend/akf_farm`. Xem tài liệu/memory dev-env.
+- `docker-compose.yml` — định nghĩa production; `docker-compose.override.yml` — lớp dev live-edit.
 
 ## Môi trường phát triển
 

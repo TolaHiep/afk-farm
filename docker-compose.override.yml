@@ -1,0 +1,49 @@
+# Dev override — bien stack akf-farm thanh moi truong DEV live-edit.
+# `docker compose up -d` tu dong gop file nay voi docker-compose.yml.
+#   - backend/scheduler/queue/websocket: bind-mount source -> sua .py thay ngay (bench serve auto-reload)
+#   - web-dev: vite hot-reload tren cong 80 (thay nginx tinh; nginx 'frontend' bi tat qua profile prod)
+# Production (sau): chay rieng `docker compose -f docker-compose.yml ...` (KHONG co override),
+# hoac tren nhanh git production khong kem file nay.
+
+x-app-mount: &app-mount
+  - ./backend/akf_farm:/home/frappe/frappe-bench/apps/akf_farm
+
+services:
+  # Tat nginx tinh trong dev (chi chay khi --profile prod) de web-dev chiem cong 80
+  frontend:
+    profiles: ["prod"]
+
+  # Vite dev server (hot-reload) phuc vu React, proxy /api,/files,/assets -> backend:8000.
+  # node_modules cai san trong image (stage 'dev'); anonymous volume /app/node_modules duoc
+  # Docker nap tu image, khong bi bind-mount ./frontend de len.
+  web-dev:
+    build:
+      context: ./frontend
+      target: dev
+    environment:
+      VITE_BACKEND_TARGET: http://backend:8000
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Backend dev: bench serve (auto-reload .py) + bat developer_mode; mount source live
+  backend:
+    command: ["bash", "-c", "bench set-config -g developer_mode 1; exec bench serve --port 8000"]
+    volumes: *app-mount
+
+  scheduler:
+    volumes: *app-mount
+
+  queue-short:
+    volumes: *app-mount
+
+  queue-long:
+    volumes: *app-mount
+
+  websocket:
+    volumes: *app-mount
