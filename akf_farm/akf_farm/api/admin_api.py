@@ -1,6 +1,7 @@
 import frappe
 from frappe.utils import add_days, getdate
 from akf_farm.api.serializers import serialize_plot, serialize_zone
+from akf_farm.engine.leader_kpi import compute_kpi
 
 
 @frappe.whitelist()
@@ -180,6 +181,36 @@ def save_settings(**kwargs):
             s.set(field, kwargs[k])
     s.save()
     return {"ok": True}
+
+
+@frappe.whitelist()
+def team_kpi():
+    """KPI theo tổ trưởng (xấp xỉ GĐ1). Trả shape kpiData: top-level + byCrop (Gấc/Sâm)."""
+    leaders = list_team_leaders()
+    fields = ["onTime", "overdue", "completed", "notDone", "fullReport", "anomalies", "totalWork"]
+    out = []
+    for ld in leaders:
+        tasks = frappe.get_all("Farm Task", filters={"team_leader": ld["id"]}, fields=["status", "crop"])
+        ts = [{"status": t.status, "on_time": t.status == "completed", "mandays": 1} for t in tasks]
+        report_days = {}
+        for r in frappe.get_all("Team Leader Report", filters={"team_leader": ld["id"]},
+                                fields=["report_date"]):
+            report_days[str(r.report_date)] = True
+        anomaly_count = frappe.db.count("Abnormal Report", {"reporter": ld["id"]})
+        k = compute_kpi(ts, report_days, anomaly_count)
+        row = {
+            "teamLeaderId": ld["id"], "name": ld["name"],
+            "onTime": round(k["on_time_pct"]), "overdue": k["overdue"], "completed": k["completed"],
+            "notDone": k["not_done"], "fullReport": round(k["full_report_pct"]),
+            "anomalies": k["anomalies"], "totalWork": k["total_work"],
+        }
+        gac_n = len([t for t in tasks if t.crop == "Gấc"]) or 1
+        share = gac_n / (len(tasks) or 1)
+        gac = {f: round(row[f] * share) for f in fields}
+        sam = {f: row[f] - gac[f] for f in fields}
+        row["byCrop"] = {"Gấc": gac, "Sâm": sam}
+        out.append(row)
+    return out
 
 
 @frappe.whitelist()

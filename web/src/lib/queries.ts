@@ -36,6 +36,7 @@ export const getSettings = () => api.get("admin_api.get_settings") as Promise<an
 export const saveSettings = (s: Record<string, unknown>) => api.post("admin_api.save_settings", s);
 export const getDashboard = (date?: string) =>
   api.get("admin_api.dashboard", date ? { date } : undefined) as Promise<any>;
+export const getTeamKpi = () => api.get("admin_api.team_kpi") as Promise<any[]>;
 
 // Field (mobile)
 export const getTodayTasks = (date?: string) =>
@@ -51,3 +52,4 @@ export const getMyReports = () => api.get("field_api.my_reports") as Promise<any
 export const submitSupport = (p: { block: string; type: string; content: string; photos?: string[] }) =>
   api.post("field_api.submit_support", p);
 export const getMySupport = () => api.get("field_api.my_support") as Promise<any[]>;
+export const getMobileNotifications = () => api.get("field_api.notifications") as Promise<any[]>;

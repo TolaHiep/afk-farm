@@ -62,6 +62,18 @@ def task_detail(task):
 
 
 @frappe.whitelist()
+def notifications():
+    """Thông báo cho tổ trưởng: việc quá hạn của mình."""
+    out = []
+    for t in frappe.get_all("Farm Task",
+                            filters={"team_leader": frappe.session.user, "status": "overdue"},
+                            fields=["name", "title", "block", "task_date"], limit=20):
+        out.append({"id": f"t-{t.name}", "type": "overdue", "title": "Việc quá hạn",
+                    "description": f"{t.title} - {t.block}", "date": str(t.task_date), "read": False})
+    return out
+
+
+@frappe.whitelist()
 def my_reports():
     rows = frappe.get_all("Team Leader Report", filters={"team_leader": frappe.session.user},
         fields=["name as id", "block as plotId", "crop", "report_date as date", "content",
