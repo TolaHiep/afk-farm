@@ -1,8 +1,8 @@
 import React from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Play } from "lucide-react";
-import { plotName } from "../../lib/mockData";
-import { getTaskDetail, completeTask } from "../../lib/queries";
+import { getTaskDetail, completeTask, getMyPlots } from "../../lib/queries";
+import { enqueueOffline, isNetworkError, uid } from "../../lib/offline";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 
@@ -35,6 +35,18 @@ export function TaskDetail() {
   const [hasPhoto, setHasPhoto] = React.useState(false);
   const [showConfirmation, setShowConfirmation] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Map plotId -> tên lô thật (lấy từ API)
+  const [plotNames, setPlotNames] = React.useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    getMyPlots()
+      .then((plots) => {
+        const map: Record<string, string> = {};
+        for (const p of plots) map[p.id] = p.name;
+        setPlotNames(map);
+      })
+      .catch(() => setPlotNames({}));
+  }, []);
 
   React.useEffect(() => {
     if (!id) return;
@@ -84,14 +96,27 @@ export function TaskDetail() {
   const confirmCompletion = async () => {
     if (!id) return;
     setError(null);
+    const photos = task.photos ?? [];
+    const clientUuid = uid();
     try {
-      const photos = task.photos ?? [];
-      await completeTask(id, undefined, photos);
+      await completeTask(id, clientUuid, photos);
       setStatus("completed");
       setShowConfirmation(false);
       navigate("/mobile/success");
     } catch (e: any) {
-      setError(e?.message || "Không thể hoàn thành công việc. Vui lòng thử lại.");
+      if (isNetworkError(e)) {
+        enqueueOffline({
+          id: clientUuid, kind: "task",
+          payload: { task: id, client_uuid: clientUuid, photos },
+          title: task.title,
+          date: new Date().toISOString(),
+        });
+        setStatus("completed");
+        setShowConfirmation(false);
+        navigate("/mobile/success");
+      } else {
+        setError(e?.message || "Không thể hoàn thành công việc. Vui lòng thử lại.");
+      }
     }
   };
 
@@ -129,7 +154,7 @@ export function TaskDetail() {
             <MapPin className="w-5 h-5 text-gray-600" />
             <div>
               <p className="text-sm text-gray-600">Lô</p>
-              <p className="font-bold text-gray-900">{plotName(task.plotId)}</p>
+              <p className="font-bold text-gray-900">{plotNames[task.plotId] || task.plotId}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

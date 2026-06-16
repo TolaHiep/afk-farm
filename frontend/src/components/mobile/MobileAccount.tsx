@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   User,
@@ -12,36 +12,57 @@ import {
   LogOut,
   Sprout,
 } from "lucide-react";
-import { teamMembers, leaderPlots } from "../../lib/mockData";
+import { getMyPlots, getMyTeamMembers, updateMyProfile, changeMyPassword } from "../../lib/queries";
 import { useAuth } from "../../lib/auth";
+
+type Plot = { id: string; name: string; zoneId?: string; crops?: string[] };
 
 export function MobileAccount() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  if (!user) {
-    return <div className="p-4 text-center text-gray-500">Vui lòng đăng nhập</div>;
-  }
-
-  const myPlots = leaderPlots(user.email);
-  const memberCount = teamMembers.filter(
-    (m) => m.teamLeaderId === user.email
-  ).length;
+  // Dữ liệu thật của tổ trưởng đang đăng nhập
+  const [myPlots, setMyPlots] = useState<Plot[]>([]);
+  const [memberCount, setMemberCount] = useState(0);
 
   // Form thông tin liên hệ
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState(user.email);
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [savingContact, setSavingContact] = useState(false);
 
   // Form đổi mật khẩu
   const [curPass, setCurPass] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
+  const [savingPass, setSavingPass] = useState(false);
 
-  function handleSaveContact() {
-    alert(`Đã lưu thông tin liên hệ (demo).\nSĐT: ${phone}\nEmail: ${email}`);
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([getMyPlots(), getMyTeamMembers()])
+      .then(([plots, members]) => {
+        setMyPlots(plots ?? []);
+        setMemberCount((members ?? []).length);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  if (!user) {
+    return <div className="p-4 text-center text-gray-500">Vui lòng đăng nhập</div>;
   }
 
-  function handleChangePassword() {
+  async function handleSaveContact() {
+    setSavingContact(true);
+    try {
+      await updateMyProfile(phone);
+      alert("Đã lưu số điện thoại.");
+    } catch {
+      alert("Lưu thông tin thất bại. Vui lòng thử lại.");
+    } finally {
+      setSavingContact(false);
+    }
+  }
+
+  async function handleChangePassword() {
     if (!curPass || !newPass || !confirmPass) {
       alert("Vui lòng nhập đầy đủ thông tin mật khẩu.");
       return;
@@ -50,10 +71,18 @@ export function MobileAccount() {
       alert("Mật khẩu nhập lại không khớp.");
       return;
     }
-    alert("Đổi mật khẩu thành công (demo).");
-    setCurPass("");
-    setNewPass("");
-    setConfirmPass("");
+    setSavingPass(true);
+    try {
+      await changeMyPassword(newPass, curPass);
+      alert("Đổi mật khẩu thành công.");
+      setCurPass("");
+      setNewPass("");
+      setConfirmPass("");
+    } catch {
+      alert("Đổi mật khẩu thất bại. Kiểm tra lại mật khẩu hiện tại.");
+    } finally {
+      setSavingPass(false);
+    }
   }
 
   return (
@@ -98,7 +127,7 @@ export function MobileAccount() {
               className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-700"
             >
               <Sprout className="w-3.5 h-3.5" />
-              {p.name} · {p.crop}
+              {p.name}{p.crops && p.crops.length > 0 ? ` · ${p.crops.join(", ")}` : ""}
             </span>
           ))}
           {myPlots.length === 0 && (
@@ -136,19 +165,21 @@ export function MobileAccount() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 py-3 outline-none text-gray-900 bg-transparent"
-              placeholder="Nhập email"
+              readOnly
+              className="flex-1 py-3 outline-none text-gray-500 bg-transparent"
+              placeholder="Email đăng nhập"
             />
           </div>
+          <p className="text-xs text-gray-400 mt-1">Email đăng nhập do quản trị viên cấp, không thể tự đổi.</p>
         </div>
 
         <button
           onClick={handleSaveContact}
-          className="w-full bg-green-600 text-white rounded-xl py-3.5 flex items-center justify-center gap-2 font-semibold shadow active:bg-green-700"
+          disabled={savingContact}
+          className="w-full bg-green-600 text-white rounded-xl py-3.5 flex items-center justify-center gap-2 font-semibold shadow active:bg-green-700 disabled:opacity-60"
         >
           <Save className="w-5 h-5" />
-          Lưu
+          {savingContact ? "Đang lưu…" : "Lưu"}
         </button>
       </div>
 
@@ -206,10 +237,11 @@ export function MobileAccount() {
 
         <button
           onClick={handleChangePassword}
-          className="w-full bg-blue-600 text-white rounded-xl py-3.5 flex items-center justify-center gap-2 font-semibold shadow active:bg-blue-700"
+          disabled={savingPass}
+          className="w-full bg-blue-600 text-white rounded-xl py-3.5 flex items-center justify-center gap-2 font-semibold shadow active:bg-blue-700 disabled:opacity-60"
         >
           <KeyRound className="w-5 h-5" />
-          Đổi mật khẩu
+          {savingPass ? "Đang đổi…" : "Đổi mật khẩu"}
         </button>
       </div>
 

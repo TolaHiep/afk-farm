@@ -9,8 +9,7 @@ import {
   ImageIcon,
   Filter,
 } from "lucide-react";
-import { plotName } from "../../lib/mockData";
-import { getMyReports } from "../../lib/queries";
+import { getMyReports, getMyPlots } from "../../lib/queries";
 
 // Định dạng ngày kiểu Việt Nam (dd/MM/yyyy)
 function formatVNDate(iso: string) {
@@ -22,6 +21,19 @@ export function MobileReportHistory() {
   const [plotFilter, setPlotFilter] = useState<string>("all");
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Map plotId -> tên lô thật (lấy từ API)
+  const [plotNames, setPlotNames] = useState<Record<string, string>>({});
+
+  // Nạp danh sách lô thật 1 lần để tra tên theo plotId
+  useEffect(() => {
+    getMyPlots()
+      .then((plots) => {
+        const map: Record<string, string> = {};
+        for (const p of plots) map[p.id] = p.name;
+        setPlotNames(map);
+      })
+      .catch(() => setPlotNames({}));
+  }, []);
 
   // Fetch reports from API
   useEffect(() => {
@@ -49,7 +61,7 @@ export function MobileReportHistory() {
     new Map(
       reports.map((r: any) => [
         r.plotId,
-        { id: r.plotId, name: plotName(r.plotId) },
+        { id: r.plotId, name: plotNames[r.plotId] || r.plotId },
       ])
     ).values()
   );
@@ -131,7 +143,7 @@ export function MobileReportHistory() {
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                   <Layers className="w-3.5 h-3.5" />
-                  {plotName(r.plotId)}
+                  {plotNames[r.plotId] || r.plotId}
                 </span>
                 <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">
                   <Sprout className="w-3.5 h-3.5" />

@@ -1,7 +1,6 @@
 import React from "react";
 import { ClipboardList, ImageIcon, AlertTriangle } from "lucide-react";
-import { teamLeaders, plots, zones, plotName, zoneName } from "../../lib/mockData";
-import { getReports } from "../../lib/queries";
+import { getReports, getTeamLeaders, getPlots, getZones } from "../../lib/queries";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Chờ xem", cls: "bg-yellow-100 text-yellow-800" },
@@ -19,29 +18,65 @@ export function TeamLeaderReports() {
   const [date, setDate] = React.useState("");
   const [detail, setDetail] = React.useState<string | null>(null);
   const [teamLeaderReports, setTeamLeaderReports] = React.useState<any[]>([]);
+  const [teamLeaders, setTeamLeaders] = React.useState<any[]>([]);
+  const [plots, setPlots] = React.useState<any[]>([]);
+  const [zones, setZones] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState("");
 
   React.useEffect(() => {
-    getReports().then((data) => {
-      setTeamLeaderReports(data);
-      setLoading(false);
-    }).catch(() => {
-      setLoading(false);
-    });
+    Promise.all([getReports(), getTeamLeaders(), getPlots(), getZones()])
+      .then(([reports, leaders, plotList, zoneList]) => {
+        setTeamLeaderReports(reports);
+        setTeamLeaders(leaders);
+        setPlots(plotList);
+        setZones(zoneList);
+      })
+      .catch(() => setLoadError("Không tải được dữ liệu báo cáo từ máy chủ"))
+      .finally(() => setLoading(false));
   }, []);
+
+  // Map id -> đối tượng lô/vùng (chỉ tra khi cần tên lô/vùng)
+  const plotById = React.useMemo(() => {
+    const m = new Map<string, any>();
+    plots.forEach((p) => m.set(p.id ?? p.name, p));
+    return m;
+  }, [plots]);
+  const zoneNameById = React.useMemo(() => {
+    const m = new Map<string, string>();
+    zones.forEach((z) => m.set(z.id ?? z.name, z.zone_name ?? z.name ?? z.id));
+    return m;
+  }, [zones]);
+
+  const plotLabel = React.useCallback((plotId: string) => {
+    const p = plotById.get(plotId);
+    if (!p) return plotId;
+    const plotName = p.block_name ?? p.name ?? plotId;
+    const zoneId = p.zoneId ?? p.zone;
+    const zoneName = zoneId ? zoneNameById.get(zoneId) : undefined;
+    return zoneName ? `${zoneName} · ${plotName}` : plotName;
+  }, [plotById, zoneNameById]);
+
+  const plotZoneId = React.useCallback((plotId: string) => {
+    const p = plotById.get(plotId);
+    return p ? (p.zoneId ?? p.zone) : undefined;
+  }, [plotById]);
 
   if (loading) {
     return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
+  }
+
+  if (loadError) {
+    return <div className="p-10 text-center text-red-500">{loadError}</div>;
   }
 
   // Danh sách loại cây có thật trong dữ liệu báo cáo
   const crops = Array.from(new Set(teamLeaderReports.map((r) => r.crop)));
 
   const rows = teamLeaderReports.filter((r) => {
-    const p = plots.find((x) => x.id === r.plotId);
     if (leader !== "all" && r.teamLeaderId !== leader) return false;
     if (plot !== "all" && r.plotId !== plot) return false;
-    if (zone !== "all" && p?.zoneId !== zone) return false;
+    if (zone !== "all" && plotZoneId(r.plotId) !== zone) return false;
     if (crop !== "all" && r.crop !== crop) return false;
     if (status !== "all" && r.status !== status) return false;
     if (abnormal === "yes" && !r.abnormal) return false;
@@ -70,11 +105,11 @@ export function TeamLeaderReports() {
         </select>
         <select value={zone} onChange={(e) => setZone(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
           <option value="all">Tất cả vùng</option>
-          {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+          {zones.map((z) => <option key={z.id ?? z.name} value={z.id ?? z.name}>{z.zone_name ?? z.name ?? z.id}</option>)}
         </select>
         <select value={plot} onChange={(e) => setPlot(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
           <option value="all">Tất cả lô</option>
-          {plots.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {plots.map((p) => <option key={p.id ?? p.name} value={p.id ?? p.name}>{p.block_name ?? p.name ?? p.id}</option>)}
         </select>
         <select value={crop} onChange={(e) => setCrop(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
           <option value="all">Tất cả loại cây</option>
@@ -103,12 +138,11 @@ export function TeamLeaderReports() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {rows.map((r) => {
-              const p = plots.find((x) => x.id === r.plotId);
               return (
                 <tr key={r.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{r.date}</td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">{r.reporter}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{p ? `${zoneName(p.zoneId)} · ${p.name}` : plotName(r.plotId)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{plotLabel(r.plotId)}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{r.crop}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{r.content}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">
@@ -138,7 +172,6 @@ export function TeamLeaderReports() {
       {/* Cards (mobile) */}
       <div className="md:hidden space-y-3">
         {rows.map((r) => {
-          const p = plots.find((x) => x.id === r.plotId);
           return (
             <div key={r.id} className="bg-white rounded-lg border border-gray-200 p-4 space-y-2">
               <div className="flex items-center justify-between gap-2">
@@ -151,7 +184,7 @@ export function TeamLeaderReports() {
                 </div>
               </div>
               <div className="text-sm text-gray-600">
-                <span className="font-medium text-gray-900">{r.reporter}</span> · {p ? `${zoneName(p.zoneId)} · ${p.name}` : plotName(r.plotId)} · {r.crop}
+                <span className="font-medium text-gray-900">{r.reporter}</span> · {plotLabel(r.plotId)} · {r.crop}
               </div>
               <p className="text-sm text-gray-600 line-clamp-2">{r.content}</p>
               <div className="flex items-center justify-between">
@@ -178,7 +211,7 @@ export function TeamLeaderReports() {
               <h3 className="text-lg font-semibold text-gray-900">Báo cáo ngày {current.date}</h3>
               <button onClick={() => setDetail(null)} className="text-gray-400 text-xl leading-none">×</button>
             </div>
-            <div className="text-sm text-gray-500">{current.reporter} · {plotName(current.plotId)} · {current.crop}</div>
+            <div className="text-sm text-gray-500">{current.reporter} · {plotLabel(current.plotId)} · {current.crop}</div>
             <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">{current.content}</div>
             {(current.photos ?? []).length > 0 && (
               <img src={current.photos[0]} alt="ảnh báo cáo" className="w-full h-48 object-cover rounded-lg border border-gray-200" />

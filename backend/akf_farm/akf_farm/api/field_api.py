@@ -75,6 +75,40 @@ def my_plots():
 
 
 @frappe.whitelist()
+def update_my_profile(phone=None):
+    """Tổ trưởng tự cập nhật SĐT (lưu vào username) của chính mình."""
+    doc = frappe.get_doc("User", frappe.session.user)
+    if phone is not None:
+        doc.username = phone or None
+    doc.save(ignore_permissions=True)
+    return {"ok": True}
+
+
+@frappe.whitelist()
+def change_my_password(new_password, old_password=None):
+    """Tổ trưởng tự đổi mật khẩu; xác minh mật khẩu hiện tại trước."""
+    from frappe.utils.password import check_password
+    user = frappe.session.user
+    if old_password:
+        try:
+            check_password(user, old_password)
+        except frappe.AuthenticationError:
+            frappe.throw("Mật khẩu hiện tại không đúng")
+    doc = frappe.get_doc("User", user)
+    doc.new_password = new_password
+    doc.save(ignore_permissions=True)
+    return {"ok": True}
+
+
+@frappe.whitelist()
+def my_team_members():
+    """Tổ viên thuộc tổ trưởng đang đăng nhập (cho màn Tài khoản mobile)."""
+    rows = frappe.get_all("Team Member", filters={"team_leader": frappe.session.user},
+                          fields=["name as id", "member_name as name", "phone", "status"])
+    return rows
+
+
+@frappe.whitelist()
 def notifications():
     """Thông báo cho tổ trưởng: việc quá hạn của mình."""
     out = []

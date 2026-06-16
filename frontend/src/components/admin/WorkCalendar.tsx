@@ -1,8 +1,8 @@
 import React from "react";
-import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { getCalendar, getPlots, getZones, getTeamLeaders } from "../../lib/queries";
+import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask } from "../../lib/queries";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 type Task = { id: string; title: string; plotId: string; crop: string; date: string; status: string; teamLeaderId: string; requirePhoto?: boolean; priority?: string };
@@ -23,6 +23,11 @@ export function WorkCalendar() {
   const [teamLeaders, setTeamLeaders] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState("");
+
+  const reloadCalendar = React.useCallback(async () => {
+    const t = await getCalendar(FROM_DATE, 10);
+    setTasks((t as Task[]) ?? []);
+  }, []);
 
   React.useEffect(() => {
     Promise.all([getCalendar(FROM_DATE, 10), getPlots(), getZones(), getTeamLeaders()])
@@ -94,8 +99,57 @@ export function WorkCalendar() {
     notDone: items.length - items.filter((t) => t.status === "completed").length,
   });
 
-  const handleReassign = (task: any) => alert(`(Demo) Gán lại việc "${task.title}" — ${plotName(task.plotId)}. Admin chủ động chọn tổ trưởng mới.`);
-  const handlePostpone = (task: any) => alert(`(Demo) Lùi lịch việc "${task.title}" — ${plotName(task.plotId)} (ngày ${task.date}). Admin chủ động chọn ngày mới.`);
+  // Modal đổi lịch / đổi tổ trưởng cho 1 việc
+  const [modalTask, setModalTask] = React.useState<Task | null>(null);
+  const [modalDate, setModalDate] = React.useState("");
+  const [modalLeader, setModalLeader] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  const openTaskModal = (task: Task) => {
+    setModalTask(task);
+    setModalDate(task.date);
+    setModalLeader(task.teamLeaderId);
+  };
+  const closeTaskModal = () => {
+    if (saving) return;
+    setModalTask(null);
+  };
+
+  const handleReschedule = async () => {
+    if (!modalTask) return;
+    if (!modalDate || modalDate === modalTask.date) {
+      alert("Vui lòng chọn ngày mới khác ngày hiện tại.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await rescheduleTask(modalTask.id, modalDate);
+      await reloadCalendar();
+      setModalTask(null);
+    } catch (e) {
+      alert("Không đổi được ngày công việc. Vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReassign = async () => {
+    if (!modalTask) return;
+    if (!modalLeader || modalLeader === modalTask.teamLeaderId) {
+      alert("Vui lòng chọn tổ trưởng khác tổ trưởng hiện tại.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await reassignTask(modalTask.id, modalLeader);
+      await reloadCalendar();
+      setModalTask(null);
+    } catch (e) {
+      alert("Không đổi được tổ trưởng. Vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const leaderOverview = React.useMemo(() => {
     if (filterLeader === "all") return null;
@@ -254,8 +308,8 @@ export function WorkCalendar() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => handleReassign(task)}>Gán lại</Button>
-                        <Button variant="ghost" size="sm" onClick={() => handlePostpone(task)}>Lùi lịch</Button>
+                        <Button variant="secondary" size="sm" onClick={() => openTaskModal(task)}>Gán lại</Button>
+                        <Button variant="ghost" size="sm" onClick={() => openTaskModal(task)}>Lùi lịch</Button>
                       </div>
                     </div>
                   ))}
@@ -266,6 +320,73 @@ export function WorkCalendar() {
         </div>
       </div>
       </div>
+
+      {/* Modal đổi lịch / đổi tổ trưởng cho 1 việc */}
+      {modalTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeTaskModal}>
+          <div
+            className="w-full max-w-md bg-white rounded-lg shadow-xl border border-gray-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h3 className="text-base font-semibold text-gray-900">Điều chỉnh công việc</h3>
+              <button onClick={closeTaskModal} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div>
+                <div className="text-sm font-medium text-gray-900">{modalTask.title}</div>
+                <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                  <MapPin className="w-3.5 h-3.5 text-green-600" />
+                  <span>{plotName(modalTask.plotId)}</span>
+                  <span>· {modalTask.crop}</span>
+                </div>
+              </div>
+
+              {/* Đổi ngày */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Đổi ngày</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={modalDate}
+                    onChange={(e) => setModalDate(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                  <Button variant="primary" size="sm" onClick={handleReschedule} disabled={saving}>
+                    {saving ? "Đang lưu..." : "Đổi ngày"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Đổi tổ trưởng */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Đổi tổ trưởng</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={modalLeader}
+                    onChange={(e) => setModalLeader(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    {teamLeaders.map((tl) => (
+                      <option key={tl.id} value={tl.id}>{tl.name}</option>
+                    ))}
+                  </select>
+                  <Button variant="primary" size="sm" onClick={handleReassign} disabled={saving}>
+                    {saving ? "Đang lưu..." : "Gán lại"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 py-3 border-t border-gray-200 flex justify-end">
+              <Button variant="ghost" size="sm" onClick={closeTaskModal} disabled={saving}>Đóng</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

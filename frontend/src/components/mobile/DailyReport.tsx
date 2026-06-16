@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList } from "lucide-react";
 import { submitReport, getMyPlots } from "../../lib/queries";
+import { enqueueOffline, isNetworkError, uid } from "../../lib/offline";
 
 const ANOMALY_TYPES = [
   { value: "ung", label: "Úng nước" },
@@ -122,23 +123,38 @@ export function DailyReport() {
     const now = new Date();
     const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
+    const payload = {
+      block: activeItem.plotId, // map lô -> block
+      crop: activeItem.crop,
+      date,
+      content,
+      photos,
+      abnormal: hasAnomaly ? 1 : 0,
+      client_uuid: `${activeItem.id}-${uid()}`,
+    };
+
     setSubmitting(true);
     try {
-      await submitReport({
-        block: activeItem.plotId, // map lô -> block
-        crop: activeItem.crop,
-        date,
-        content,
-        photos,
-        abnormal: hasAnomaly ? 1 : 0,
-        client_uuid: `${activeItem.id}-${Date.now()}`,
-      });
+      await submitReport(payload);
       setReportedIds((prev) =>
         prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]
       );
       navigate("/mobile/success");
     } catch (err: any) {
-      alert(err?.message || "Gửi báo cáo thất bại. Vui lòng thử lại.");
+      if (isNetworkError(err)) {
+        // Mất mạng: lưu tạm, sẽ tự gửi lại ở màn Đồng bộ
+        enqueueOffline({
+          id: payload.client_uuid, kind: "report", payload,
+          title: `${activeItem.plotName} · ${activeItem.crop}`,
+          date: new Date().toISOString(),
+        });
+        setReportedIds((prev) =>
+          prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]
+        );
+        navigate("/mobile/success");
+      } else {
+        alert(err?.message || "Gửi báo cáo thất bại. Vui lòng thử lại.");
+      }
     } finally {
       setSubmitting(false);
     }

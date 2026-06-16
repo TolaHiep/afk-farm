@@ -15,8 +15,7 @@ import {
   Send,
   TrendingUp,
 } from "lucide-react";
-import { plots } from "../../lib/mockData";
-import { getTodayTasks } from "../../lib/queries";
+import { getTodayTasks, getMyPlots } from "../../lib/queries";
 
 const TODAY = "2026-06-14";
 
@@ -80,8 +79,16 @@ export function TodayTasks() {
   const navigate = useNavigate();
   const [viewDate, setViewDate] = useState(TODAY);
   const [dayTasks, setDayTasks] = useState<any[]>([]);
+  const [myPlots, setMyPlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const isToday = viewDate === TODAY;
+
+  // Nạp danh sách lô thật 1 lần để tra tên/cây theo plotId
+  useEffect(() => {
+    getMyPlots()
+      .then((plots) => setMyPlots(plots))
+      .catch(() => setMyPlots([]));
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -100,7 +107,7 @@ export function TodayTasks() {
 
   // Nhóm việc theo lô, rồi trong mỗi lô nhóm tiếp theo cây (Gấc / Sâm) — mô hình xen canh
   const plotGroups = Array.from(new Set(dayTasks.map((t) => t.plotId))).map((plotId) => {
-    const plot = plots.find((p) => p.id === plotId);
+    const plot = myPlots.find((p) => p.id === plotId);
     const items = dayTasks.filter((t) => t.plotId === plotId);
     const done = items.filter((t) => t.status === "completed").length;
 

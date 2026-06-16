@@ -1,8 +1,9 @@
 import React from "react";
 import { useNavigate, Link } from "react-router";
 import { ArrowLeft, Camera, CheckCircle, Send, HelpCircle, MessageSquare } from "lucide-react";
-import { supportTypes, plotName } from "../../lib/mockData";
+import { supportTypes } from "../../lib/mockData";
 import { submitSupport, getMySupport, getMyPlots } from "../../lib/queries";
+import { enqueueOffline, isNetworkError, uid } from "../../lib/offline";
 
 type SupportRequest = {
   id: string;
@@ -70,21 +71,33 @@ export function MobileSupport() {
       return;
     }
 
+    const payload = { block: plotId, type, content: content.trim() };
     try {
-      await submitSupport({
-        block: plotId,
-        type,
-        content: content.trim(),
-      });
+      await submitSupport(payload);
       setContent("");
       setHasPhoto(false);
       alert("Đã gửi yêu cầu hỗ trợ");
       await loadRequests();
     } catch (err) {
-      console.error("Failed to submit support request:", err);
-      alert("Gửi yêu cầu thất bại");
+      if (isNetworkError(err)) {
+        enqueueOffline({
+          id: uid(), kind: "support", payload,
+          title: `${plotName(plotId)} · ${type}`,
+          date: new Date().toISOString(),
+        });
+        setContent("");
+        setHasPhoto(false);
+        alert("Mất mạng — đã lưu tạm, sẽ tự gửi khi có mạng (xem màn Đồng bộ).");
+      } else {
+        console.error("Failed to submit support request:", err);
+        alert("Gửi yêu cầu thất bại");
+      }
     }
   };
+
+  // Tra tên lô thật theo plotId từ danh sách lô đã nạp, fallback hiển thị chính plotId
+  const plotName = (plotId: string) =>
+    myPlots.find((p) => p.id === plotId)?.name || plotId;
 
   const statusInfo = (status: string) => {
     switch (status) {

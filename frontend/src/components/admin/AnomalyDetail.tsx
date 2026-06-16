@@ -3,29 +3,46 @@ import { useNavigate, useParams } from "react-router";
 import { ArrowLeft, MapPin, Calendar, User, Image as ImageIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { plots } from "../../lib/mockData";
-import { getAnomalies } from "../../lib/queries";
+import { getAnomalies, getPlots, updateAnomaly } from "../../lib/queries";
 
 export function AnomalyDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [anomaly, setAnomaly] = useState<any>(null);
+  const [plots, setPlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
-    const fetchAnomaly = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getAnomalies();
-        const found = data.find(a => a.id === id);
-        setAnomaly(found);
+        const [anomalyList, plotList] = await Promise.all([getAnomalies(), getPlots()]);
+        setAnomaly(anomalyList.find(a => a.id === id));
+        setPlots(plotList);
       } catch (error) {
         console.error("Error fetching anomaly:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchAnomaly();
+    fetchData();
   }, [id]);
+
+  const changeStatus = async (status: string) => {
+    if (!anomaly) return;
+    setSaving(true);
+    setActionError("");
+    try {
+      await updateAnomaly(anomaly.id, { status });
+      setAnomaly((prev: any) => ({ ...prev, status }));
+    } catch (error) {
+      console.error("Error updating anomaly:", error);
+      setActionError("Không cập nhật được trạng thái. Vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
@@ -35,7 +52,8 @@ export function AnomalyDetail() {
     return <div>Không tìm thấy báo cáo bất thường</div>;
   }
 
-  const plot = plots.find(p => p.id === anomaly.plotId);
+  const plot = plots.find(p => (p.id ?? p.name) === anomaly.plotId);
+  const plotLabel = plot ? (plot.block_name ?? plot.name ?? anomaly.plotId) : anomaly.plotId;
 
   return (
     <div className="space-y-6">
@@ -51,12 +69,16 @@ export function AnomalyDetail() {
           <h2 className="text-2xl font-bold text-gray-900">Chi tiết báo cáo bất thường</h2>
           <p className="text-gray-600 mt-1">Mã báo cáo: {anomaly.id.toUpperCase()}</p>
         </div>
-        {anomaly.status === "pending" && (
-          <Button variant="primary">
-            Đánh dấu đã xử lý
+        {anomaly.status !== "resolved" && (
+          <Button variant="primary" disabled={saving} onClick={() => changeStatus("resolved")}>
+            {saving ? "Đang lưu…" : "Đánh dấu đã xử lý"}
           </Button>
         )}
       </div>
+
+      {actionError && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">{actionError}</div>
+      )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -86,7 +108,7 @@ export function AnomalyDetail() {
                   <MapPin className="w-4 h-4" />
                   <span className="text-sm font-medium">Lô</span>
                 </div>
-                <p className="text-gray-900 font-semibold">{plot?.name}</p>
+                <p className="text-gray-900 font-semibold">{plotLabel}</p>
               </div>
 
               <div>
@@ -157,7 +179,7 @@ export function AnomalyDetail() {
                 Tạo công việc khắc phục
               </Button>
               {anomaly.status !== "resolved" && (
-                <Button variant="ghost" className="w-full">
+                <Button variant="ghost" className="w-full" disabled={saving} onClick={() => changeStatus("resolved")}>
                   Đóng báo cáo
                 </Button>
               )}

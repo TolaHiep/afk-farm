@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ArrowLeft, MapPin, Calendar } from "lucide-react";
-import { plotName } from "../../lib/mockData";
-import { getUpcomingTasks } from "../../lib/queries";
+import { getUpcomingTasks, getMyPlots } from "../../lib/queries";
 
 const TODAY = "2026-06-14";
 
@@ -64,6 +63,18 @@ export function UpcomingTasks() {
   const [range, setRange] = useState<RangeKey>("10");
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Map plotId -> tên lô thật (lấy từ API)
+  const [plotNames, setPlotNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    getMyPlots()
+      .then((plots) => {
+        const map: Record<string, string> = {};
+        for (const p of plots) map[p.id] = p.name;
+        setPlotNames(map);
+      })
+      .catch(() => setPlotNames({}));
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -166,7 +177,7 @@ export function UpcomingTasks() {
                       <div key={plotId}>
                         <div className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-2">
                           <MapPin className="w-4 h-4 text-green-600" />
-                          <span>{plotName(plotId)}</span>
+                          <span>{plotNames[plotId] || plotId}</span>
                         </div>
                         <div className="space-y-3 pl-1">
                           {crops.map((crop) => (

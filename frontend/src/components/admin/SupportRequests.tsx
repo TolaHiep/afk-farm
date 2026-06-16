@@ -1,7 +1,6 @@
 import React from "react";
 import { LifeBuoy, Mail, Check, X, MessageSquare, MapPin } from "lucide-react";
-import { plotName, plots, zoneName } from "../../lib/mockData";
-import { getSupport } from "../../lib/queries";
+import { getSupport, replySupport } from "../../lib/queries";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Chờ xử lý", cls: "bg-yellow-100 text-yellow-800" },
@@ -17,6 +16,7 @@ export function SupportRequests() {
   const [selected, setSelected] = React.useState<string | null>(null);
   const [reply, setReply] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
+  const [sending, setSending] = React.useState(false);
 
   React.useEffect(() => {
     getSupport().then((data) => {
@@ -32,9 +32,23 @@ export function SupportRequests() {
   const setStatus = (id: string, status: string, replyText?: string) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status, reply: replyText ?? i.reply } : i)));
   };
-  const plotZone = (plotId: string) => {
-    const p = plots.find((x) => x.id === plotId);
-    return p ? `${zoneName(p.zoneId)} · ${p.name}` : plotName(plotId);
+
+  const handleReply = async (id: string, status = "replied") => {
+    const text = reply.trim();
+    if (!text) {
+      alert("Vui lòng nhập nội dung phản hồi.");
+      return;
+    }
+    setSending(true);
+    try {
+      await replySupport(id, text, status);
+      setStatus(id, status, text);
+      setReply("");
+    } catch (e) {
+      alert("Không gửi được phản hồi. Vui lòng thử lại.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading) {
@@ -86,7 +100,7 @@ export function SupportRequests() {
                 </span>
               </div>
               <div className="text-xs text-gray-500 flex items-center gap-1 mb-1">
-                <MapPin className="w-3 h-3" /> {plotZone(i.plotId)} · {i.type}
+                <MapPin className="w-3 h-3" /> {i.plotId} · {i.type}
               </div>
               <p className="text-sm text-gray-600 line-clamp-2">{i.content}</p>
               <div className="text-xs text-gray-400 mt-1">{i.sentAt}</div>
@@ -107,7 +121,7 @@ export function SupportRequests() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{current.type} — {current.reporter}</h3>
                   <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <MapPin className="w-4 h-4" /> {plotZone(current.plotId)} · {current.sentAt}
+                    <MapPin className="w-4 h-4" /> {current.plotId} · {current.sentAt}
                   </p>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS[current.status].cls}`}>
@@ -145,22 +159,25 @@ export function SupportRequests() {
 
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => setStatus(current.id, "approved")}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+                  onClick={() => handleReply(current.id, "approved")}
+                  disabled={sending}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
                 >
                   <Check className="w-4 h-4" /> Duyệt
                 </button>
                 <button
-                  onClick={() => setStatus(current.id, "rejected")}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+                  onClick={() => handleReply(current.id, "rejected")}
+                  disabled={sending}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 disabled:opacity-50"
                 >
                   <X className="w-4 h-4" /> Từ chối
                 </button>
                 <button
-                  onClick={() => { setStatus(current.id, "replied", reply || current.reply); setReply(""); }}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                  onClick={() => handleReply(current.id, "replied")}
+                  disabled={sending}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
                 >
-                  <MessageSquare className="w-4 h-4" /> Gửi phản hồi
+                  <MessageSquare className="w-4 h-4" /> {sending ? "Đang gửi..." : "Gửi phản hồi"}
                 </button>
                 <button
                   onClick={() => alert(`(Demo) Đã gửi email phản hồi tới tổ trưởng ${current.reporter}`)}

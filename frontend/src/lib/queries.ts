@@ -32,6 +32,38 @@ export const getTeamMembers = () => api.get("admin_api.list_team_members") as Pr
 export const getProcesses = () => api.get("admin_api.list_processes") as Promise<any[]>;
 export const getCropCycles = () => api.get("admin_api.list_crop_cycles") as Promise<any[]>;
 
+// Tổ trưởng (CRUD) — "xóa" = vô hiệu hóa
+export const createTeamLeader = (p: { email: string; full_name: string; phone?: string; password?: string; status?: string; plot_ids?: string[] }) =>
+  api.post("admin_api.create_team_leader", p);
+export const updateTeamLeader = (name: string, p: Record<string, unknown>) =>
+  api.post("admin_api.update_team_leader", { name, ...p });
+export const deleteTeamLeader = (name: string) => api.post("admin_api.delete_team_leader", { name });
+
+// Tổ viên (CRUD)
+export const createTeamMember = (p: { member_name: string; team_leader?: string; phone?: string; status?: string }) =>
+  api.post("admin_api.create_team_member", p);
+export const updateTeamMember = (name: string, p: Record<string, unknown>) =>
+  api.post("admin_api.update_team_member", { name, ...p });
+export const deleteTeamMember = (name: string) => api.post("admin_api.delete_team_member", { name });
+
+// Quy trình (CRUD)
+export const createProcess = (p: { process_name: string; crop?: string; steps?: unknown[] }) =>
+  api.post("admin_api.create_process", p);
+export const updateProcess = (name: string, p: Record<string, unknown>) =>
+  api.post("admin_api.update_process", { name, ...p });
+export const deleteProcess = (name: string) => api.post("admin_api.delete_process", { name });
+
+// Chu kỳ cây trồng (CRUD)
+export const createCropCycle = (p: { block: string; crop: string; start_date: string; cultivation_process?: string; status?: string }) =>
+  api.post("admin_api.create_crop_cycle", p);
+export const updateCropCycle = (name: string, p: Record<string, unknown>) =>
+  api.post("admin_api.update_crop_cycle", { name, ...p });
+export const deleteCropCycle = (name: string) => api.post("admin_api.delete_crop_cycle", { name });
+
+// Bất thường — cập nhật trạng thái / phản hồi
+export const updateAnomaly = (name: string, p: { status?: string; reply?: string }) =>
+  api.post("admin_api.update_anomaly", { name, ...p });
+
 // Admin — báo cáo/hỗ trợ/bất thường/thông báo/cài đặt/dashboard
 export const getAnomalies = () => api.get("admin_api.list_anomalies") as Promise<any[]>;
 export const getReports = () => api.get("admin_api.list_reports") as Promise<any[]>;
@@ -61,3 +93,7 @@ export const submitSupport = (p: { block: string; type: string; content: string;
 export const getMySupport = () => api.get("field_api.my_support") as Promise<any[]>;
 export const getMobileNotifications = () => api.get("field_api.notifications") as Promise<any[]>;
 export const getMyPlots = () => api.get("field_api.my_plots") as Promise<any[]>;
+export const getMyTeamMembers = () => api.get("field_api.my_team_members") as Promise<any[]>;
+export const updateMyProfile = (phone: string) => api.post("field_api.update_my_profile", { phone });
+export const changeMyPassword = (newPassword: string, oldPassword?: string) =>
+  api.post("field_api.change_my_password", { new_password: newPassword, old_password: oldPassword });

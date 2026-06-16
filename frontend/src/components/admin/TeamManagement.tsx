@@ -2,9 +2,13 @@ import React from "react";
 import { Search, ChevronDown, ChevronRight, Phone, Mail, MapPin, Users, Plus, Pencil, Trash2, UserPlus } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { getTeamLeaders, getTeamMembers } from "../../lib/queries";
+import {
+  getTeamLeaders, getTeamMembers,
+  createTeamLeader, updateTeamLeader, deleteTeamLeader,
+  createTeamMember, updateTeamMember, deleteTeamMember,
+} from "../../lib/queries";
 
-interface Leader { id: string; name: string; phone: string; email: string; plotId: string; plotIds: string[]; status: string; }
+interface Leader { id: string; name: string; phone: string; email: string; password?: string; plotId: string; plotIds: string[]; status: string; }
 interface Member { id: string; name: string; phone: string; teamLeaderId: string; status: string; }
 
 type LeaderModal = { mode: "add" | "edit"; data: Leader } | null;
@@ -14,7 +18,7 @@ type Confirm =
   | { kind: "member"; id: string; name: string }
   | null;
 
-const emptyLeader = (): Leader => ({ id: "", name: "", phone: "", email: "", plotId: "", plotIds: [], status: "active" });
+const emptyLeader = (): Leader => ({ id: "", name: "", phone: "", email: "", password: "", plotId: "", plotIds: [], status: "active" });
 const emptyMember = (leaderId: string): Member => ({ id: "", name: "", phone: "", teamLeaderId: leaderId, status: "active" });
 
 export function TeamManagement() {
@@ -26,16 +30,15 @@ export function TeamManagement() {
   const [leaderModal, setLeaderModal] = React.useState<LeaderModal>(null);
   const [memberModal, setMemberModal] = React.useState<MemberModal>(null);
   const [confirm, setConfirm] = React.useState<Confirm>(null);
-  const seq = React.useRef(100);
-  const nextId = (prefix: string) => `${prefix}${++seq.current}`;
+
+  const reload = () =>
+    Promise.all([getTeamLeaders(), getTeamMembers()]).then(([l, m]) => {
+      setLeaders(l);
+      setMembers(m);
+    });
 
   React.useEffect(() => {
-    Promise.all([getTeamLeaders(), getTeamMembers()])
-      .then(([l, m]) => {
-        setLeaders(l);
-        setMembers(m);
-      })
-      .finally(() => setLoading(false));
+    reload().finally(() => setLoading(false));
   }, []);
 
   const toggle = (id: string) => setOpenIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -47,30 +50,66 @@ export function TeamManagement() {
     !q || l.name.toLowerCase().includes(q) || l.email.toLowerCase().includes(q) || l.phone.toLowerCase().includes(q)
   );
 
-  // ===== CRUD tổ trưởng =====
-  const saveLeader = (data: Leader) => {
+  // ===== CRUD tổ trưởng (gọi API thật) =====
+  const saveLeader = async (data: Leader) => {
     if (!data.name.trim()) return;
-    setLeaders((prev) =>
-      data.id ? prev.map((l) => (l.id === data.id ? data : l)) : [...prev, { ...data, id: nextId("tl") }]
-    );
-    setLeaderModal(null);
+    try {
+      if (data.id) {
+        await updateTeamLeader(data.id, {
+          full_name: data.name, phone: data.phone, status: data.status,
+          ...(data.password ? { password: data.password } : {}),
+        });
+      } else {
+        if (!data.email.trim()) { alert("Vui lòng nhập email đăng nhập cho tổ trưởng."); return; }
+        await createTeamLeader({
+          email: data.email.trim(), full_name: data.name, phone: data.phone,
+          password: data.password || undefined, status: data.status,
+        });
+      }
+      await reload();
+      setLeaderModal(null);
+    } catch (e) {
+      alert("Lưu tổ trưởng thất bại: " + (e as Error).message);
+    }
   };
-  const deleteLeader = (id: string) => {
-    setLeaders((prev) => prev.filter((l) => l.id !== id));
-    setMembers((prev) => prev.filter((m) => m.teamLeaderId !== id));
+  const deleteLeader = async (id: string) => {
+    try {
+      await deleteTeamLeader(id);
+      await reload();
+    } catch (e) {
+      alert("Ngừng hoạt động tổ trưởng thất bại: " + (e as Error).message);
+    }
     setConfirm(null);
   };
 
-  // ===== CRUD tổ viên =====
-  const saveMember = (data: Member) => {
+  // ===== CRUD tổ viên (gọi API thật) =====
+  const saveMember = async (data: Member) => {
     if (!data.name.trim()) return;
-    setMembers((prev) =>
-      data.id ? prev.map((m) => (m.id === data.id ? data : m)) : [...prev, { ...data, id: nextId("tm") }]
-    );
-    setMemberModal(null);
+    try {
+      if (data.id) {
+        await updateTeamMember(data.id, {
+          member_name: data.name, phone: data.phone,
+          team_leader: data.teamLeaderId, status: data.status,
+        });
+      } else {
+        await createTeamMember({
+          member_name: data.name, team_leader: data.teamLeaderId || undefined,
+          phone: data.phone, status: data.status,
+        });
+      }
+      await reload();
+      setMemberModal(null);
+    } catch (e) {
+      alert("Lưu tổ viên thất bại: " + (e as Error).message);
+    }
   };
-  const deleteMember = (id: string) => {
-    setMembers((prev) => prev.filter((m) => m.id !== id));
+  const deleteMember = async (id: string) => {
+    try {
+      await deleteTeamMember(id);
+      await reload();
+    } catch (e) {
+      alert("Xóa tổ viên thất bại: " + (e as Error).message);
+    }
     setConfirm(null);
   };
 
@@ -235,11 +274,11 @@ export function TeamManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setConfirm(null)}>
           <div className="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {confirm.kind === "leader" ? `Xóa tổ trưởng "${confirm.name}"?` : `Xóa tổ viên "${confirm.name}"?`}
+              {confirm.kind === "leader" ? `Ngừng hoạt động tổ trưởng "${confirm.name}"?` : `Xóa tổ viên "${confirm.name}"?`}
             </h3>
             <p className="text-sm text-gray-600 mb-6">
               {confirm.kind === "leader"
-                ? `Toàn bộ ${confirm.memberCount} tổ viên thuộc tổ trưởng này cũng sẽ bị xóa. Dữ liệu liên quan có thể bị ảnh hưởng.`
+                ? `Tài khoản sẽ bị vô hiệu hóa (không đăng nhập được) và các công việc tương lai được gán lại tự động. Dữ liệu lịch sử vẫn được giữ.`
                 : "Bạn có chắc chắn muốn xóa tổ viên này không?"}
             </p>
             <div className="flex justify-end gap-3">
@@ -269,8 +308,15 @@ function LeaderForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit";
         <input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="0901234567"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
       </Field>
-      <Field label="Email">
+      <Field label={modal.mode === "add" ? "Email đăng nhập *" : "Email đăng nhập"}>
         <input value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="vana@nongtrai.vn"
+          readOnly={modal.mode === "edit"}
+          className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${modal.mode === "edit" ? "bg-gray-100 text-gray-500" : ""}`} />
+        {modal.mode === "edit" && <p className="text-xs text-gray-400 mt-1">Email là tài khoản đăng nhập, không thể đổi.</p>}
+      </Field>
+      <Field label={modal.mode === "add" ? "Mật khẩu" : "Đặt lại mật khẩu (để trống nếu giữ nguyên)"}>
+        <input type="password" value={form.password ?? ""} onChange={(e) => set("password", e.target.value)}
+          placeholder={modal.mode === "add" ? "Để trống sẽ tự sinh mật khẩu" : "••••••••"}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
       </Field>
       <Field label="Trạng thái">
@@ -279,7 +325,7 @@ function LeaderForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit";
           <option value="inactive">Ngừng hoạt động</option>
         </select>
       </Field>
-      <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.name.trim()} />
+      <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.name.trim() || (modal.mode === "add" && !form.email.trim())} />
     </Modal>
   );
 }

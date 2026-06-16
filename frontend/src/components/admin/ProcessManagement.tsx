@@ -2,13 +2,25 @@ import React from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
-import { getProcesses } from "../../lib/queries";
+import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess } from "../../lib/queries";
 
-interface Step { step: number; description: string; workPerHa: number; frequency: string; scope: string; requirePhoto: boolean; }
+interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; scope: string; scopeRaw: string; requirePhoto: boolean; }
 interface Process { id: string; name: string; crop: string; steps: Step[]; }
 
+const FREQ_OPTIONS: { value: string; label: string }[] = [
+  { value: "one_time", label: "1 lần/chu kỳ" },
+  { value: "daily", label: "Hàng ngày" },
+  { value: "every_n_days", label: "N ngày/lần" },
+  { value: "n_per_day", label: "N lần/ngày" },
+];
+
 const emptyProcess = (): Process => ({ id: "", name: "", crop: "Gấc", steps: [] });
-const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", scope: "Toàn bộ lô", requirePhoto: false });
+const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "one_time", frequencyValue: 1, scope: "", scopeRaw: "shared", requirePhoto: false });
+
+// Chuẩn hóa bước để gửi lên API (chỉ field backend cần)
+const toApiSteps = (steps: Step[]) =>
+  steps.map((s) => ({ description: s.description, workPerHa: s.workPerHa, frequencyType: s.frequencyType,
+    frequencyValue: s.frequencyValue, scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto }));
 
 type ProcModal = { mode: "add" | "edit"; data: Process } | null;
 type StepModal = { mode: "add" | "edit"; procId: string; index: number; data: Step } | null;
@@ -21,60 +33,76 @@ export function ProcessManagement() {
   const [procModal, setProcModal] = React.useState<ProcModal>(null);
   const [stepModal, setStepModal] = React.useState<StepModal>(null);
   const [confirm, setConfirm] = React.useState<Confirm>(null);
-  const seq = React.useRef(100);
+
+  const reload = (selectId?: string) =>
+    getProcesses().then((data: Process[]) => {
+      setProcs(data);
+      setSelectedId((cur) => selectId ?? (data.some((p) => p.id === cur) ? cur : data[0]?.id ?? ""));
+    });
 
   React.useEffect(() => {
-    getProcesses().then(setProcs).catch(() => setProcs([])).finally(() => setLoading(false));
-    const firstId = procs[0]?.id;
-    if (firstId) setSelectedId(firstId);
+    reload().catch(() => setProcs([])).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
 
   const selected = procs.find((p) => p.id === selectedId) || procs[0];
 
-  // ===== CRUD quy trình =====
-  const saveProcess = (data: Process) => {
+  // ===== CRUD quy trình (gọi API thật) =====
+  const saveProcess = async (data: Process) => {
     if (!data.name.trim()) return;
-    if (data.id) {
-      setProcs((prev) => prev.map((p) => (p.id === data.id ? { ...p, name: data.name, crop: data.crop } : p)));
-    } else {
-      const id = `proc${++seq.current}`;
-      setProcs((prev) => [...prev, { ...data, id, steps: [] }]);
-      setSelectedId(id);
+    try {
+      if (data.id) {
+        const res = await updateProcess(data.id, { process_name: data.name, crop: data.crop });
+        await reload(res?.id ?? data.id);
+      } else {
+        const res = await createProcess({ process_name: data.name, crop: data.crop, steps: [] });
+        await reload(res?.id);
+      }
+      setProcModal(null);
+    } catch (e) {
+      alert("Lưu quy trình thất bại: " + (e as Error).message);
     }
-    setProcModal(null);
   };
-  const deleteProcess = (id: string) => {
-    setProcs((prev) => {
-      const next = prev.filter((p) => p.id !== id);
-      if (id === selectedId) setSelectedId(next[0]?.id ?? "");
-      return next;
-    });
+  const deleteProcess = async (id: string) => {
+    try {
+      await apiDeleteProcess(id);
+      await reload();
+    } catch (e) {
+      alert("Xóa quy trình thất bại: " + (e as Error).message);
+    }
     setConfirm(null);
   };
 
-  // ===== CRUD bước =====
-  const saveStep = (procId: string, index: number, data: Step) => {
-    if (!data.description.trim()) return;
-    setProcs((prev) =>
-      prev.map((p) => {
-        if (p.id !== procId) return p;
-        const steps = [...p.steps];
-        if (index >= 0) steps[index] = data;
-        else steps.push(data);
-        // đánh số lại theo thứ tự
-        return { ...p, steps: steps.map((s, i) => ({ ...s, step: i + 1 })) };
-      })
-    );
-    setStepModal(null);
+  // ===== CRUD bước: cập nhật mảng bước rồi lưu cả quy trình =====
+  const persistSteps = async (procId: string, steps: Step[]) => {
+    const proc = procs.find((p) => p.id === procId);
+    if (!proc) return;
+    await updateProcess(procId, { process_name: proc.name, crop: proc.crop, steps: toApiSteps(steps) });
+    await reload(procId);
   };
-  const deleteStep = (procId: string, index: number) => {
-    setProcs((prev) =>
-      prev.map((p) =>
-        p.id === procId ? { ...p, steps: p.steps.filter((_, i) => i !== index).map((s, i) => ({ ...s, step: i + 1 })) } : p
-      )
-    );
+  const saveStep = async (procId: string, index: number, data: Step) => {
+    if (!data.description.trim()) return;
+    const proc = procs.find((p) => p.id === procId);
+    if (!proc) return;
+    const steps = [...proc.steps];
+    if (index >= 0) steps[index] = data;
+    else steps.push(data);
+    try {
+      await persistSteps(procId, steps);
+      setStepModal(null);
+    } catch (e) {
+      alert("Lưu bước thất bại: " + (e as Error).message);
+    }
+  };
+  const deleteStep = async (procId: string, index: number) => {
+    const proc = procs.find((p) => p.id === procId);
+    if (!proc) return;
+    try {
+      await persistSteps(procId, proc.steps.filter((_, i) => i !== index));
+    } catch (e) {
+      alert("Xóa bước thất bại: " + (e as Error).message);
+    }
     setConfirm(null);
   };
 
@@ -274,11 +302,21 @@ function StepForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit"; d
           <input type="number" value={form.workPerHa || ""} onChange={(e) => setForm({ ...form, workPerHa: Number(e.target.value) })} className={inputCls} />
         </Field>
         <Field label="Tần suất">
-          <input value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} placeholder="2 ngày/lần" className={inputCls} />
+          <select value={form.frequencyType} onChange={(e) => setForm({ ...form, frequencyType: e.target.value })} className={inputCls}>
+            {FREQ_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
         </Field>
       </div>
+      {(form.frequencyType === "every_n_days" || form.frequencyType === "n_per_day") && (
+        <Field label={form.frequencyType === "every_n_days" ? "Số ngày (N)" : "Số lần/ngày (N)"}>
+          <input type="number" min={1} value={form.frequencyValue || ""} onChange={(e) => setForm({ ...form, frequencyValue: Number(e.target.value) })} className={inputCls} />
+        </Field>
+      )}
       <Field label="Phạm vi">
-        <input value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })} placeholder="Toàn bộ lô" className={inputCls} />
+        <select value={form.scopeRaw} onChange={(e) => setForm({ ...form, scopeRaw: e.target.value })} className={inputCls}>
+          <option value="shared">Dùng chung</option>
+          <option value="per_crop">Theo cây</option>
+        </select>
       </Field>
       <label className="flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" checked={form.requirePhoto} onChange={(e) => setForm({ ...form, requirePhoto: e.target.checked })} className="w-4 h-4" />

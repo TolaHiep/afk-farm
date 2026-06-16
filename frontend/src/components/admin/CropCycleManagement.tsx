@@ -4,10 +4,7 @@ import { Plus, Calendar, FileText, X, AlertTriangle, MapPin, Edit2, Trash2, Chev
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
-import {
-  plotName, zoneName, plotCrops,
-} from "../../lib/mockData";
-import { getCropCycles, getZones, getPlots, getProcesses, getReports } from "../../lib/queries";
+import { getCropCycles, getZones, getPlots, getProcesses, getReports, createCropCycle, updateCropCycle, deleteCropCycle } from "../../lib/queries";
 
 interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
 
@@ -30,7 +27,12 @@ export function CropCycleManagement() {
   const [loading, setLoading] = useState(true);
   const [cycleModal, setCycleModal] = useState<{ mode: "add" | "edit"; data: Cycle } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const seq = React.useRef(100);
+  const [saving, setSaving] = useState(false);
+
+  const reloadCycles = async () => {
+    const cyclesData = await getCropCycles();
+    setCycles(cyclesData || []);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,17 +72,53 @@ export function CropCycleManagement() {
   const [openZones, setOpenZones] = useState<Set<string>>(() => new Set());
   const toggleZone = (id: string) => setOpenZones((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  const saveCycle = (data: Cycle) => {
-    if (!data.plotId) return;
-    setCycles((prev) => (data.id ? prev.map((c) => (c.id === data.id ? data : c)) : [...prev, { ...data, id: `cc${++seq.current}` }]));
-    setCycleModal(null);
+  const saveCycle = async (data: Cycle) => {
+    if (!data.plotId || !data.crop || !data.startDate) {
+      alert("Vui lòng nhập đầy đủ Lô, Loại cây và Ngày bắt đầu.");
+      return;
+    }
+    setSaving(true);
+    try {
+      if (data.id) {
+        await updateCropCycle(data.id, {
+          block: data.plotId,
+          crop: data.crop,
+          cultivation_process: data.processId || undefined,
+          start_date: data.startDate,
+          status: data.status,
+        });
+      } else {
+        await createCropCycle({
+          block: data.plotId,
+          crop: data.crop,
+          start_date: data.startDate,
+          cultivation_process: data.processId || undefined,
+          status: data.status,
+        });
+      }
+      await reloadCycles();
+      setCycleModal(null);
+    } catch (error) {
+      console.error("Failed to save crop cycle:", error);
+      alert("Lưu chu kỳ thất bại. Vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
   };
-  const deleteCycle = (id: string) => { setCycles((prev) => prev.filter((c) => c.id !== id)); setConfirmId(null); };
+  const deleteCycle = async (id: string) => {
+    try {
+      await deleteCropCycle(id);
+      await reloadCycles();
+    } catch (error) {
+      console.error("Failed to delete crop cycle:", error);
+      alert("Xóa chu kỳ thất bại. Vui lòng thử lại.");
+    } finally {
+      setConfirmId(null);
+    }
+  };
   const goToPlot = (plotId: string) => navigate(`/admin/zones?plot=${plotId}`);
 
   const cycleProgress = (cycle: Cycle): number => {
-    const match = plotCrops(cycle.plotId).find((c) => c.crop === cycle.crop);
-    if (match && match.total > 0) return Math.min(Math.round((match.done / match.total) * 100), 100);
     const days = Math.floor((new Date("2026-06-14").getTime() - new Date(cycle.startDate).getTime()) / 86400000);
     return Math.min(Math.max(Math.round((days / 90) * 100), 0), 100);
   };
@@ -250,10 +288,10 @@ export function CropCycleManagement() {
           <div className="relative bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-2xl max-h-[85vh] flex flex-col">
             <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Báo cáo tổ trưởng — {reportPlot?.name || plotName(reportPlotId)}</h3>
+                <h3 className="text-lg font-bold text-gray-900">Báo cáo tổ trưởng — {reportPlot?.name || reportPlotId}</h3>
                 {reportPlot && (
                   <button type="button" onClick={() => goToPlot(reportPlotId)} className="mt-1 inline-flex items-center gap-1 text-xs text-green-700 hover:underline">
-                    <MapPin className="w-3.5 h-3.5" />{zoneName(reportPlot.zoneId)} · {reportPlot.teamLeader} · {(reportPlot.area / 10000).toFixed(1)} ha
+                    <MapPin className="w-3.5 h-3.5" />{zones.find((z) => z.id === reportPlot.zoneId)?.name || "—"} · {reportPlot.teamLeader} · {(reportPlot.area / 10000).toFixed(1)} ha
                   </button>
                 )}
               </div>
@@ -306,7 +344,7 @@ export function CropCycleManagement() {
       )}
 
       {/* Modal thêm/sửa chu kỳ */}
-      {cycleModal && <CycleForm modal={cycleModal} zones={zones} plots={plots} processes={processes} onClose={() => setCycleModal(null)} onSave={saveCycle} />}
+      {cycleModal && <CycleForm modal={cycleModal} zones={zones} plots={plots} processes={processes} saving={saving} onClose={() => setCycleModal(null)} onSave={saveCycle} />}
 
       {/* Xác nhận xóa */}
       {confirmId && (
@@ -322,7 +360,7 @@ export function CropCycleManagement() {
 }
 
 // Form: chọn VÙNG trước → rồi chọn LÔ trong vùng đó
-function CycleForm({ modal, zones, plots, processes, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Cycle }; zones: any[]; plots: any[]; processes: any[]; onClose: () => void; onSave: (d: Cycle) => void; }) {
+function CycleForm({ modal, zones, plots, processes, saving, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Cycle }; zones: any[]; plots: any[]; processes: any[]; saving: boolean; onClose: () => void; onSave: (d: Cycle) => void; }) {
   const [form, setForm] = React.useState<Cycle>(modal.data);
   const [zoneId, setZoneId] = React.useState<string>(
     plots.find((p) => p.id === modal.data.plotId)?.zoneId ?? zones[0]?.id ?? ""
@@ -373,7 +411,7 @@ function CycleForm({ modal, zones, plots, processes, onClose, onSave }: { modal:
           <option value="done">Kết thúc</option>
         </select>
       </Field>
-      <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.plotId} />
+      <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.plotId || saving} />
     </Modal>
   );
 }

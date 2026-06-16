@@ -156,7 +156,9 @@ def list_processes():
         steps = [{
             "step": s.step, "description": s.description, "workPerHa": s.mandays_per_ha,
             "frequency": _freq_text(s.frequency_type, s.frequency_value),
-            "scope": _scope_text(s.scope), "requirePhoto": bool(s.require_photo),
+            "frequencyType": s.frequency_type or "one_time", "frequencyValue": s.frequency_value or 1,
+            "scope": _scope_text(s.scope), "scopeRaw": s.scope or "shared",
+            "requirePhoto": bool(s.require_photo),
         } for s in doc.steps]
         out.append({"id": p.name, "name": p.process_name, "crop": p.crop, "steps": steps})
     return out
@@ -306,3 +308,194 @@ def dashboard(date=None):
         "overdue": overdue, "newAnomalies": new_anomalies, "redPlots": red, "yellowPlots": yellow,
         "date": d,
     }
+
+
+# ==========================================================================
+# CRUD tổ trưởng (User + role AKF Team Leader). "Xóa" = vô hiệu hóa (enabled=0)
+# để giữ lịch sử việc & kích hoạt gán lại việc tương lai (events.user_on_update).
+# ==========================================================================
+
+def _leader_dict(name):
+    u = frappe.get_doc("User", name)
+    plot_ids = [b.name for b in frappe.get_all("Farm Block", filters={"team_leader": name}, fields=["name"])]
+    return {"id": u.name, "name": u.full_name or u.name, "phone": u.username or "", "email": u.name,
+            "plotId": plot_ids[0] if plot_ids else "", "plotIds": plot_ids,
+            "status": "active" if u.enabled else "inactive"}
+
+
+def _set_leader_plots(email, plot_ids):
+    """Đồng bộ danh sách lô phụ trách: gán lô mới, gỡ lô bị bỏ."""
+    if plot_ids is None:
+        return
+    if isinstance(plot_ids, str):
+        plot_ids = frappe.parse_json(plot_ids)
+    want = set(plot_ids or [])
+    current = {b.name for b in frappe.get_all("Farm Block", filters={"team_leader": email}, fields=["name"])}
+    for b in want - current:
+        frappe.db.set_value("Farm Block", b, "team_leader", email)
+    for b in current - want:
+        frappe.db.set_value("Farm Block", b, "team_leader", None)
+
+
+@frappe.whitelist()
+def create_team_leader(email, full_name, phone=None, password=None, status="active", plot_ids=None):
+    if frappe.db.exists("User", email):
+        frappe.throw(f"Email {email} đã tồn tại")
+    doc = frappe.get_doc({
+        "doctype": "User", "email": email, "first_name": full_name,
+        "username": phone or None, "send_welcome_email": 0,
+        "enabled": 1 if status == "active" else 0,
+        "new_password": password or frappe.generate_hash(length=10),
+        "roles": [{"role": "AKF Team Leader"}],
+    }).insert(ignore_permissions=True)
+    _set_leader_plots(doc.name, plot_ids)
+    frappe.db.commit()
+    return _leader_dict(doc.name)
+
+
+@frappe.whitelist()
+def update_team_leader(name, full_name=None, phone=None, password=None, status=None, plot_ids=None):
+    doc = frappe.get_doc("User", name)
+    if full_name is not None:
+        doc.first_name = full_name
+    if phone is not None:
+        doc.username = phone or None
+    if status is not None:
+        doc.enabled = 1 if status == "active" else 0
+    if password:
+        doc.new_password = password
+    if "AKF Team Leader" not in [r.role for r in doc.roles]:
+        doc.append("roles", {"role": "AKF Team Leader"})
+    doc.save(ignore_permissions=True)
+    _set_leader_plots(name, plot_ids)
+    frappe.db.commit()
+    return _leader_dict(name)
+
+
+@frappe.whitelist()
+def delete_team_leader(name):
+    """Vô hiệu hóa tổ trưởng (giữ dữ liệu); việc tương lai được gán lại tự động."""
+    doc = frappe.get_doc("User", name)
+    doc.enabled = 0
+    doc.save(ignore_permissions=True)
+    frappe.db.commit()
+    return {"ok": True}
+
+
+# ---- CRUD tổ viên (Team Member) ----
+
+@frappe.whitelist()
+def create_team_member(member_name, team_leader=None, phone=None, status="active"):
+    doc = frappe.get_doc({"doctype": "Team Member", "member_name": member_name,
+                          "team_leader": team_leader or None, "phone": phone, "status": status}).insert()
+    return {"id": doc.name, "name": doc.member_name, "phone": doc.phone or "",
+            "teamLeaderId": doc.team_leader or "", "status": doc.status or "active"}
+
+
+@frappe.whitelist()
+def update_team_member(name, **kwargs):
+    doc = frappe.get_doc("Team Member", name)
+    mapping = {"name_": "member_name", "member_name": "member_name", "teamLeaderId": "team_leader",
+               "team_leader": "team_leader", "phone": "phone", "status": "status"}
+    for k, field in mapping.items():
+        if k in kwargs:
+            doc.set(field, kwargs[k] or None if field == "team_leader" else kwargs[k])
+    doc.save()
+    return {"id": doc.name, "name": doc.member_name, "phone": doc.phone or "",
+            "teamLeaderId": doc.team_leader or "", "status": doc.status or "active"}
+
+
+@frappe.whitelist()
+def delete_team_member(name):
+    frappe.delete_doc("Team Member", name)
+    return {"ok": True}
+
+
+# ---- CRUD quy trình (Cultivation Process + bước con) ----
+
+def _apply_steps(doc, steps):
+    if isinstance(steps, str):
+        steps = frappe.parse_json(steps)
+    doc.set("steps", [])
+    for i, s in enumerate(steps or [], start=1):
+        doc.append("steps", {
+            "step": i,
+            "description": s.get("description"),
+            "mandays_per_ha": s.get("workPerHa") or 0,
+            "frequency_type": s.get("frequencyType") or "one_time",
+            "frequency_value": s.get("frequencyValue") or 1,
+            "scope": s.get("scopeRaw") or "shared",
+            "require_photo": 1 if s.get("requirePhoto") else 0,
+        })
+
+
+@frappe.whitelist()
+def create_process(process_name, crop=None, steps=None):
+    doc = frappe.get_doc({"doctype": "Cultivation Process", "process_name": process_name, "crop": crop})
+    _apply_steps(doc, steps)
+    doc.insert()
+    return {"id": doc.name, "name": doc.process_name, "crop": doc.crop}
+
+
+@frappe.whitelist()
+def update_process(name, process_name=None, crop=None, steps=None):
+    doc = frappe.get_doc("Cultivation Process", name)
+    if crop is not None:
+        doc.crop = crop
+    if steps is not None:
+        _apply_steps(doc, steps)
+    doc.save()
+    # process_name là autoname (field:process_name) — đổi tên cần rename_doc
+    if process_name and process_name != doc.process_name:
+        doc = frappe.rename_doc("Cultivation Process", doc.name, process_name, force=True)
+    return {"id": doc.name, "name": doc.process_name, "crop": doc.crop}
+
+
+@frappe.whitelist()
+def delete_process(name):
+    frappe.delete_doc("Cultivation Process", name)
+    return {"ok": True}
+
+
+# ---- CRUD chu kỳ cây trồng (Crop Cycle) ----
+
+@frappe.whitelist()
+def create_crop_cycle(block, crop, start_date, cultivation_process=None, status="active"):
+    doc = frappe.get_doc({"doctype": "Crop Cycle", "block": block, "crop": crop,
+                          "cultivation_process": cultivation_process or None,
+                          "start_date": start_date, "status": status}).insert()
+    return {"id": doc.name, "plotId": doc.block, "crop": doc.crop,
+            "processId": doc.cultivation_process or "", "startDate": str(doc.start_date), "status": doc.status}
+
+
+@frappe.whitelist()
+def update_crop_cycle(name, **kwargs):
+    doc = frappe.get_doc("Crop Cycle", name)
+    mapping = {"plotId": "block", "block": "block", "crop": "crop", "processId": "cultivation_process",
+               "cultivation_process": "cultivation_process", "startDate": "start_date",
+               "start_date": "start_date", "status": "status"}
+    for k, field in mapping.items():
+        if k in kwargs:
+            doc.set(field, kwargs[k] or None if field == "cultivation_process" else kwargs[k])
+    doc.save()
+    return {"id": doc.name, "plotId": doc.block, "crop": doc.crop,
+            "processId": doc.cultivation_process or "", "startDate": str(doc.start_date), "status": doc.status}
+
+
+@frappe.whitelist()
+def delete_crop_cycle(name):
+    frappe.delete_doc("Crop Cycle", name)
+    return {"ok": True}
+
+
+# ---- Cập nhật trạng thái / phản hồi bất thường ----
+
+@frappe.whitelist()
+def update_anomaly(name, status=None, reply=None):
+    doc = frappe.get_doc("Abnormal Report", name)
+    if status is not None:
+        doc.status = status
+    if reply is not None:
+        doc.reply = reply
+    doc.save()
+    return {"ok": True}
