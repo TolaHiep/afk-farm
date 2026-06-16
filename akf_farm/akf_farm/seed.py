@@ -1,6 +1,7 @@
 import frappe
 from akf_farm.install import ensure_roles
 from akf_farm.engine.task_generator import generate_tasks
+from akf_farm.api.sheet_import import import_from_markdown
 
 LEADERS = [
     ("vana@akf.local", "Nguyễn Văn A", "0901234567"),
@@ -36,22 +37,16 @@ def run(start_date="2026-06-14"):
             frappe.get_doc({"doctype": "Farm Block", "block_name": bn, "zone": zn,
                             "area": 12500, "team_leader": tl, "status": "good"}).insert()
 
-    if not frappe.db.exists("Cultivation Process", "Quy trình Gấc"):
-        frappe.get_doc({
-            "doctype": "Cultivation Process", "process_name": "Quy trình Gấc", "crop": "Gấc",
-            "steps": [
-                {"step": 1, "description": "Tưới nước giàn gấc", "mandays_per_ha": 2,
-                 "frequency_type": "every_n_days", "frequency_value": 2, "scope": "per_crop"},
-                {"step": 2, "description": "Kiểm tra sâu bệnh gấc", "mandays_per_ha": 2,
-                 "frequency_type": "every_n_days", "frequency_value": 3, "scope": "per_crop", "require_photo": 1},
-            ],
-        }).insert()
+    # Quy trình THẬT từ docs/quy-trinh-canh-tac.md (Sâm 22 bước + Gấc 22 bước)
+    import_from_markdown()
 
+    # Mô hình xen canh: mỗi lô trồng đồng thời Gấc (giàn) + Sâm (dưới tán)
     for bn, zn, tl in BLOCKS:
-        if not frappe.db.exists("Crop Cycle", {"block": bn, "crop": "Gấc"}):
-            frappe.get_doc({"doctype": "Crop Cycle", "block": bn, "crop": "Gấc",
-                            "cultivation_process": "Quy trình Gấc", "start_date": start_date,
-                            "status": "active"}).insert()
+        for crop in ("Gấc", "Sâm"):
+            if not frappe.db.exists("Crop Cycle", {"block": bn, "crop": crop}):
+                frappe.get_doc({"doctype": "Crop Cycle", "block": bn, "crop": crop,
+                                "cultivation_process": f"Quy trình {crop}", "start_date": start_date,
+                                "status": "active"}).insert()
 
     frappe.db.commit()
     created = generate_tasks(from_date=start_date, days=10)
