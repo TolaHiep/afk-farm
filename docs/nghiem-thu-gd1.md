@@ -29,10 +29,15 @@
 5. Lùi lịch 1 việc độc lập theo cây (test `reschedule_task`) ✅
 6. Tổ trưởng A không truy vấn được việc của tổ B (permission_query) ✅
 
-## Điểm còn tinh chỉnh (không chặn nghiệm thu lõi)
-- Vài màn còn dùng helper tra cứu tên từ mockData (id backend chính là tên đọc được nên hiển thị đúng); nên thay bằng tra cứu từ dữ liệu API khi hoàn thiện.
-- `DailyReport` (mobile): danh sách lô chọn còn lấy tạm từ mock — cần đổi sang lô của tổ trưởng từ API.
-- Bản đồ: tọa độ lô đang sinh theo lưới (geo.ts) thay vì `boundary` GeoJSON thật — khi admin vẽ ranh giới thật sẽ dùng `boundary`.
+## Đã tinh chỉnh (16/06/2026)
+- `DailyReport`/`MobileSupport` (mobile): danh sách lô lấy từ API theo tổ trưởng đăng nhập (`field_api.my_plots`). ✅
+- `CropCycleManagement`, `TeamLeaderKPI`: thay mảng mock (zones/plots/processes/reports/support/leaders) bằng API. ✅
+- `TeamManagement`: dùng `plotIds` từ API thay helper mock. ✅
+- CRUD vùng/lô (create/update/delete) + form `PlotForm` tạo/sửa + nút xóa `ZoneManagement` nối API. ✅ (admin tạo được vùng/lô qua giao diện)
+
+## Điểm còn lại (việc tương lai / chờ dữ liệu — không chặn nghiệm thu lõi)
+- `AnomalyDetail`/`TodayTasks` còn helper tra cứu tên từ mock (id backend chính là tên đọc được → hiển thị đúng); `OfflineSync` là demo hàng đợi offline.
+- Bản đồ: tọa độ lô sinh theo lưới (geo.ts) thay vì `boundary` GeoJSON thật — `PlotForm` đã có công cụ vẽ ranh giới; sẽ lưu `boundary` khi hoàn thiện BoundaryMap → API.
 - ERPNext chưa cài (Frappe-only) — để dành GĐ2/3 (kho/kế toán/truy xuất).
-- Deploy thật trên VPS: cần đóng gói Frappe (gunicorn/supervisor) cùng compose thay cho `bench serve` dev.
-- 6 câu hỏi nghiệp vụ còn mở của chủ đầu tư (tần suất thu hoạch gấc, ngày bắt đầu chu kỳ chuẩn, mẫu file sheet...) — engine đã nhận tham số, chờ dữ liệu thật.
+- Deploy VPS: cần đóng gói Frappe (gunicorn/supervisor) cùng compose thay cho `bench serve` dev.
+- 6 câu hỏi nghiệp vụ còn mở của chủ đầu tư (tần suất thu hoạch gấc, ngày bắt đầu chu kỳ, mẫu file sheet...) — engine đã nhận tham số, chờ dữ liệu thật.
