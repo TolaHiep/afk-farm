@@ -2,12 +2,14 @@
 
 Hệ thống quản lý sản xuất nông trại (gấc trên giàn + sâm đất dưới tán), xây dựng trên nền ERPNext v15 với custom app `akf_farm`.
 
-## Trạng thái (cập nhật 14/06/2026)
+## Trạng thái (cập nhật 16/06/2026)
 
-- Đã hoàn tất thiết kế và kế hoạch triển khai **Giai đoạn 1 (MVP)**.
+- **Backend GĐ1 đã hoàn tất** (merge vào `main`): Frappe v15 headless + custom app `akf_farm` — DocTypes, engine sinh việc 10 ngày, REST API khớp frontend, auth 2 vai trò, phân quyền. **60 test xanh.**
+- **Frontend đã nối API**: toàn bộ màn admin + mobile gọi backend (auth thật + route guard); admin tạo/sửa/xóa vùng-lô qua giao diện.
+- **Chạy chung 1 cổng 8080** (same-origin: React + API). Xem `docs/huong-dan-su-dung.md`.
+- Nghiệm thu & điểm còn lại: `docs/nghiem-thu-gd1.md`. Backend dev env: `docs/superpowers/specs/2026-06-16-akf-backend-erpnext-headless-design.md`.
+- Còn chờ: ERPNext modules cho GĐ2/3, 6 câu hỏi nghiệp vụ của chủ đầu tư, đóng gói Frappe cho VPS.
 - Báo giá GĐ1 đã chốt: **25.000.000đ** (50 công × 500.000đ, chưa VAT).
-- **Chưa code.** Chờ chủ đầu tư cung cấp thông tin Nhóm A và trả lời 6 câu hỏi còn mở trong spec GĐ1.
-- Git: **chỉ có repo cục bộ, chưa có remote / chưa push lên GitHub.**
 
 ## Tài liệu trong repo
 
