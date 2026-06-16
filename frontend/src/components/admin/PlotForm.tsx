@@ -4,6 +4,22 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "../ui/button";
 import { BoundaryMap } from "./BoundaryMap";
 import { getZones, getTeamLeaders, getPlot, createZone, createPlot, updatePlot } from "../../lib/queries";
+import { polygonFromGeoJSON, type LatLng } from "../../lib/geo";
+
+type Pt = { lat: number; lng: number };
+
+// Chuyển polygon nội bộ ({lat,lng}[]) -> GeoJSON Polygon string để lưu vào field boundary
+function toGeoJSONPolygon(points: Pt[]): string | undefined {
+  if (points.length < 3) return undefined;
+  const ring = points.map((p) => [p.lng, p.lat] as [number, number]);
+  ring.push([ring[0][0], ring[0][1]]); // GeoJSON yêu cầu đóng vòng
+  return JSON.stringify({ type: "Polygon", coordinates: [ring] });
+}
+
+// Chuyển [lat,lng][] (kết quả polygonFromGeoJSON) -> Pt[] cho BoundaryMap
+function toPts(latlngs: LatLng[] | null): Pt[] | undefined {
+  return latlngs ? latlngs.map(([lat, lng]) => ({ lat, lng })) : undefined;
+}
 
 export function PlotForm() {
   const navigate = useNavigate();
@@ -21,6 +37,9 @@ export function PlotForm() {
   const [zoneId, setZoneId] = React.useState(searchParams.get("zone") || "");
   const [teamLeader, setTeamLeader] = React.useState("");
   const [area, setArea] = React.useState<number>(0);
+  const [points, setPoints] = React.useState<Pt[]>([]);
+  // Polygon đã lưu (khi sửa) — nạp vào BoundaryMap qua prop `initial`
+  const [initialPoints, setInitialPoints] = React.useState<Pt[] | undefined>(undefined);
 
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -44,6 +63,11 @@ export function PlotForm() {
           setZoneId(p.zoneId || "");
           setTeamLeader(p.teamLeaderId || "");
           setArea(p.area || 0);
+          const existing = toPts(polygonFromGeoJSON(p.boundary));
+          if (existing) {
+            setInitialPoints(existing);
+            setPoints(existing);
+          }
         } catch (e: any) {
           if (alive) setError(e?.message || "Không tải được dữ liệu lô");
         }
@@ -57,17 +81,29 @@ export function PlotForm() {
   // Vùng cha đã chọn sẵn khi bấm "Thêm lô" từ thẻ vùng
   const presetZone = !isEdit ? zones.find((z) => z.id === searchParams.get("zone")) : undefined;
 
+  // Ranh giới vùng cha (để chặn vẽ lô ra ngoài) — lấy theo zoneId hiện tại
+  const parentBoundary = React.useMemo<Pt[] | undefined>(() => {
+    if (isZone) return undefined;
+    const z = zones.find((z) => z.id === zoneId);
+    return toPts(polygonFromGeoJSON(z?.boundary));
+  }, [isZone, zoneId, zones]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (points.length < 3) {
+      setError("Vui lòng vẽ ranh giới trên bản đồ (ít nhất 3 điểm)");
+      return;
+    }
+    const boundary = toGeoJSONPolygon(points);
     setSaving(true);
     try {
       if (isEdit && id) {
-        await updatePlot(id, { block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined });
+        await updatePlot(id, { block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined, boundary });
       } else if (isZone) {
-        await createZone({ zone_name: name, area });
+        await createZone({ zone_name: name, area, boundary });
       } else {
-        await createPlot({ block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined });
+        await createPlot({ block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined, boundary });
       }
       navigate("/admin/zones");
     } catch (err: any) {
@@ -217,13 +253,20 @@ export function PlotForm() {
             </p>
           </div>
 
-          <BoundaryMap onChange={(a) => setArea(a)} />
+          <BoundaryMap
+            onChange={(a, pts) => { setArea(a); setPoints(pts); }}
+            initial={initialPoints}
+            constraint={parentBoundary}
+          />
 
           {/* Instructions */}
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
               <strong>Hướng dẫn:</strong> Tìm khu vực hoặc nhập tọa độ để tới khu đất, bấm lần lượt các góc để tạo ranh giới (cần ít nhất 3 điểm).
               <strong> Kéo các điểm</strong> để chỉnh lại ranh giới — diện tích tự cập nhật. Dùng "Hoàn tác" để bỏ điểm cuối, "Xóa hết" để vẽ lại.
+              {!isZone && parentBoundary && (
+                <> <strong>Lô phải nằm trong ranh giới vùng cha</strong> (vùng vàng nét đứt) — các điểm ngoài vùng sẽ bị từ chối.</>
+              )}
             </p>
           </div>
         </div>

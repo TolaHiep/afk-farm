@@ -20,17 +20,56 @@ function geodesicArea(pts: Pt[]): number {
   return Math.abs((area * R * R) / 2);
 }
 
-export function BoundaryMap({ onChange }: { onChange?: (area: number, points: Pt[]) => void }) {
+// Ray casting — kiểm tra điểm có nằm trong polygon không (dùng để chặn vẽ ra ngoài vùng cha)
+function pointInPolygon(pt: Pt, poly: Pt[]): boolean {
+  if (poly.length < 3) return false;
+  const x = pt.lng, y = pt.lat;
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].lng, yi = poly[i].lat;
+    const xj = poly[j].lng, yj = poly[j].lat;
+    const intersect = ((yi > y) !== (yj > y)) && (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+export function BoundaryMap({
+  onChange,
+  initial,
+  constraint,
+}: {
+  onChange?: (area: number, points: Pt[]) => void;
+  // Ranh giới đã lưu (dùng khi sửa) — nạp sẵn lên map
+  initial?: Pt[];
+  // Vùng cha — bắt buộc các điểm phải nằm trong polygon này (lô trong vùng)
+  constraint?: Pt[];
+}) {
   const elRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<L.Map | null>(null);
   const layerRef = React.useRef<L.LayerGroup | null>(null);
-  const [points, setPoints] = React.useState<Pt[]>([]);
+  const constraintLayerRef = React.useRef<L.LayerGroup | null>(null);
+  const [points, setPoints] = React.useState<Pt[]>(initial ?? []);
   const [area, setArea] = React.useState(0);
 
   const [search, setSearch] = React.useState("");
   const [coord, setCoord] = React.useState("");
   const [msg, setMsg] = React.useState("");
   const [searching, setSearching] = React.useState(false);
+
+  // Ref tới constraint mới nhất để event handler trong useEffect-init không bị stale
+  const constraintRef = React.useRef<Pt[] | undefined>(constraint);
+  React.useEffect(() => { constraintRef.current = constraint; }, [constraint]);
+
+  // Đồng bộ points khi initial đổi (form async load xong mới có polygon)
+  const seededRef = React.useRef(false);
+  React.useEffect(() => {
+    if (seededRef.current) return;
+    if (initial && initial.length >= 3) {
+      setPoints(initial);
+      seededRef.current = true;
+    }
+  }, [initial]);
 
   // Khởi tạo bản đồ 1 lần (tắt attribution theo yêu cầu)
   React.useEffect(() => {
@@ -40,9 +79,17 @@ export function BoundaryMap({ onChange }: { onChange?: (area: number, points: Pt
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       { maxZoom: 19 }
     ).addTo(map);
+    constraintLayerRef.current = L.layerGroup().addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     map.on("click", (e: L.LeafletMouseEvent) => {
-      setPoints((prev) => [...prev, { lat: e.latlng.lat, lng: e.latlng.lng }]);
+      const p = { lat: e.latlng.lat, lng: e.latlng.lng };
+      const c = constraintRef.current;
+      if (c && c.length >= 3 && !pointInPolygon(p, c)) {
+        setMsg("Điểm phải nằm trong ranh giới vùng cha (vùng vàng trên bản đồ).");
+        return;
+      }
+      setMsg("");
+      setPoints((prev) => [...prev, p]);
     });
     mapRef.current = map;
     setTimeout(() => map.invalidateSize(), 200);
@@ -51,6 +98,24 @@ export function BoundaryMap({ onChange }: { onChange?: (area: number, points: Pt
       mapRef.current = null;
     };
   }, []);
+
+  // Vẽ vùng cha + canh khung nhìn vào vùng cha hoặc polygon ban đầu
+  React.useEffect(() => {
+    const map = mapRef.current, cLayer = constraintLayerRef.current;
+    if (!map || !cLayer) return;
+    cLayer.clearLayers();
+    if (constraint && constraint.length >= 3) {
+      const latlngs = constraint.map((p) => [p.lat, p.lng] as [number, number]);
+      L.polygon(latlngs, {
+        color: "#f59e0b", weight: 2, dashArray: "6,4",
+        fillColor: "#f59e0b", fillOpacity: 0.06, interactive: false,
+      }).addTo(cLayer);
+      map.fitBounds(L.latLngBounds(latlngs), { padding: [20, 20], maxZoom: 18 });
+    } else if (initial && initial.length >= 3) {
+      const latlngs = initial.map((p) => [p.lat, p.lng] as [number, number]);
+      map.fitBounds(L.latLngBounds(latlngs), { padding: [20, 20], maxZoom: 18 });
+    }
+  }, [constraint, initial]);
 
   // Vẽ lại đa giác + tính diện tích mỗi khi điểm thay đổi
   React.useEffect(() => {
@@ -66,10 +131,18 @@ export function BoundaryMap({ onChange }: { onChange?: (area: number, points: Pt
     const dotIcon = L.divIcon({ className: "akf-vertex", iconSize: [14, 14] });
     points.forEach((p, idx) => {
       const mk = L.marker([p.lat, p.lng], { draggable: true, icon: dotIcon }).addTo(layer);
-      // Kéo thả để chỉnh lại vị trí góc — cập nhật khi thả chuột
+      // Kéo thả để chỉnh lại vị trí góc — chặn ra ngoài ranh giới vùng cha
       mk.on("dragend", () => {
         const ll = mk.getLatLng();
-        setPoints((prev) => prev.map((q, i) => (i === idx ? { lat: ll.lat, lng: ll.lng } : q)));
+        const next = { lat: ll.lat, lng: ll.lng };
+        const c = constraintRef.current;
+        if (c && c.length >= 3 && !pointInPolygon(next, c)) {
+          mk.setLatLng([p.lat, p.lng]); // revert về vị trí cũ
+          setMsg("Điểm phải nằm trong ranh giới vùng cha (vùng vàng trên bản đồ).");
+          return;
+        }
+        setMsg("");
+        setPoints((prev) => prev.map((q, i) => (i === idx ? next : q)));
       });
     });
     const a = Math.round(geodesicArea(points));

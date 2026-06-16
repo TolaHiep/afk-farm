@@ -1,6 +1,34 @@
-// Sinh hình học lưới cho bản đồ nhiệt từ danh sách vùng/lô của API (không cần toạ độ thật).
-// Vùng xếp thành lưới vuông theo thứ tự; lô lấp kín bên trong vùng theo lưới con.
+// Hình học cho bản đồ nhiệt: ưu tiên polygon thật (field `boundary` GeoJSON)
+// từ DB; nếu vùng/lô chưa có ranh giới thì fallback sinh lưới vuông demo.
 export type LatLng = [number, number];
+
+// Parse field `boundary` (GeoJSON Polygon hoặc string JSON) -> mảng LatLng cho Leaflet.
+// GeoJSON dùng thứ tự [lng, lat]; Leaflet dùng [lat, lng] nên cần đảo.
+export function polygonFromGeoJSON(raw: unknown): LatLng[] | null {
+  if (!raw) return null;
+  let obj: any = raw;
+  if (typeof raw === "string") {
+    try { obj = JSON.parse(raw); } catch { return null; }
+  }
+  const ring = obj?.type === "Polygon" ? obj.coordinates?.[0] : null;
+  if (!Array.isArray(ring) || ring.length < 3) return null;
+  const pts: LatLng[] = ring
+    .filter((c: any) => Array.isArray(c) && c.length >= 2)
+    .map((c: any) => [Number(c[1]), Number(c[0])] as LatLng)
+    .filter(([la, ln]) => Number.isFinite(la) && Number.isFinite(ln));
+  // Bỏ điểm đóng vòng trùng đầu (GeoJSON ring khép kín) để Leaflet vẽ đẹp
+  if (pts.length > 1) {
+    const [a0, a1] = pts[0], [b0, b1] = pts[pts.length - 1];
+    if (a0 === b0 && a1 === b1) pts.pop();
+  }
+  return pts.length >= 3 ? pts : null;
+}
+
+function centerOf(poly: LatLng[]): LatLng {
+  let lat = 0, lng = 0;
+  poly.forEach(([la, ln]) => { lat += la; lng += ln; });
+  return [lat / poly.length, lng / poly.length];
+}
 
 const GEO_ORIGIN = { lat: 11.96, lng: 108.436 }; // góc Tây-Bắc khu trại (demo quanh Đà Lạt)
 const ZONE_DEG = 0.013; // cạnh vùng (~1.4km)
@@ -60,6 +88,38 @@ export function computeGeo(zones: { id: string }[], plots: { id: string; zoneId:
     GEO_ORIGIN.lat - (zRows * ZONE_DEG) / 2,
     GEO_ORIGIN.lng + (zCols * ZONE_DEG) / 2,
   ];
+
+  return { zoneGeo, plotGeo, farmCenter };
+}
+
+// Build hình học cho bản đồ nhiệt: ưu tiên polygon thật từ field `boundary`;
+// vùng/lô nào chưa có ranh giới thì lấy lưới fallback (computeGeo) — để demo data cũ
+// chưa vẽ ranh giới vẫn hiện được trên bản đồ.
+export function buildGeo(
+  zones: { id: string; boundary?: unknown }[],
+  plots: { id: string; zoneId: string; boundary?: unknown }[],
+) {
+  const fallback = computeGeo(zones, plots);
+  const zoneGeo: Record<string, GeoEntry> = {};
+  const plotGeo: Record<string, GeoEntry> = {};
+
+  zones.forEach((z) => {
+    const poly = polygonFromGeoJSON(z.boundary);
+    zoneGeo[z.id] = poly
+      ? { polygon: poly, center: centerOf(poly) }
+      : fallback.zoneGeo[z.id];
+  });
+  plots.forEach((p) => {
+    const poly = polygonFromGeoJSON(p.boundary);
+    plotGeo[p.id] = poly
+      ? { polygon: poly, center: centerOf(poly) }
+      : fallback.plotGeo[p.id];
+  });
+
+  // farmCenter = trung bình tâm các vùng có ranh giới (nếu có), nếu không thì fallback
+  let lat = 0, lng = 0, n = 0;
+  Object.values(zoneGeo).forEach((g) => { if (g) { lat += g.center[0]; lng += g.center[1]; n++; } });
+  const farmCenter: LatLng = n > 0 ? [lat / n, lng / n] : fallback.farmCenter;
 
   return { zoneGeo, plotGeo, farmCenter };
 }

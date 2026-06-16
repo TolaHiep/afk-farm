@@ -2,6 +2,17 @@ import frappe
 from akf_farm.engine.status_calculator import crop_status, rollup_status
 
 
+def _parse_boundary(raw):
+    if not raw:
+        return None
+    if isinstance(raw, (dict, list)):
+        return raw
+    try:
+        return frappe.parse_json(raw)
+    except Exception:
+        return None
+
+
 def serialize_crop_on_plot(block, crop):
     tasks = frappe.get_all("Farm Task", filters={"block": block, "crop": crop}, fields=["status"])
     anomalies = frappe.get_all("Abnormal Report", filters={"block": block, "crop": crop}, fields=["status"])
@@ -25,6 +36,7 @@ def serialize_plot(block_name):
         "crops": crop_objs, "crop": " + ".join(crops),
         "done": sum(c["done"] for c in crop_objs), "total": sum(c["total"] for c in crop_objs),
         "status": rollup_status(statuses),
+        "boundary": _parse_boundary(b.boundary),
     }
 
 
@@ -32,4 +44,5 @@ def serialize_zone(zone):
     z = zone if isinstance(zone, dict) else frappe.get_doc("Farm Zone", zone).as_dict()
     plot_count = frappe.db.count("Farm Block", {"zone": z["name"]})
     return {"id": z["name"], "name": z.get("zone_name"), "area": z.get("area"),
-            "status": z.get("status"), "plots": plot_count}
+            "status": z.get("status"), "plots": plot_count,
+            "boundary": _parse_boundary(z.get("boundary"))}

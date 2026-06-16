@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { Filter, Calendar, MapPin, Sprout, User, AlertTriangle, CheckCircle2, Clock, CircleDashed, Layers } from "lucide-react";
 import { Button } from "../ui/button";
 import { getHeatmap, getAnomalies, getCalendar } from "../../lib/queries";
-import { computeGeo, type GeoEntry, type LatLng } from "../../lib/geo";
+import { buildGeo, type GeoEntry, type LatLng } from "../../lib/geo";
 
 type StatusKey = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
 
@@ -153,7 +153,7 @@ export function HeatMap() {
   const [anomalies, setAnomalies] = React.useState<any[]>([]);
   const [tasks, setTasks] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [geo, setGeo] = React.useState<ReturnType<typeof computeGeo>>({ zoneGeo: {}, plotGeo: {}, farmCenter: [0, 0] });
+  const [geo, setGeo] = React.useState<ReturnType<typeof buildGeo>>({ zoneGeo: {}, plotGeo: {}, farmCenter: [0, 0] });
 
   const zoneName = (zoneId: string) => zones.find((z) => z.id === zoneId)?.name ?? zoneId;
 
@@ -167,7 +167,7 @@ export function HeatMap() {
         setZones(z);
         setPlots(p);
         setAnomalies(an ?? []);
-        setGeo(computeGeo(z, p));
+        setGeo(buildGeo(z, p));
       })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };

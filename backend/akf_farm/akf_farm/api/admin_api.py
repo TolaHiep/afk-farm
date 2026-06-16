@@ -6,7 +6,7 @@ from akf_farm.engine.leader_kpi import compute_kpi
 
 @frappe.whitelist()
 def list_zones():
-    zones = frappe.get_all("Farm Zone", fields=["name", "zone_name", "area", "status"])
+    zones = frappe.get_all("Farm Zone", fields=["name", "zone_name", "area", "status", "boundary"])
     return [serialize_zone(dict(z)) for z in zones]
 
 
