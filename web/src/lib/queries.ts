@@ -12,6 +12,13 @@ export const getZones = () => api.get("admin_api.list_zones") as Promise<any[]>;
 export const getPlots = (zone?: string) =>
   api.get("admin_api.list_plots", zone ? { zone } : undefined) as Promise<any[]>;
 export const getHeatmap = () => api.get("admin_api.heatmap") as Promise<{ zones: any[]; plots: any[] }>;
+export const getPlot = (name: string) => api.get("admin_api.get_plot", { name }) as Promise<any>;
+export const createZone = (p: Record<string, unknown>) => api.post("admin_api.create_zone", p);
+export const updateZone = (name: string, p: Record<string, unknown>) => api.post("admin_api.update_zone", { name, ...p });
+export const deleteZone = (name: string) => api.post("admin_api.delete_zone", { name });
+export const createPlot = (p: Record<string, unknown>) => api.post("admin_api.create_plot", p);
+export const updatePlot = (name: string, p: Record<string, unknown>) => api.post("admin_api.update_plot", { name, ...p });
+export const deletePlot = (name: string) => api.post("admin_api.delete_plot", { name });
 export const getCalendar = (fromDate: string, days = 10) =>
   api.get("admin_api.calendar", { from_date: fromDate, days: String(days) }) as Promise<any[]>;
 export const rescheduleTask = (task: string, newDate: string) =>

@@ -22,6 +22,62 @@ def heatmap():
     return {"zones": list_zones(), "plots": list_plots()}
 
 
+# ---- CRUD vùng ----
+
+@frappe.whitelist()
+def create_zone(zone_name, area, boundary=None, status="good", note=None):
+    doc = frappe.get_doc({"doctype": "Farm Zone", "zone_name": zone_name, "area": area,
+                          "boundary": boundary, "status": status, "note": note}).insert()
+    return serialize_zone(doc.name)
+
+
+@frappe.whitelist()
+def update_zone(name, **kwargs):
+    doc = frappe.get_doc("Farm Zone", name)
+    for f in ("zone_name", "area", "boundary", "status", "note"):
+        if f in kwargs:
+            doc.set(f, kwargs[f])
+    doc.save()
+    return serialize_zone(doc.name)
+
+
+@frappe.whitelist()
+def delete_zone(name):
+    frappe.delete_doc("Farm Zone", name)
+    return {"ok": True}
+
+
+# ---- CRUD lô ----
+
+@frappe.whitelist()
+def create_plot(block_name, zone, area, team_leader=None, boundary=None, status="good"):
+    doc = frappe.get_doc({"doctype": "Farm Block", "block_name": block_name, "zone": zone,
+                          "area": area, "team_leader": team_leader, "boundary": boundary,
+                          "status": status}).insert()
+    return serialize_plot(doc.name)
+
+
+@frappe.whitelist()
+def update_plot(name, **kwargs):
+    doc = frappe.get_doc("Farm Block", name)
+    for f in ("block_name", "zone", "area", "team_leader", "boundary", "status"):
+        if f in kwargs:
+            doc.set(f, kwargs[f])
+    doc.save()
+    return serialize_plot(doc.name)
+
+
+@frappe.whitelist()
+def delete_plot(name):
+    frappe.delete_doc("Farm Block", name)
+    return {"ok": True}
+
+
+@frappe.whitelist()
+def get_plot(name):
+    return serialize_plot(name)
+
+
 @frappe.whitelist()
 def calendar(from_date, days=10):
     to_date = add_days(getdate(from_date), int(days) - 1)

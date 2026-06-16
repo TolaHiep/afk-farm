@@ -1,20 +1,80 @@
 import React from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "../ui/button";
 import { BoundaryMap } from "./BoundaryMap";
-import { zones, teamLeaders } from "../../lib/mockData";
+import { getZones, getTeamLeaders, getPlot, createZone, createPlot, updatePlot } from "../../lib/queries";
 
 export function PlotForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { id } = useParams();
+  const isEdit = !!id;
   const type = searchParams.get("type") || "plot";
-  const isZone = type === "zone";
+  // Khi sửa thì luôn là sửa lô
+  const isZone = isEdit ? false : type === "zone";
+
+  const [zones, setZones] = React.useState<any[]>([]);
+  const [leaders, setLeaders] = React.useState<any[]>([]);
+
+  const [name, setName] = React.useState("");
+  const [zoneId, setZoneId] = React.useState(searchParams.get("zone") || "");
+  const [teamLeader, setTeamLeader] = React.useState("");
+  const [area, setArea] = React.useState<number>(0);
+
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [zs, ls] = await Promise.all([getZones(), getTeamLeaders()]);
+        if (!alive) return;
+        setZones(zs || []);
+        setLeaders(ls || []);
+      } catch (e: any) {
+        if (alive) setError(e?.message || "Không tải được dữ liệu");
+      }
+      if (isEdit && id) {
+        try {
+          const p = await getPlot(id);
+          if (!alive || !p) return;
+          setName(p.name || "");
+          setZoneId(p.zoneId || "");
+          setTeamLeader(p.teamLeaderId || "");
+          setArea(p.area || 0);
+        } catch (e: any) {
+          if (alive) setError(e?.message || "Không tải được dữ liệu lô");
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [isEdit, id]);
 
   // Vùng cha đã chọn sẵn khi bấm "Thêm lô" từ thẻ vùng
-  const presetZone = zones.find((z) => z.id === searchParams.get("zone"));
+  const presetZone = !isEdit ? zones.find((z) => z.id === searchParams.get("zone")) : undefined;
 
-  const [area, setArea] = React.useState<number>(0);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      if (isEdit && id) {
+        await updatePlot(id, { block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined });
+      } else if (isZone) {
+        await createZone({ zone_name: name, area });
+      } else {
+        await createPlot({ block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined });
+      }
+      navigate("/admin/zones");
+    } catch (err: any) {
+      setError(err?.message || "Lưu thất bại, vui lòng thử lại");
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -27,7 +87,13 @@ export function PlotForm() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h2 className="text-2xl font-bold text-gray-900">
-          {isZone ? "Thêm vùng mới" : presetZone ? `Thêm lô vào ${presetZone.name}` : "Thêm lô mới"}
+          {isEdit
+            ? "Sửa lô"
+            : isZone
+              ? "Thêm vùng mới"
+              : presetZone
+                ? `Thêm lô vào ${presetZone.name}`
+                : "Thêm lô mới"}
         </h2>
       </div>
 
@@ -35,13 +101,15 @@ export function PlotForm() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form Fields */}
         <div className="lg:col-span-1 bg-white rounded-lg shadow p-6 border border-gray-200">
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {isZone ? "Tên vùng" : "Tên lô"}
               </label>
               <input
                 type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder={isZone ? "Vùng E" : "Lô E1"}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
@@ -58,7 +126,11 @@ export function PlotForm() {
                     <span className="text-xs text-green-600">Đã chọn từ thẻ vùng</span>
                   </div>
                 ) : (
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" defaultValue="">
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={zoneId}
+                    onChange={(e) => setZoneId(e.target.value)}
+                  >
                     <option value="">Chọn vùng</option>
                     {zones.map(zone => (
                       <option key={zone.id} value={zone.id}>{zone.name}</option>
@@ -91,9 +163,13 @@ export function PlotForm() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tổ trưởng
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option>Chọn tổ trưởng</option>
-                    {teamLeaders.map(leader => (
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={teamLeader}
+                    onChange={(e) => setTeamLeader(e.target.value)}
+                  >
+                    <option value="">Chọn tổ trưởng</option>
+                    {leaders.map(leader => (
                       <option key={leader.id} value={leader.id}>{leader.name}</option>
                     ))}
                   </select>
@@ -112,6 +188,10 @@ export function PlotForm() {
               </>
             )}
 
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+
             <div className="flex gap-3 pt-4">
               <Button
                 type="button"
@@ -121,8 +201,8 @@ export function PlotForm() {
               >
                 Hủy
               </Button>
-              <Button type="submit" variant="primary" className="flex-1">
-                Lưu
+              <Button type="submit" variant="primary" className="flex-1" disabled={saving}>
+                {saving ? "Đang lưu..." : "Lưu"}
               </Button>
             </div>
           </form>

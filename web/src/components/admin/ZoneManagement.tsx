@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { getZones, getPlots } from "../../lib/queries";
+import { getZones, getPlots, deleteZone, deletePlot, updatePlot } from "../../lib/queries";
 import { type CropOnPlot } from "../../lib/mockData";
 
 // Kiểu trạng thái chi tiết của lô/vùng
@@ -134,18 +134,21 @@ export function ZoneManagement() {
 
   const closeConfirm = () => setConfirm(null);
 
-  const doDeleteZone = (zoneId: string) => {
+  const doDeleteZone = async (zoneId: string) => {
+    await deleteZone(zoneId).catch(() => {});
     setZones((prev) => prev.filter((z) => z.id !== zoneId));
     setPlots((prev) => prev.filter((p) => p.zoneId !== zoneId));
     closeConfirm();
   };
 
-  const doDeletePlot = (plotId: string) => {
+  const doDeletePlot = async (plotId: string) => {
+    await deletePlot(plotId).catch(() => {});
     setPlots((prev) => prev.filter((p) => p.id !== plotId));
     closeConfirm();
   };
 
-  const doDeactivatePlot = (plotId: string) => {
+  const doDeactivatePlot = async (plotId: string) => {
+    await updatePlot(plotId, { status: "inactive" }).catch(() => {});
     setPlots((prev) =>
       prev.map((p) => (p.id === plotId ? { ...p, status: "inactive" } : p))
     );
