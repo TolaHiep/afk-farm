@@ -43,7 +43,7 @@ Mở http://localhost (cổng 80). `docker compose` tự gộp `docker-compose.y
 - Kèm MariaDB + Redis + scheduler + workers + websocket. Site `akf.localhost`
   tạo & cài `akf_farm` + migrate tự động lần đầu; dữ liệu ở Docker volume (bền qua restart).
 
-Đăng nhập admin: `Administrator` / `admin` (= `ADMIN_PASSWORD` trong `.env`). Muốn có
+Đăng nhập admin: `admin` / `admin123` (mật khẩu = `ADMIN_PASSWORD` trong `.env`; user `Administrator` đã được gắn username `admin`). Muốn có
 dữ liệu mẫu: đặt `SEED_DEMO=1` rồi `docker compose down -v && docker compose up -d`,
 hoặc seed thủ công: `docker compose exec backend bash -lc 'echo "import akf_farm.seed as s; s.run()" | bench --site akf.localhost console'`.
 
