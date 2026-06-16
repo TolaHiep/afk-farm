@@ -53,3 +53,4 @@ export const submitSupport = (p: { block: string; type: string; content: string;
   api.post("field_api.submit_support", p);
 export const getMySupport = () => api.get("field_api.my_support") as Promise<any[]>;
 export const getMobileNotifications = () => api.get("field_api.notifications") as Promise<any[]>;
+export const getMyPlots = () => api.get("field_api.my_plots") as Promise<any[]>;

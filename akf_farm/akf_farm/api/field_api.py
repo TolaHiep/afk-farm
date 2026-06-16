@@ -62,6 +62,19 @@ def task_detail(task):
 
 
 @frappe.whitelist()
+def my_plots():
+    """Danh sách lô của tổ trưởng đang đăng nhập (cho dropdown báo cáo/hỗ trợ)."""
+    rows = frappe.get_all("Farm Block", filters={"team_leader": frappe.session.user},
+                          fields=["name as id", "block_name as name", "zone as zoneId"])
+    out = []
+    for b in rows:
+        crops = [c.crop for c in frappe.get_all("Crop Cycle",
+                 filters={"block": b.id, "status": "active"}, fields=["crop"])]
+        out.append({**b, "crops": crops})
+    return out
+
+
+@frappe.whitelist()
 def notifications():
     """Thông báo cho tổ trưởng: việc quá hạn của mình."""
     out = []
