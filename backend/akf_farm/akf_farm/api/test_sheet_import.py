@@ -106,3 +106,24 @@ class TestImportProcessExcel(FrappeTestCase):
         self.assertEqual(res["steps"], 1)
         doc = frappe.get_doc("Cultivation Process", "QT Excel C")
         self.assertEqual(len(doc.steps), 1)
+
+
+class TestProcessTemplate(FrappeTestCase):
+    def test_template_valid_and_roundtrip(self):
+        import io
+        sheet_import.process_template()
+        content = frappe.response.get("filecontent")
+        self.assertTrue(content)
+        self.assertEqual(frappe.response.get("filename"), "mau-quy-trinh.xlsx")
+        wb = openpyxl.load_workbook(io.BytesIO(content))
+        ws = wb.active
+        self.assertEqual(ws["A1"].value, "Tên quy trình")
+        self.assertEqual(ws["A2"].value, "Cây")
+        self.assertEqual(
+            [ws.cell(row=4, column=c).value for c in range(1, 7)],
+            ["Bước", "Mô tả", "Công/ha", "Tần suất", "Phạm vi", "Yêu cầu ảnh"],
+        )
+        # File mẫu phải đọc được bằng chính parse_workbook
+        name, crop, rows = sheet_import.parse_workbook(wb)
+        self.assertEqual(crop, "Gấc")
+        self.assertTrue(len(rows) >= 1)

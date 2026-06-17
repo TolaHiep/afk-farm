@@ -149,6 +149,37 @@ def import_process_excel(file_b64, replace=0):
 
 
 @frappe.whitelist()
+def process_template():
+    """Sinh file Excel mẫu để người dùng tải về, điền rồi upload lại."""
+    import io
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Quy trình"
+    ws["A1"], ws["B1"] = "Tên quy trình", "Quy trình Gấc"
+    ws["A2"], ws["B2"] = "Cây", "Gấc"
+    header = ["Bước", "Mô tả", "Công/ha", "Tần suất", "Phạm vi", "Yêu cầu ảnh"]
+    for col, h in enumerate(header, start=1):
+        ws.cell(row=4, column=col, value=h)
+    samples = [
+        [1, "Đào hố trồng 60x60cm", 2, "1 lần/20 năm", "Theo cây", ""],
+        [2, "Bón phân nước định kỳ", 2, "60 ngày/lần", "Theo cây", ""],
+        [3, "Tưới mát", "", "2 lần/ngày", "Dùng chung", ""],
+        [4, "Kiểm tra sâu, bệnh", "", "Hàng ngày", "Dùng chung", "x"],
+    ]
+    for ri, r in enumerate(samples, start=5):
+        for ci, v in enumerate(r, start=1):
+            ws.cell(row=ri, column=ci, value=v)
+
+    bio = io.BytesIO()
+    wb.save(bio)
+    frappe.response["filename"] = "mau-quy-trinh.xlsx"
+    frappe.response["filecontent"] = bio.getvalue()
+    frappe.response["type"] = "binary"
+
+
+@frappe.whitelist()
 def import_file(process_name, crop, file_url):
     import openpyxl
 
