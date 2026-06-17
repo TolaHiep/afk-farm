@@ -16,6 +16,46 @@ def setup_step_indices(steps):
     return out
 
 
+def _setup_complete(cycle_name, setup_descs):
+    """Mọi việc setup của cycle (theo title=description) đã completed?"""
+    import frappe
+
+    for desc in setup_descs:
+        t = frappe.get_all("Farm Task", filters={"cycle": cycle_name, "title": desc},
+                           fields=["status"], limit=1)
+        if not t or t[0].status != "completed":
+            return False
+    return True
+
+
+def stamp_setup_if_done(cycle_name):
+    """Nếu setup của cycle đã xong mà chưa đánh dấu -> set setup_done_on (KHÔNG gọi generate_tasks).
+    Trả setup_done_on (date) hoặc None."""
+    import frappe
+    from frappe.utils import getdate
+
+    cyc = frappe.db.get_value("Crop Cycle", cycle_name,
+                              ["cultivation_process", "setup_done_on", "start_date"], as_dict=True)
+    if not cyc:
+        return None
+    if cyc.setup_done_on:
+        return getdate(cyc.setup_done_on)
+    if not cyc.cultivation_process:
+        return None
+    proc = frappe.get_doc("Cultivation Process", cyc.cultivation_process)
+    steps = list(proc.steps)
+    setup_descs = [steps[i].description for i in
+                   setup_step_indices([(s.frequency_type, s.offset_days) for s in steps])]
+    done = None
+    if not setup_descs:
+        done = getdate(cyc.start_date)
+    elif _setup_complete(cycle_name, setup_descs):
+        done = getdate()
+    if done:
+        frappe.db.set_value("Crop Cycle", cycle_name, "setup_done_on", str(done))
+    return done
+
+
 def compute_mandays(mandays_per_ha: float, area_m2: float) -> float:
     ha = (area_m2 or 0) / 10000.0
     return round((mandays_per_ha or 0) * ha, 2)
@@ -82,9 +122,22 @@ def generate_tasks(from_date=None, days=10):
         if c.block not in area_of:
             area_of[c.block] = frappe.db.get_value("Farm Block", c.block, "area") or 0
         proc = frappe.get_doc("Cultivation Process", c.cultivation_process)
-        for s in proc.steps:
+        steps = list(proc.steps)
+        setup_idx = setup_step_indices([(s.frequency_type, s.offset_days) for s in steps])
+        setup_done = stamp_setup_if_done(c.name)
+        start = getdate(c.start_date)
+        for i, s in enumerate(steps):
             freq = (s.frequency_type, s.frequency_value) if s.frequency_type else ("one_time", 1)
-            for d in due_dates(getdate(c.start_date), freq, from_d, to_d):
+            offset = s.offset_days
+            if offset is not None and offset >= 0:
+                anchor = getdate(add_days(start, offset))
+            elif i in setup_idx:
+                anchor = start
+            else:
+                if not setup_done:
+                    continue  # bảo trì auto: chưa xong setup -> chưa sinh
+                anchor = setup_done
+            for d in due_dates(anchor, freq, from_d, to_d):
                 rows.append({
                     "cycle": c.name, "block": c.block, "crop": c.crop, "date": d,
                     "description": s.description, "scope": s.scope, "require_photo": s.require_photo,
