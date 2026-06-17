@@ -2,6 +2,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, add_days
 from akf_farm.engine.task_generator import generate_tasks
+from akf_farm.api import field_api
 
 
 def _proc(name, steps):
@@ -78,3 +79,20 @@ class TestPhasedGeneration(FrappeTestCase):
         _block("B NOSETUP")
         name = _cycle("B NOSETUP", "QT NOSETUP")
         self.assertTrue(_has_task(name, "Tưới NOSETUP", getdate()))  # bảo trì từ ngày gieo
+
+
+class TestCompleteTaskFinishesSetup(FrappeTestCase):
+    def test_completing_last_setup_task_spawns_maintenance(self):
+        _proc("QT CT", [
+            {"step": 1, "description": "Gieo CT", "frequency_type": "one_time", "scope": "per_crop"},
+            {"step": 2, "description": "Tưới CT", "frequency_type": "daily", "scope": "per_crop"},
+        ])
+        _block("B CT")
+        name = _cycle("B CT", "QT CT")
+        today = getdate()
+        self.assertFalse(_has_task(name, "Tưới CT", today))
+        gieo = frappe.get_all("Farm Task", filters={"cycle": name, "title": "Gieo CT"})[0].name
+        # đi qua API hoàn thành việc (không set_value tay)
+        field_api.complete_task(gieo)
+        self.assertTrue(frappe.db.get_value("Crop Cycle", name, "setup_done_on"))
+        self.assertTrue(_has_task(name, "Tưới CT", today))
