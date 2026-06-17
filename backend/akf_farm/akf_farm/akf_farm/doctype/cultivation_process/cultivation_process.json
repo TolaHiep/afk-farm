@@ -8,7 +8,8 @@
  "field_order": [
   "process_name",
   "crop",
-  "steps"
+  "steps",
+  "cycle_length_days"
  ],
  "fields": [
   {
@@ -29,6 +30,11 @@
    "fieldtype": "Table",
    "label": "Các bước",
    "options": "Cultivation Step"
+  },
+  {
+   "fieldname": "cycle_length_days",
+   "fieldtype": "Int",
+   "label": "Số ngày 1 chu kỳ"
   }
  ],
  "index_web_pages_for_search": 1,

@@ -16,7 +16,8 @@
   "mandays",
   "require_photo",
   "client_uuid",
-  "photos"
+  "photos",
+  "completed_on"
  ],
  "fields": [
   {
@@ -97,6 +98,12 @@
    "fieldtype": "Table",
    "label": "Ảnh",
    "options": "Farm Task Photo"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Date",
+   "label": "Ngày hoàn thành",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

@@ -12,7 +12,8 @@
   "frequency_value",
   "scope",
   "require_photo",
-  "offset_days"
+  "offset_days",
+  "prerequisite"
  ],
  "fields": [
   {
@@ -60,10 +61,15 @@
    "label": "Bắt buộc ảnh"
   },
   {
-   "default": "-1",
+   "default": "0",
    "fieldname": "offset_days",
    "fieldtype": "Int",
    "label": "Bắt đầu sau khi gieo (ngày)"
+  },
+  {
+   "fieldname": "prerequisite",
+   "fieldtype": "Data",
+   "label": "Bước tiên quyết"
   }
  ],
  "istable": 1,
