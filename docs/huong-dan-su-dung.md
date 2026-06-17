@@ -1,59 +1,79 @@
-# Hướng dẫn sử dụng & vận hành — AKF GĐ1
+# Hướng dẫn sử dụng & vận hành — AKF
 
 ## 1. Kiến trúc tóm tắt
 - **Frontend:** React (Vite) — giao diện admin (web) + tổ trưởng (mobile/PWA), là giao diện DUY NHẤT.
 - **Backend:** ERPNext/Frappe v15 headless + custom app `akf_farm` (DocTypes, engine sinh việc, REST API).
 - React gọi API tại `/api/method/akf_farm.api.*`; chạy same-origin (cùng cổng) nên dùng chung phiên đăng nhập.
 
-## 2. Chạy hệ thống
+## 2. Chạy hệ thống (một lệnh, một compose)
 
-### 2a. Chế độ DEMO (một cổng 8080)
-Backend (Frappe dev stack) phải đang chạy và `bench serve` nghe ở cổng 8000 (xem 2b). Sau đó tại thư mục gốc dự án:
+Toàn bộ stack (Frappe backend + MariaDB + Redis + scheduler/worker + frontend) nằm trong **một** `docker-compose.yml` ở gốc repo. Tạo `.env` từ `.env.example` trước.
+
+### 2a. Chế độ DEV (live-edit, hot-reload) — mặc định
 ```
-docker compose up -d --build      # build React + nginx, phục vụ ở http://localhost:8080
+docker compose up -d --build      # tự gộp docker-compose.override.yml
 docker compose down               # dừng
 ```
-Mở **http://localhost:8080**. nginx phục vụ React tĩnh và proxy `/api`,`/files` về backend (qua `akf-backend` → host:8000).
+- Mở **http://localhost:${HTTP_PORT}** (mặc định `80`; `.env` hiện đặt `8080`).
+- Backend chạy `bench serve` (auto-reload khi sửa `.py`); frontend chạy Vite (hot-reload khi sửa React); proxy `/api`,`/files`,`/assets` → backend.
+- Site `akf.localhost` tự tạo + cài `akf_farm` + migrate lần đầu (volume bền).
 
-### 2b. Backend (Frappe) — stack dev `frappe_docker`
-Đặt tại `C:\Users\SE-HiepNM\frappe_docker` (ngoài repo), project Docker tên `akf`. Lệnh dùng:
+### 2b. Chế độ PRODUCTION (không live-edit)
 ```
-# Bật 4 container (frappe, mariadb, redis x2)
-docker compose -p akf -f .devcontainer/docker-compose.yml up -d
-# Vào container chạy web server (giữ chạy nền)
-docker compose -p akf -f .devcontainer/docker-compose.yml exec frappe \
-  bash -lc 'cd /workspace/development/frappe-bench && bench serve --port 8000'
+docker compose -f docker-compose.yml up -d --build   # bỏ qua override
 ```
-Site: `akf.localhost` · Admin: `Administrator` / `admin`.
+nginx phục vụ React đã build + proxy API; cổng theo `HTTP_PORT`.
 
-### 2c. Chế độ PHÁT TRIỂN (sửa code, hot-reload)
+### 2c. Bật scheduler (BẮT BUỘC để sinh việc hằng ngày)
 ```
-cd web && npm install && npm run dev      # http://localhost:5173 (proxy /api -> backend 8000)
+docker compose exec backend bash -lc 'bench --site akf.localhost enable-scheduler'
 ```
+Scheduler chạy job hằng ngày: sinh việc cuốn chiếu + đánh dấu quá hạn. Nếu tắt, việc sẽ không tự cập nhật theo ngày.
 
 ## 3. Tài khoản
-- **Admin (web):** đăng nhập bằng email, ví dụ `Administrator` / `admin`.
+- **Admin (web):** đăng nhập bằng tên đăng nhập **`admin`** / mật khẩu **`admin`** (đăng nhập bằng username đã được bật; cũng có thể dùng email `Administrator`).
 - **Tổ trưởng (mobile):** đăng nhập bằng **số điện thoại** (username) + mật khẩu. Tài khoản seed: `0901234567`, `0902345678` (mật khẩu `Akf@Farm2026`). Admin tạo tổ trưởng trong "Tổ & Tổ viên".
 
 ## 4. Nạp dữ liệu mẫu
-Trong container Frappe:
 ```
-echo "import akf_farm.seed as s; s.run()" | bench --site akf.localhost console
+docker compose exec backend bash -lc 'echo "import akf_farm.seed as s; s.run()" | bench --site akf.localhost console'
 ```
-Tạo 2 vùng, 4 lô, 2 tổ trưởng, quy trình Gấc, chu kỳ + sinh việc 10 ngày.
+Tạo 2 vùng, 4 lô, 2 tổ trưởng, quy trình **Gấc + Sâm**, chu kỳ + sinh việc 10 ngày.
 
 ## 5. Luồng nghiệp vụ (admin)
-1. **Vùng & Lô:** tạo vùng (diện tích), lô (thuộc vùng, gán tổ trưởng).
-2. **Quy trình:** nhập các bước canh tác (công/ha, tần suất, phạm vi theo cây / dùng chung).
-3. **Chu kỳ cây trồng:** mỗi lô gắn cây (Gấc/Sâm) + quy trình + ngày bắt đầu → hệ thống tự sinh việc 10 ngày (job hằng đêm).
-4. **Lịch công việc / Bản đồ nhiệt:** theo dõi tiến độ; bản đồ tô màu theo trạng thái (trộn màu theo tỷ lệ việc của 2 cây).
+
+1. **Vùng & Lô:** tạo vùng (vẽ ranh giới trên ảnh vệ tinh → tự tính diện tích). Tạo lô:
+   - **Vẽ thủ công**: vẽ ranh giới lô trong vùng cha.
+   - **Chia tự động**: chọn vùng + nhập **số lô** hoặc **diện tích/lô** → hệ thống cắt vùng thành các lô đều nhau (bisection), xem trước tự động rồi tạo hàng loạt; tên lô = tiền tố + STT (A1, A2…).
+   - Mỗi lô gắn **nhãn cây** (Gấc/Sâm hoặc cả hai) + tổ trưởng.
+2. **Quy trình:** nhập **thủ công từng bước**. Mỗi bước có: tên việc, **tần suất** (1 lần/chu kỳ · Hàng ngày · **N lần / N ngày**), công/ha, **phạm vi** (Theo cây / Dùng chung), **bắt đầu** (ngay / sau N ngày), **bước tiên quyết** (tùy chọn), yêu cầu ảnh. Quy trình có **Số ngày 1 chu kỳ**. Xem chi tiết & mẫu khai báo: [huong-dan-tao-quy-trinh.md](huong-dan-tao-quy-trinh.md).
+   - (Nhập quy trình bằng file Excel đang tạm ẩn — nhập tay là cách chuẩn hiện tại.)
+3. **Chu kỳ cây trồng:** mỗi lô gắn cây (Gấc/Sâm) + quy trình + ngày bắt đầu (mặc định = hôm nay). **Tạo chu kỳ là sinh việc ngay** cho cửa sổ 10 ngày; sau đó scheduler bù mỗi ngày.
+   - Sinh việc **theo giai đoạn (event-driven)**: bước không tiên quyết bắt đầu từ ngày gieo + offset; bước có tiên quyết chỉ xuất hiện **sau khi** bước tiên quyết được tổ trưởng đánh dấu hoàn thành. Việc lặp dừng khi hết "Số ngày 1 chu kỳ".
+   - "N lần/ngày" → mỗi ngày sinh nhiều việc "(lần 1/2)", "(lần 2/2)".
+   - **Xoá chu kỳ:** chưa có việc hoàn thành → xoá hẳn (gỡ việc chưa xong); đã có việc hoàn thành → tự **đóng** chu kỳ (giữ lịch sử) + gỡ việc chưa xong.
+4. **Lịch công việc / Bản đồ nhiệt:** theo dõi tiến độ; bản đồ tô màu theo trạng thái. Admin có thể **dời (lùi) từng việc** trong lịch.
 5. **KPI tổ trưởng, Báo cáo, Yêu cầu hỗ trợ, Thông báo:** giám sát & phản hồi.
 
 ## 6. Luồng tổ trưởng (mobile)
 Việc hôm nay → bấm việc → Hoàn thành (đính ảnh nếu việc yêu cầu) → Báo cáo cuối ngày (số liệu + bất thường kèm ảnh). Xem lịch sử báo cáo, gửi yêu cầu hỗ trợ.
 
+> Khi tổ trưởng hoàn thành một việc **tiên quyết** (vd "Xuống giống"), hệ thống tự mở khoá và sinh các việc phụ thuộc (vd tưới, chăm sóc) ngay.
+
 ## 7. Sao lưu / khôi phục (Frappe)
 ```
-bench --site akf.localhost backup            # sao lưu DB + file
-bench --site akf.localhost restore <path>    # khôi phục
+docker compose exec backend bash -lc 'bench --site akf.localhost backup'            # sao lưu DB + file
+docker compose exec backend bash -lc 'bench --site akf.localhost restore <path>'    # khôi phục
+```
+
+## 8. Lệnh vận hành hay dùng
+```
+# Migrate sau khi sửa DocType
+docker compose exec backend bash -lc 'bench --site akf.localhost migrate'
+# Chạy test backend
+docker compose exec backend bash -lc 'bench --site akf.localhost run-tests --app akf_farm'
+# Sinh việc thủ công (vd sau khi import quy trình/chu kỳ)
+docker compose exec backend bash -lc 'bench --site akf.localhost execute akf_farm.engine.task_generator.generate_tasks'
+# Log
+docker compose logs -f backend | web-dev
 ```

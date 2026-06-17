@@ -53,16 +53,16 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 - Nút "Thêm vùng" và "Thêm lô"
 
 ### 5. Form Thêm/Sửa Lô (`/admin/zones/add`)
+**2 chế độ tạo lô:**
+- **Vẽ thủ công:** vẽ polygon ranh giới lô trong vùng cha → tự tính diện tích.
+- **Chia tự động:** chọn vùng cha + nhập **số lô** hoặc **diện tích/lô** → hệ thống cắt vùng thành các lô đều nhau (bisection), **xem trước tự động** trên bản đồ rồi tạo hàng loạt; tên lô = tiền tố + STT (A1, A2…). Khi chia theo diện tích có phần dư → chọn "giữ lô nhỏ" hoặc "chia đều".
+
 **Thông Tin:**
 - Tên lô/vùng
 - Vùng cha (cho lô)
 - Diện tích (tự động từ bản đồ)
 - Tổ trưởng
-- Loại cây
-
-**Bản Đồ:**
-- Vẽ polygon ranh giới
-- Tự động tính diện tích
+- **Nhãn cây** (Gấc / Sâm — tích được cả hai)
 
 ### 6. Quản Lý Tổ & Tổ Viên (`/admin/teams`)
 **2 Tab:**
@@ -78,17 +78,29 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 - Quy trình Gấc
 - Quy trình Sâm
 
-**Bảng Bước:**
-- STT, Mô tả, Công/ha, Tần suất
-- Phạm vi, Yêu cầu ảnh
-- Upload Excel
+**Cấp quy trình:** Tên, Cây, **Số ngày 1 chu kỳ**.
+
+**Bảng Bước (nhập tay):**
+- STT, Mô tả, Công/ha
+- **Tần suất:** 1 lần/chu kỳ · Hàng ngày · **N lần / N ngày** (Số lần X + Mỗi Y ngày)
+- Phạm vi (Theo cây / Dùng chung), Yêu cầu ảnh
+- **Bắt đầu:** Ngay / Sau N ngày
+- **Bước tiên quyết** (tùy chọn): bước phải hoàn thành trước
+- (Nhập từ Excel: tạm ẩn)
+
+Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 
 ### 8. Quản Lý Chu Kỳ Cây Trồng (`/admin/crop-cycles`)
 **Thông Tin:**
-- Lô, cây trồng, ngày bắt đầu
+- Lô, cây trồng, ngày bắt đầu (mặc định hôm nay)
 - Quy trình áp dụng
 - Tiến độ (progress bar)
-- Một lô có thể có nhiều cây
+- Một lô có thể có nhiều cây (xen canh Gấc + Sâm)
+
+**Sinh việc (event-driven):**
+- Tạo chu kỳ → sinh việc ngay (cửa sổ 10 ngày); scheduler bù mỗi ngày.
+- Bước có **tiên quyết** chỉ sinh sau khi bước đó được đánh dấu hoàn thành (neo từ ngày hoàn thành + offset); bước không tiên quyết neo từ ngày gieo + offset. Việc lặp dừng khi hết "Số ngày 1 chu kỳ".
+- **Xoá chu kỳ:** chưa có việc hoàn thành → xoá hẳn; đã có → tự đóng (giữ lịch sử), gỡ việc chưa xong.
 
 ### 9. Lịch Công Việc 10 Ngày (`/admin/calendar`)
 **Tính Năng:**
