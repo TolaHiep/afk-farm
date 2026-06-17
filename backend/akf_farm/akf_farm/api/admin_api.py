@@ -526,8 +526,20 @@ def update_crop_cycle(name, **kwargs):
 
 @frappe.whitelist()
 def delete_crop_cycle(name):
+    """Xoá chu kỳ: gỡ các việc chưa hoàn thành trước (Farm Task link tới cycle).
+    - Chưa có việc hoàn thành -> xoá hẳn chu kỳ.
+    - Đã có việc hoàn thành -> đóng chu kỳ (status=closed, giữ lịch sử); generate_tasks
+      chỉ sinh cho cycle active nên tự ngừng sinh việc mới."""
+    tasks = frappe.get_all("Farm Task", filters={"cycle": name}, fields=["name", "status"])
+    has_completed = any(t.status == "completed" for t in tasks)
+    for t in tasks:
+        if t.status != "completed":
+            frappe.delete_doc("Farm Task", t.name, force=True, ignore_permissions=True)
+    if has_completed:
+        frappe.db.set_value("Crop Cycle", name, "status", "closed")
+        return {"deleted": False, "closed": True}
     frappe.delete_doc("Crop Cycle", name)
-    return {"ok": True}
+    return {"deleted": True, "closed": False}
 
 
 # ---- Cập nhật trạng thái / phản hồi bất thường ----

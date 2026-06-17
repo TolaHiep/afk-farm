@@ -12,6 +12,7 @@ const CYCLE_STATUS: Record<string, { label: string; badge: "active" | "pending" 
   active: { label: "Đang hoạt động", badge: "active" },
   paused: { label: "Tạm dừng", badge: "pending" },
   done: { label: "Kết thúc", badge: "completed" },
+  closed: { label: "Đã đóng", badge: "completed" },
 };
 const emptyCycle = (firstPlotId = "", firstProcessId = ""): Cycle => ({ id: "", plotId: firstPlotId, crop: "Gấc", startDate: "2026-06-14", processId: firstProcessId, status: "active" });
 const cropOrder = (crop: string) => (crop === "Gấc" ? 0 : crop === "Sâm" ? 1 : 2);
@@ -107,8 +108,11 @@ export function CropCycleManagement() {
   };
   const deleteCycle = async (id: string) => {
     try {
-      await deleteCropCycle(id);
+      const res: any = await deleteCropCycle(id);
       await reloadCycles();
+      if (res?.closed) {
+        alert("Chu kỳ đã có việc hoàn thành nên được ĐÓNG (giữ lịch sử) thay vì xoá; các việc chưa xong đã được gỡ.");
+      }
     } catch (error) {
       console.error("Failed to delete crop cycle:", error);
       alert("Xóa chu kỳ thất bại. Vui lòng thử lại.");
