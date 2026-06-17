@@ -31,7 +31,7 @@ def due_dates(start, freq, from_date, to_date):
         if from_date <= start <= to_date:
             out.append(start)
         return out
-    step = 1 if ftype in ("daily", "n_per_day") else fval
+    step = 1 if ftype == "daily" else fval
     cur = start
     if cur < from_date:
         gap = (from_date - start).days
@@ -105,12 +105,15 @@ def generate_tasks(from_date=None, days=10, cycle=None):
                 anchor = getdate(add_days(base, offset))
             else:
                 anchor = getdate(add_days(start, offset))
+            times = max(1, int(s.times_per_period or 1)) if s.frequency_type == "n_per_period" else 1
             for d in due_dates(anchor, freq, from_d, window_end):
-                rows.append({
-                    "cycle": c.name, "block": c.block, "crop": c.crop, "date": d,
-                    "description": s.description, "scope": s.scope, "require_photo": s.require_photo,
-                    "mandays": compute_mandays(s.mandays_per_ha, area_of[c.block]),
-                })
+                for k in range(times):
+                    title = s.description if times == 1 else f"{s.description} (lần {k + 1}/{times})"
+                    rows.append({
+                        "cycle": c.name, "block": c.block, "crop": c.crop, "date": d,
+                        "description": title, "scope": s.scope, "require_photo": s.require_photo,
+                        "mandays": compute_mandays(s.mandays_per_ha, area_of[c.block]),
+                    })
     for r in dedupe_shared(rows):
         if r.get("scope") == "shared":
             exists = frappe.db.exists("Farm Task", {

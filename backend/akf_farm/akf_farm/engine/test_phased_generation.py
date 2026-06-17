@@ -192,6 +192,32 @@ class TestSetupDoneOnRemoved(FrappeTestCase):
         self.assertFalse(frappe.get_meta("Crop Cycle").has_field("setup_done_on"))
 
 
+class TestNPerPeriodGeneration(FrappeTestCase):
+    def test_two_per_day_makes_two_tasks(self):
+        _proc("QT 2D", [
+            {"step": 1, "description": "Tưới 2D", "frequency_type": "n_per_period",
+             "frequency_value": 1, "times_per_period": 2, "scope": "per_crop"},
+        ])
+        _block("B 2D")
+        name = _cycle("B 2D", "QT 2D")
+        today = getdate()
+        self.assertTrue(_has(name, "Tưới 2D (lần 1/2)", today))
+        self.assertTrue(_has(name, "Tưới 2D (lần 2/2)", today))
+        self.assertFalse(_has(name, "Tưới 2D", today))  # không có task không hậu tố
+
+    def test_every_n_days_single_task(self):
+        _proc("QT 3N", [
+            {"step": 1, "description": "Bón 3N", "frequency_type": "n_per_period",
+             "frequency_value": 3, "times_per_period": 1, "scope": "per_crop"},
+        ])
+        _block("B 3N")
+        name = _cycle("B 3N", "QT 3N")
+        today = getdate()
+        self.assertTrue(_has(name, "Bón 3N", today))            # X=1 -> không hậu tố
+        self.assertFalse(_has(name, "Bón 3N", add_days(today, 1)))
+        self.assertTrue(_has(name, "Bón 3N", add_days(today, 3)))  # mỗi 3 ngày
+
+
 class TestFreqFields(FrappeTestCase):
     def test_times_per_period_field_and_default(self):
         if frappe.db.exists("Cultivation Process", "QT TPP"):

@@ -41,9 +41,10 @@ class TestDueDates(unittest.TestCase):
         out = due_dates(self.d("2026-01-01"), ("every_n_days", 20), self.d("2026-01-15"), self.d("2026-02-15"))
         self.assertEqual(out, [self.d("2026-01-21"), self.d("2026-02-10")])
 
-    def test_n_per_day_one_per_day_at_date_level(self):
-        out = due_dates(self.d("2026-01-01"), ("n_per_day", 2), self.d("2026-01-01"), self.d("2026-01-03"))
-        self.assertEqual(out, [self.d("2026-01-01"), self.d("2026-01-02"), self.d("2026-01-03")])
+    def test_n_per_period_steps_by_period(self):
+        # n_per_period period=2 -> mỗi 2 ngày 1 occurrence (số lần/ngày xử lý ở generate_tasks)
+        out = due_dates(self.d("2026-01-01"), ("n_per_period", 2), self.d("2026-01-01"), self.d("2026-01-05"))
+        self.assertEqual(out, [self.d("2026-01-01"), self.d("2026-01-03"), self.d("2026-01-05")])
 
     def test_cadence_empty_when_start_after_window(self):
         out = due_dates(self.d("2026-03-01"), ("every_n_days", 5), self.d("2026-01-01"), self.d("2026-02-01"))
