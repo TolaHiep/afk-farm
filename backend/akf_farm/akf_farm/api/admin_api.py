@@ -201,6 +201,7 @@ def list_processes():
             "frequencyType": s.frequency_type or "one_time", "frequencyValue": s.frequency_value or 1,
             "scope": _scope_text(s.scope), "scopeRaw": s.scope or "shared",
             "requirePhoto": bool(s.require_photo),
+            "offsetDays": s.offset_days,
         } for s in doc.steps]
         out.append({"id": p.name, "name": p.process_name, "crop": p.crop, "steps": steps})
     return out
@@ -455,6 +456,15 @@ def delete_team_member(name):
 
 # ---- CRUD quy trình (Cultivation Process + bước con) ----
 
+def _norm_offset(v):
+    if v is None or v == "":
+        return -1
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return -1
+
+
 def _apply_steps(doc, steps):
     if isinstance(steps, str):
         steps = frappe.parse_json(steps)
@@ -468,6 +478,7 @@ def _apply_steps(doc, steps):
             "frequency_value": s.get("frequencyValue") or 1,
             "scope": s.get("scopeRaw") or "shared",
             "require_photo": 1 if s.get("requirePhoto") else 0,
+            "offset_days": _norm_offset(s.get("offsetDays")),
         })
 
 

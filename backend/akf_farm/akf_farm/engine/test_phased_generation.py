@@ -3,6 +3,7 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, add_days
 from akf_farm.engine.task_generator import generate_tasks
 from akf_farm.api import field_api
+from akf_farm.api import admin_api
 
 
 def _proc(name, steps):
@@ -79,6 +80,22 @@ class TestPhasedGeneration(FrappeTestCase):
         _block("B NOSETUP")
         name = _cycle("B NOSETUP", "QT NOSETUP")
         self.assertTrue(_has_task(name, "Tưới NOSETUP", getdate()))  # bảo trì từ ngày gieo
+
+
+class TestProcessOffsetApi(FrappeTestCase):
+    def test_create_and_list_offset(self):
+        if frappe.db.exists("Cultivation Process", "QT API"):
+            frappe.delete_doc("Cultivation Process", "QT API", force=True)
+        admin_api.create_process(process_name="QT API", crop="Gấc", steps=[
+            {"description": "Có offset", "frequencyType": "daily", "scopeRaw": "per_crop", "offsetDays": 5},
+            {"description": "Không offset", "frequencyType": "daily", "scopeRaw": "per_crop"},
+        ])
+        doc = frappe.get_doc("Cultivation Process", "QT API")
+        self.assertEqual(doc.steps[0].offset_days, 5)
+        self.assertEqual(doc.steps[1].offset_days, -1)  # trống -> -1
+        listed = [p for p in admin_api.list_processes() if p["id"] == "QT API"][0]
+        self.assertEqual(listed["steps"][0]["offsetDays"], 5)
+        self.assertEqual(listed["steps"][1]["offsetDays"], -1)
 
 
 class TestCompleteTaskFinishesSetup(FrappeTestCase):
