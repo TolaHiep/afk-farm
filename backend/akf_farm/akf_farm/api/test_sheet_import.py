@@ -108,6 +108,27 @@ class TestImportProcessExcel(FrappeTestCase):
         self.assertEqual(len(doc.steps), 1)
 
 
+class TestImportOffset(FrappeTestCase):
+    def test_import_rows_offset(self):
+        if frappe.db.exists("Cultivation Process", "QT OFFSET IMP"):
+            frappe.delete_doc("Cultivation Process", "QT OFFSET IMP", force=True)
+        rows = [
+            {"Bước": 1, "Mô tả": "Có offset", "Tần suất": "Hàng ngày", "Phạm vi": "Theo cây", "Bắt đầu sau (ngày)": 7},
+            {"Bước": 2, "Mô tả": "Trống", "Tần suất": "Hàng ngày", "Phạm vi": "Theo cây", "Bắt đầu sau (ngày)": ""},
+        ]
+        name = import_rows("QT OFFSET IMP", "Gấc", rows)
+        doc = frappe.get_doc("Cultivation Process", name)
+        self.assertEqual(doc.steps[0].offset_days, 7)
+        self.assertEqual(doc.steps[1].offset_days, -1)
+
+    def test_template_has_offset_column(self):
+        import io
+        sheet_import.process_template()
+        wb = openpyxl.load_workbook(io.BytesIO(frappe.response.get("filecontent")))
+        ws = wb.active
+        self.assertEqual(ws.cell(row=4, column=7).value, "Bắt đầu sau (ngày)")
+
+
 class TestProcessTemplate(FrappeTestCase):
     def test_template_valid_and_roundtrip(self):
         import io

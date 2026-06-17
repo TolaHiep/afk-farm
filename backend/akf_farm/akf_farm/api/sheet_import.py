@@ -8,6 +8,15 @@ def _truthy(v):
     return str(v or "").strip().lower() in ("x", "có", "co", "1", "yes", "true", "y")
 
 
+def _offset(v):
+    if v is None or str(v).strip() == "":
+        return -1
+    try:
+        return int(float(str(v).strip()))
+    except ValueError:
+        return -1
+
+
 def import_rows(process_name, crop, rows):
     """Tạo Cultivation Process + steps từ list dict (cột Bước, Mô tả, Công/ha, Tần suất, Phạm vi)."""
     steps = []
@@ -19,6 +28,7 @@ def import_rows(process_name, crop, rows):
             "mandays_per_ha": r.get("Công/ha", 0), "frequency_type": ftype,
             "frequency_value": fval, "scope": scope,
             "require_photo": 1 if _truthy(r.get("Yêu cầu ảnh", "")) else 0,
+            "offset_days": _offset(r.get("Bắt đầu sau (ngày)", "")),
         })
     doc = frappe.get_doc({
         "doctype": "Cultivation Process", "process_name": process_name, "crop": crop, "steps": steps,
@@ -159,14 +169,14 @@ def process_template():
     ws.title = "Quy trình"
     ws["A1"], ws["B1"] = "Tên quy trình", "Quy trình Gấc"
     ws["A2"], ws["B2"] = "Cây", "Gấc"
-    header = ["Bước", "Mô tả", "Công/ha", "Tần suất", "Phạm vi", "Yêu cầu ảnh"]
+    header = ["Bước", "Mô tả", "Công/ha", "Tần suất", "Phạm vi", "Yêu cầu ảnh", "Bắt đầu sau (ngày)"]
     for col, h in enumerate(header, start=1):
         ws.cell(row=4, column=col, value=h)
     samples = [
-        [1, "Đào hố trồng 60x60cm", 2, "1 lần/20 năm", "Theo cây", ""],
-        [2, "Bón phân nước định kỳ", 2, "60 ngày/lần", "Theo cây", ""],
-        [3, "Tưới mát", "", "2 lần/ngày", "Dùng chung", ""],
-        [4, "Kiểm tra sâu, bệnh", "", "Hàng ngày", "Dùng chung", "x"],
+        [1, "Đào hố trồng 60x60cm", 2, "1 lần/20 năm", "Theo cây", "", ""],
+        [2, "Bón phân nước định kỳ", 2, "60 ngày/lần", "Theo cây", "", ""],
+        [3, "Tưới mát", "", "2 lần/ngày", "Dùng chung", "", ""],
+        [4, "Kiểm tra sâu, bệnh", "", "Hàng ngày", "Dùng chung", "x", ""],
     ]
     for ri, r in enumerate(samples, start=5):
         for ci, v in enumerate(r, start=1):
