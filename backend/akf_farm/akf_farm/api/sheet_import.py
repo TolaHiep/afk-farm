@@ -92,6 +92,40 @@ def import_from_markdown(path=None, replace=True):
     return created
 
 
+def parse_workbook(wb):
+    """Đọc workbook mẫu: B1=tên quy trình, B2=cây, dòng header 'Bước', rồi các bước.
+
+    Trả (name, crop, rows) với rows = list dict key tiếng Việt khớp import_rows.
+    """
+    ws = wb.active
+    name = str(ws["B1"].value or "").strip()
+    crop = str(ws["B2"].value or "").strip()
+
+    header_row, headers = None, []
+    for row in ws.iter_rows(min_row=1):
+        if str(row[0].value or "").strip().lower() == "bước":
+            header_row = row[0].row
+            headers = [str(c.value or "").strip() for c in row]
+            break
+    if header_row is None:
+        frappe.throw("Không tìm thấy dòng tiêu đề 'Bước' trong file.")
+
+    rows = []
+    for vals in ws.iter_rows(min_row=header_row + 1, values_only=True):
+        rec = {headers[i]: vals[i] for i in range(len(headers)) if i < len(vals)}
+        if not str(rec.get("Mô tả", "") or "").strip():
+            continue
+        rows.append(rec)
+
+    if not name:
+        frappe.throw("Thiếu Tên quy trình (ô B1).")
+    if crop not in ("Gấc", "Sâm"):
+        frappe.throw("Cây phải là 'Gấc' hoặc 'Sâm' (ô B2).")
+    if not rows:
+        frappe.throw("File chưa có bước nào (cột Mô tả trống).")
+    return name, crop, rows
+
+
 @frappe.whitelist()
 def import_file(process_name, crop, file_url):
     import openpyxl
