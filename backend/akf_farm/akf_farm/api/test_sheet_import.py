@@ -71,3 +71,38 @@ class TestParseWorkbook(FrappeTestCase):
     def test_parse_no_rows_throws(self):
         with self.assertRaises(frappe.exceptions.ValidationError):
             sheet_import.parse_workbook(_build_wb(data=[]))
+
+
+def _b64(wb):
+    import io, base64
+    bio = io.BytesIO()
+    wb.save(bio)
+    return base64.b64encode(bio.getvalue()).decode()
+
+
+class TestImportProcessExcel(FrappeTestCase):
+    def test_import_creates(self):
+        if frappe.db.exists("Cultivation Process", "QT Excel A"):
+            frappe.delete_doc("Cultivation Process", "QT Excel A", force=True)
+        res = sheet_import.import_process_excel(_b64(_build_wb(name="QT Excel A", crop="Sâm")))
+        self.assertEqual(res["exists"], False)
+        self.assertEqual(res["name"], "QT Excel A")
+        self.assertEqual(res["steps"], 2)
+        self.assertTrue(frappe.db.exists("Cultivation Process", "QT Excel A"))
+
+    def test_duplicate_without_replace_returns_exists(self):
+        if not frappe.db.exists("Cultivation Process", "QT Excel B"):
+            sheet_import.import_process_excel(_b64(_build_wb(name="QT Excel B", crop="Gấc")))
+        res = sheet_import.import_process_excel(_b64(_build_wb(name="QT Excel B", crop="Gấc")))
+        self.assertEqual(res["exists"], True)
+        self.assertEqual(res["name"], "QT Excel B")
+
+    def test_replace_overwrites(self):
+        if not frappe.db.exists("Cultivation Process", "QT Excel C"):
+            sheet_import.import_process_excel(_b64(_build_wb(name="QT Excel C", crop="Gấc")))
+        one_row = [[1, "Chỉ một bước", 1, "Hàng ngày", "Dùng chung", ""]]
+        res = sheet_import.import_process_excel(_b64(_build_wb(name="QT Excel C", crop="Gấc", data=one_row)), replace=1)
+        self.assertEqual(res["exists"], False)
+        self.assertEqual(res["steps"], 1)
+        doc = frappe.get_doc("Cultivation Process", "QT Excel C")
+        self.assertEqual(len(doc.steps), 1)

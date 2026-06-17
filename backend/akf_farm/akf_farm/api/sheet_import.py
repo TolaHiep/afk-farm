@@ -127,6 +127,28 @@ def parse_workbook(wb):
 
 
 @frappe.whitelist()
+def import_process_excel(file_b64, replace=0):
+    """Nhận file xlsx (base64), đọc + tạo Cultivation Process. Trùng tên: cần replace=1 để ghi đè."""
+    import base64
+    import io
+    import openpyxl
+
+    try:
+        raw = base64.b64decode(file_b64)
+        wb = openpyxl.load_workbook(io.BytesIO(raw), data_only=True)
+    except Exception:
+        frappe.throw("File không đọc được — hãy dùng đúng mẫu .xlsx.")
+
+    name, crop, rows = parse_workbook(wb)
+    if frappe.db.exists("Cultivation Process", name):
+        if not int(replace or 0):
+            return {"exists": True, "name": name}
+        frappe.delete_doc("Cultivation Process", name, force=True)
+    import_rows(name, crop, rows)
+    return {"exists": False, "name": name, "crop": crop, "steps": len(rows)}
+
+
+@frappe.whitelist()
 def import_file(process_name, crop, file_url):
     import openpyxl
 
