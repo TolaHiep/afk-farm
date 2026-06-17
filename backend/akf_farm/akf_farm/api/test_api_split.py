@@ -23,3 +23,30 @@ class TestPlotCrops(FrappeTestCase):
     def test_no_crops_returns_empty_tags(self):
         admin_api.create_plot(block_name="BC3", zone="Z SPLIT", area=1000)
         self.assertEqual(admin_api.get_plot("BC3")["cropTags"], [])
+
+
+class TestPlotsBulk(FrappeTestCase):
+    def setUp(self):
+        if not frappe.db.exists("Farm Zone", "Z BULK"):
+            admin_api.create_zone(zone_name="Z BULK", area=100000, boundary=SQUARE)
+
+    def test_create_plots_bulk(self):
+        plots = [
+            {"block_name": "BK1", "area": 500, "boundary": SQUARE, "crops": ["Gấc"]},
+            {"block_name": "BK2", "area": 500, "boundary": SQUARE, "crops": ["Gấc", "Sâm"]},
+        ]
+        out = admin_api.create_plots_bulk(zone="Z BULK", plots=plots)
+        self.assertEqual(len(out), 2)
+        self.assertEqual(out[1]["cropTags"], ["Gấc", "Sâm"])
+        self.assertTrue(frappe.db.exists("Farm Block", "BK1"))
+        self.assertEqual(frappe.db.get_value("Farm Block", "BK1", "zone"), "Z BULK")
+
+    def test_bulk_applies_team_leader_to_all(self):
+        plots = [{"block_name": "BKT1", "area": 500, "boundary": SQUARE}]
+        out = admin_api.create_plots_bulk(zone="Z BULK", plots=plots, team_leader="Administrator")
+        self.assertEqual(out[0]["teamLeaderId"], "Administrator")
+
+    def test_bulk_duplicate_name_raises(self):
+        admin_api.create_plot(block_name="DUP", zone="Z BULK", area=100)
+        with self.assertRaises(frappe.exceptions.DuplicateEntryError):
+            admin_api.create_plots_bulk(zone="Z BULK", plots=[{"block_name": "DUP", "area": 1, "boundary": SQUARE}])

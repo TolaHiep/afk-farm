@@ -95,6 +95,27 @@ def delete_plot(name):
 
 
 @frappe.whitelist()
+def create_plots_bulk(zone, plots, team_leader=None):
+    """Tạo nhiều lô trong 1 request (dùng cho chia lô tự động)."""
+    if isinstance(plots, str):
+        plots = frappe.parse_json(plots)
+    out = []
+    for p in plots:
+        doc = frappe.get_doc({
+            "doctype": "Farm Block",
+            "block_name": p.get("block_name"),
+            "zone": zone,
+            "area": p.get("area"),
+            "boundary": p.get("boundary"),
+            "team_leader": team_leader or p.get("team_leader"),
+            "crops": _norm_crops(p.get("crops")),
+            "status": p.get("status") or "good",
+        }).insert()
+        out.append(serialize_plot(doc.name))
+    return out
+
+
+@frappe.whitelist()
 def get_plot(name):
     return serialize_plot(name)
 
