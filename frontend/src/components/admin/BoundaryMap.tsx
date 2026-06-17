@@ -3,22 +3,9 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Undo2, Trash2, Search, Crosshair } from "lucide-react";
 import { Button } from "../ui/button";
+import { geodesicArea } from "../../lib/geo";
 
 type Pt = { lat: number; lng: number };
-
-// Diện tích đa giác trên mặt cầu Trái Đất (m²) — công thức trắc địa như Leaflet.Draw
-function geodesicArea(pts: Pt[]): number {
-  if (pts.length < 3) return 0;
-  const R = 6378137; // bán kính Trái Đất (m)
-  const d2r = Math.PI / 180;
-  let area = 0;
-  for (let i = 0; i < pts.length; i++) {
-    const p1 = pts[i];
-    const p2 = pts[(i + 1) % pts.length];
-    area += (p2.lng - p1.lng) * d2r * (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
-  }
-  return Math.abs((area * R * R) / 2);
-}
 
 // Ray casting — kiểm tra điểm có nằm trong polygon không (dùng để chặn vẽ ra ngoài vùng cha)
 function pointInPolygon(pt: Pt, poly: Pt[]): boolean {

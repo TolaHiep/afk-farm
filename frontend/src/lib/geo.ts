@@ -2,6 +2,22 @@
 // từ DB; nếu vùng/lô chưa có ranh giới thì fallback sinh lưới vuông demo.
 export type LatLng = [number, number];
 
+export type Pt = { lat: number; lng: number };
+
+// Dien tich da giac tren mat cau Trai Dat (m²) — cong thuc trac dia nhu Leaflet.Draw
+export function geodesicArea(pts: Pt[]): number {
+  if (pts.length < 3) return 0;
+  const R = 6378137; // ban kinh Trai Dat (m)
+  const d2r = Math.PI / 180;
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % pts.length];
+    area += (p2.lng - p1.lng) * d2r * (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+  }
+  return Math.abs((area * R * R) / 2);
+}
+
 // Parse field `boundary` (GeoJSON Polygon hoặc string JSON) -> mảng LatLng cho Leaflet.
 // GeoJSON dùng thứ tự [lng, lat]; Leaflet dùng [lat, lng] nên cần đảo.
 export function polygonFromGeoJSON(raw: unknown): LatLng[] | null {
