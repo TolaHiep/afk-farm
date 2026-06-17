@@ -7,7 +7,7 @@ def crop_cycle_after_insert(doc, method=None):
     10 ngày (idempotent). Bổ sung cho job daily để có phản hồi tức thì. Lỗi sinh việc
     không được chặn việc lưu chu kỳ — log lại để job daily lo tiếp."""
     try:
-        generate_tasks()
+        generate_tasks(cycle=doc.name)  # chỉ sinh cho chu kỳ vừa tạo
     except Exception:
         frappe.log_error(frappe.get_traceback(), "crop_cycle_after_insert: generate_tasks failed")
 

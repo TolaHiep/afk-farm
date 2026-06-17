@@ -59,8 +59,10 @@ def dedupe_shared(rows):
     return out
 
 
-def generate_tasks(from_date=None, days=10):
+def generate_tasks(from_date=None, days=10, cycle=None):
     """Sinh Farm Task cho horizon `days` ngày từ các Crop Cycle active. Idempotent.
+    `cycle` (tùy chọn): chỉ sinh cho 1 chu kỳ (dùng khi tạo chu kỳ / hoàn thành 1 việc) —
+    tránh quét lại toàn bộ chu kỳ mỗi lần.
 
     Import frappe CỤC BỘ để các hàm thuần phía trên vẫn test được không cần Frappe.
     """
@@ -70,9 +72,12 @@ def generate_tasks(from_date=None, days=10):
     from_d = getdate(from_date) if from_date else getdate()
     to_d = getdate(add_days(from_d, days - 1))
     created = 0
+    filters = {"status": "active"}
+    if cycle:
+        filters["name"] = cycle
     cycles = frappe.get_all(
         "Crop Cycle",
-        filters={"status": "active"},
+        filters=filters,
         fields=["name", "block", "crop", "cultivation_process", "start_date"],
     )
     area_of = {}

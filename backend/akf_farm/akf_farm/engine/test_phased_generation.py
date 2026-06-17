@@ -146,3 +146,47 @@ class TestCompleteSetsCompletedOn(FrappeTestCase):
         field_api.complete_task(gieo)
         self.assertEqual(str(frappe.db.get_value("Farm Task", gieo, "completed_on")), str(today))
         self.assertTrue(_has(name, "Tưới CT", today))  # mở khóa bước phụ thuộc ngay
+
+
+class TestPrereqIsolatedAcrossCycles(FrappeTestCase):
+    def test_prereq_isolated_per_cycle(self):
+        _proc("QT ISO", [
+            {"step": 1, "description": "Gieo ISO", "frequency_type": "one_time", "scope": "per_crop"},
+            {"step": 2, "description": "Tưới ISO", "frequency_type": "daily", "scope": "per_crop",
+             "prerequisite": "Gieo ISO"},
+        ])
+        _block("B ISO1")
+        _block("B ISO2")
+        c1 = _cycle("B ISO1", "QT ISO")
+        c2 = _cycle("B ISO2", "QT ISO")
+        today = getdate()
+        # hoàn thành prereq CHỈ ở chu kỳ 1
+        g1 = frappe.get_all("Farm Task", filters={"cycle": c1, "title": "Gieo ISO"})[0].name
+        frappe.db.set_value("Farm Task", g1, {"status": "completed", "completed_on": str(today)})
+        generate_tasks()
+        self.assertTrue(_has(c1, "Tưới ISO", today))   # chu kỳ 1 mở khóa
+        self.assertFalse(_has(c2, "Tưới ISO", today))  # chu kỳ 2 KHÔNG bị mở khóa nhầm
+
+
+class TestGenerateScopedToCycle(FrappeTestCase):
+    def test_scoped_generation_only_touches_one_cycle(self):
+        _proc("QT SC", [{"step": 1, "description": "Lặp SC", "frequency_type": "daily", "scope": "per_crop"}])
+        _block("B SC1")
+        _block("B SC2")
+        a = _cycle("B SC1", "QT SC")
+        b = _cycle("B SC2", "QT SC")
+        today = getdate()
+        # xóa task hôm nay của chu kỳ B
+        for t in frappe.get_all("Farm Task", filters={"cycle": b, "title": "Lặp SC", "task_date": str(today)}):
+            frappe.delete_doc("Farm Task", t.name, force=True)
+        # sinh phạm vi CHỈ chu kỳ A -> B không được tái sinh
+        generate_tasks(cycle=a)
+        self.assertFalse(_has(b, "Lặp SC", today))
+        # sinh toàn bộ -> B tái sinh
+        generate_tasks()
+        self.assertTrue(_has(b, "Lặp SC", today))
+
+
+class TestSetupDoneOnRemoved(FrappeTestCase):
+    def test_setup_done_on_field_removed(self):
+        self.assertFalse(frappe.get_meta("Crop Cycle").has_field("setup_done_on"))

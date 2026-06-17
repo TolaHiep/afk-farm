@@ -35,7 +35,7 @@ def complete_task(task, client_uuid=None, photos=None):
     doc.save()
     doc.db_set("completed_on", str(getdate()))
     if doc.cycle:
-        generate_tasks()  # mở khóa các bước có prereq trỏ tới việc vừa xong
+        generate_tasks(cycle=doc.cycle)  # mở khóa bước phụ thuộc của ĐÚNG chu kỳ vừa xong
     return {"ok": True}
 
 
