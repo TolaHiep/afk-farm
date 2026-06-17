@@ -38,6 +38,7 @@ export function PlotForm() {
   const [teamLeader, setTeamLeader] = React.useState("");
   const [area, setArea] = React.useState<number>(0);
   const [points, setPoints] = React.useState<Pt[]>([]);
+  const [cropTags, setCropTags] = React.useState<string[]>([]);
   // Polygon đã lưu (khi sửa) — nạp vào BoundaryMap qua prop `initial`
   const [initialPoints, setInitialPoints] = React.useState<Pt[] | undefined>(undefined);
 
@@ -63,6 +64,7 @@ export function PlotForm() {
           setZoneId(p.zoneId || "");
           setTeamLeader(p.teamLeaderId || "");
           setArea(p.area || 0);
+          setCropTags(Array.isArray(p.cropTags) ? p.cropTags : []);
           const existing = toPts(polygonFromGeoJSON(p.boundary));
           if (existing) {
             setInitialPoints(existing);
@@ -99,11 +101,11 @@ export function PlotForm() {
     setSaving(true);
     try {
       if (isEdit && id) {
-        await updatePlot(id, { block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined, boundary });
+        await updatePlot(id, { block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined, boundary, crops: cropTags });
       } else if (isZone) {
         await createZone({ zone_name: name, area, boundary });
       } else {
-        await createPlot({ block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined, boundary });
+        await createPlot({ block_name: name, zone: zoneId, area, team_leader: teamLeader || undefined, boundary, crops: cropTags });
       }
       navigate("/admin/zones");
     } catch (err: any) {
@@ -213,13 +215,24 @@ export function PlotForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Loại cây
+                    Cây trồng
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option>Chọn loại cây</option>
-                    <option>Gấc</option>
-                    <option>Sâm</option>
-                  </select>
+                  <div className="flex gap-4">
+                    {["Gấc", "Sâm"].map((c) => (
+                      <label key={c} className="flex items-center gap-2 text-sm text-gray-800">
+                        <input
+                          type="checkbox"
+                          checked={cropTags.includes(c)}
+                          onChange={(e) =>
+                            setCropTags((prev) =>
+                              e.target.checked ? [...prev, c] : prev.filter((x) => x !== c)
+                            )
+                          }
+                        />
+                        {c}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </>
             )}
