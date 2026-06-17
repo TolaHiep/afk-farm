@@ -21,12 +21,12 @@ def import_rows(process_name, crop, rows):
     """Tạo Cultivation Process + steps từ list dict (cột Bước, Mô tả, Công/ha, Tần suất, Phạm vi)."""
     steps = []
     for i, r in enumerate(rows, 1):
-        ftype, fval = parse_frequency(str(r.get("Tần suất", "")))
+        ftype, fval, ftimes = parse_frequency(str(r.get("Tần suất", "")))
         scope = SCOPE_MAP.get(str(r.get("Phạm vi", "")).strip().lower(), "per_crop")
         steps.append({
             "step": r.get("Bước", i), "description": r["Mô tả"],
             "mandays_per_ha": r.get("Công/ha", 0), "frequency_type": ftype,
-            "frequency_value": fval, "scope": scope,
+            "frequency_value": fval, "times_per_period": ftimes, "scope": scope,
             "require_photo": 1 if _truthy(r.get("Yêu cầu ảnh", "")) else 0,
             "offset_days": _offset(r.get("Bắt đầu sau (ngày)", "")),
         })

@@ -36,7 +36,9 @@ class TestSheetImport(FrappeTestCase):
         doc = frappe.get_doc("Cultivation Process", name)
         self.assertEqual(len(doc.steps), 2)
         self.assertEqual(doc.steps[0].scope, "shared")
-        self.assertEqual(doc.steps[1].frequency_type, "every_n_days")
+        self.assertEqual(doc.steps[1].frequency_type, "n_per_period")
+        self.assertEqual(doc.steps[1].frequency_value, 2)
+        self.assertEqual(doc.steps[1].times_per_period, 1)
 
     def test_import_rows_require_photo(self):
         if frappe.db.exists("Cultivation Process", "QT Photo IMP"):
