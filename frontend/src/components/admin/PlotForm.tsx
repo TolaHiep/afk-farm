@@ -104,7 +104,10 @@ export function PlotForm() {
     return toPts(polygonFromGeoJSON(z?.boundary));
   }, [isZone, zoneId, zones]);
 
-  const selectedZone = zones.find((z) => z.id === (searchParams.get("zone") || zoneId));
+  const selectedZone = React.useMemo(
+    () => zones.find((z) => z.id === (searchParams.get("zone") || zoneId)),
+    [zones, zoneId, searchParams]
+  );
   React.useEffect(() => {
     if (autoMode && selectedZone && !prefix) setPrefix(defaultPrefix(selectedZone.name || ""));
   }, [autoMode, selectedZone, prefix]);
