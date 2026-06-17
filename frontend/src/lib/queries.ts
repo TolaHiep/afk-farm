@@ -17,6 +17,11 @@ export const createZone = (p: Record<string, unknown>) => api.post("admin_api.cr
 export const updateZone = (name: string, p: Record<string, unknown>) => api.post("admin_api.update_zone", { name, ...p });
 export const deleteZone = (name: string) => api.post("admin_api.delete_zone", { name });
 export const createPlot = (p: Record<string, unknown>) => api.post("admin_api.create_plot", p);
+export const createPlotsBulk = (
+  zone: string,
+  plots: Array<{ block_name: string; area: number; boundary?: string; crops?: string[] }>,
+  teamLeader?: string,
+) => api.post("admin_api.create_plots_bulk", { zone, plots, team_leader: teamLeader });
 export const updatePlot = (name: string, p: Record<string, unknown>) => api.post("admin_api.update_plot", { name, ...p });
 export const deletePlot = (name: string) => api.post("admin_api.delete_plot", { name });
 export const getCalendar = (fromDate: string, days = 10) =>
