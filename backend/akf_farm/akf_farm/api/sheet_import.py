@@ -4,6 +4,10 @@ from akf_farm.engine.frequency import parse_frequency
 SCOPE_MAP = {"dùng chung": "shared", "toàn bộ lô": "shared", "theo cây": "per_crop"}
 
 
+def _truthy(v):
+    return str(v or "").strip().lower() in ("x", "có", "co", "1", "yes", "true", "y")
+
+
 def import_rows(process_name, crop, rows):
     """Tạo Cultivation Process + steps từ list dict (cột Bước, Mô tả, Công/ha, Tần suất, Phạm vi)."""
     steps = []
@@ -14,6 +18,7 @@ def import_rows(process_name, crop, rows):
             "step": r.get("Bước", i), "description": r["Mô tả"],
             "mandays_per_ha": r.get("Công/ha", 0), "frequency_type": ftype,
             "frequency_value": fval, "scope": scope,
+            "require_photo": 1 if _truthy(r.get("Yêu cầu ảnh", "")) else 0,
         })
     doc = frappe.get_doc({
         "doctype": "Cultivation Process", "process_name": process_name, "crop": crop, "steps": steps,
