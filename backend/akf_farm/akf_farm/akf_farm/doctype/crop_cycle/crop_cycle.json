@@ -9,7 +9,8 @@
   "crop",
   "cultivation_process",
   "start_date",
-  "status"
+  "status",
+  "setup_done_on"
  ],
  "fields": [
   {
@@ -44,6 +45,12 @@
    "fieldtype": "Select",
    "label": "Trạng thái",
    "options": "active\nclosed"
+  },
+  {
+   "fieldname": "setup_done_on",
+   "fieldtype": "Date",
+   "label": "Ngày setup hoàn tất",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
