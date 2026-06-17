@@ -218,6 +218,21 @@ class TestNPerPeriodGeneration(FrappeTestCase):
         self.assertTrue(_has(name, "Bón 3N", add_days(today, 3)))  # mỗi 3 ngày
 
 
+class TestFreqApi(FrappeTestCase):
+    def test_create_list_times_per_period(self):
+        if frappe.db.exists("Cultivation Process", "QT FAPI"):
+            frappe.delete_doc("Cultivation Process", "QT FAPI", force=True)
+        admin_api.create_process(process_name="QT FAPI", crop="Gấc", steps=[
+            {"description": "Tưới", "frequencyType": "n_per_period", "frequencyValue": 1,
+             "timesPerPeriod": 2, "scopeRaw": "per_crop"},
+        ])
+        doc = frappe.get_doc("Cultivation Process", "QT FAPI")
+        self.assertEqual(doc.steps[0].times_per_period, 2)
+        listed = [p for p in admin_api.list_processes() if p["id"] == "QT FAPI"][0]
+        self.assertEqual(listed["steps"][0]["timesPerPeriod"], 2)
+        self.assertEqual(listed["steps"][0]["frequency"], "2 lần / 1 ngày")
+
+
 class TestFreqFields(FrappeTestCase):
     def test_times_per_period_field_and_default(self):
         if frappe.db.exists("Cultivation Process", "QT TPP"):

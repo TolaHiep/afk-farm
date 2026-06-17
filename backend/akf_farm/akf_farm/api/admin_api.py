@@ -151,12 +151,16 @@ def reassign_task(task, team_leader):
 
 # ---- Tổ trưởng & tổ viên ----
 
-def _freq_text(ftype, fval):
+def _freq_text(ftype, fval, times=1):
     fval = int(fval or 1)
-    return {
-        "one_time": "1 lần/chu kỳ", "daily": "Hàng ngày",
-        "every_n_days": f"{fval} ngày/lần", "n_per_day": f"{fval} lần/ngày",
-    }.get(ftype, "1 lần/chu kỳ")
+    times = int(times or 1)
+    if ftype == "one_time":
+        return "1 lần/chu kỳ"
+    if ftype == "daily":
+        return "Hàng ngày"
+    if ftype == "n_per_period":
+        return f"{times} lần / {fval} ngày"
+    return "1 lần/chu kỳ"
 
 
 def _scope_text(scope):
@@ -197,8 +201,9 @@ def list_processes():
         doc = frappe.get_doc("Cultivation Process", p.name)
         steps = [{
             "step": s.step, "description": s.description, "workPerHa": s.mandays_per_ha,
-            "frequency": _freq_text(s.frequency_type, s.frequency_value),
+            "frequency": _freq_text(s.frequency_type, s.frequency_value, s.times_per_period),
             "frequencyType": s.frequency_type or "one_time", "frequencyValue": s.frequency_value or 1,
+            "timesPerPeriod": s.times_per_period or 1,
             "scope": _scope_text(s.scope), "scopeRaw": s.scope or "shared",
             "requirePhoto": bool(s.require_photo),
             "offsetDays": s.offset_days or 0, "prerequisite": s.prerequisite or "",
@@ -477,6 +482,7 @@ def _apply_steps(doc, steps):
             "mandays_per_ha": s.get("workPerHa") or 0,
             "frequency_type": s.get("frequencyType") or "one_time",
             "frequency_value": s.get("frequencyValue") or 1,
+            "times_per_period": max(1, int(s.get("timesPerPeriod") or 1)),
             "scope": s.get("scopeRaw") or "shared",
             "require_photo": 1 if s.get("requirePhoto") else 0,
             "offset_days": _norm_offset(s.get("offsetDays")),
