@@ -201,9 +201,10 @@ def list_processes():
             "frequencyType": s.frequency_type or "one_time", "frequencyValue": s.frequency_value or 1,
             "scope": _scope_text(s.scope), "scopeRaw": s.scope or "shared",
             "requirePhoto": bool(s.require_photo),
-            "offsetDays": s.offset_days,
+            "offsetDays": s.offset_days or 0, "prerequisite": s.prerequisite or "",
         } for s in doc.steps]
-        out.append({"id": p.name, "name": p.process_name, "crop": p.crop, "steps": steps})
+        out.append({"id": p.name, "name": p.process_name, "crop": p.crop,
+                    "cycleLengthDays": doc.cycle_length_days or 0, "steps": steps})
     return out
 
 
@@ -458,11 +459,11 @@ def delete_team_member(name):
 
 def _norm_offset(v):
     if v is None or v == "":
-        return -1
+        return 0
     try:
-        return int(v)
+        return max(0, int(v))
     except (TypeError, ValueError):
-        return -1
+        return 0
 
 
 def _apply_steps(doc, steps):
@@ -479,22 +480,26 @@ def _apply_steps(doc, steps):
             "scope": s.get("scopeRaw") or "shared",
             "require_photo": 1 if s.get("requirePhoto") else 0,
             "offset_days": _norm_offset(s.get("offsetDays")),
+            "prerequisite": (s.get("prerequisite") or None),
         })
 
 
 @frappe.whitelist()
-def create_process(process_name, crop=None, steps=None):
-    doc = frappe.get_doc({"doctype": "Cultivation Process", "process_name": process_name, "crop": crop})
+def create_process(process_name, crop=None, steps=None, cycle_length_days=0):
+    doc = frappe.get_doc({"doctype": "Cultivation Process", "process_name": process_name,
+                          "crop": crop, "cycle_length_days": int(cycle_length_days or 0)})
     _apply_steps(doc, steps)
     doc.insert()
     return {"id": doc.name, "name": doc.process_name, "crop": doc.crop}
 
 
 @frappe.whitelist()
-def update_process(name, process_name=None, crop=None, steps=None):
+def update_process(name, process_name=None, crop=None, steps=None, cycle_length_days=None):
     doc = frappe.get_doc("Cultivation Process", name)
     if crop is not None:
         doc.crop = crop
+    if cycle_length_days is not None:
+        doc.cycle_length_days = int(cycle_length_days or 0)
     if steps is not None:
         _apply_steps(doc, steps)
     doc.save()

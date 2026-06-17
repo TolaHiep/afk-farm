@@ -3,6 +3,7 @@ from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, add_days
 from akf_farm.engine.task_generator import generate_tasks
 from akf_farm.api import field_api
+from akf_farm.api import admin_api
 
 
 class TestExplicitFields(FrappeTestCase):
@@ -108,6 +109,26 @@ class TestExplicitGeneration(FrappeTestCase):
         generate_tasks()
         cnt = frappe.db.count("Farm Task", {"block": "B SH", "title": "Họp SH", "task_date": str(getdate())})
         self.assertEqual(cnt, 1)  # gộp 1 task/lô dù 2 cây
+
+
+class TestProcessApi(FrappeTestCase):
+    def test_create_list_offset_prereq_cyclelen(self):
+        if frappe.db.exists("Cultivation Process", "QT API2"):
+            frappe.delete_doc("Cultivation Process", "QT API2", force=True)
+        admin_api.create_process(process_name="QT API2", crop="Gấc", cycle_length_days=1095, steps=[
+            {"description": "Gieo", "frequencyType": "one_time", "scopeRaw": "per_crop"},
+            {"description": "Tưới", "frequencyType": "daily", "scopeRaw": "per_crop",
+             "offsetDays": 2, "prerequisite": "Gieo"},
+        ])
+        doc = frappe.get_doc("Cultivation Process", "QT API2")
+        self.assertEqual(doc.cycle_length_days, 1095)
+        self.assertEqual(doc.steps[0].offset_days, 0)
+        self.assertEqual(doc.steps[1].offset_days, 2)
+        self.assertEqual(doc.steps[1].prerequisite, "Gieo")
+        listed = [p for p in admin_api.list_processes() if p["id"] == "QT API2"][0]
+        self.assertEqual(listed["cycleLengthDays"], 1095)
+        self.assertEqual(listed["steps"][1]["offsetDays"], 2)
+        self.assertEqual(listed["steps"][1]["prerequisite"], "Gieo")
 
 
 class TestCompleteSetsCompletedOn(FrappeTestCase):
