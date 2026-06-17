@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ArrowLeft, MapPin, Calendar } from "lucide-react";
 import { getUpcomingTasks, getMyPlots } from "../../lib/queries";
+import { todayYMD } from "../../lib/today";
 
-const TODAY = "2026-06-14";
+const TODAY = todayYMD();
 
 type RangeKey = "1" | "3" | "7" | "10";
 

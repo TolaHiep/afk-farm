@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import { getCropCycles, getZones, getPlots, getProcesses, getReports, createCropCycle, updateCropCycle, deleteCropCycle } from "../../lib/queries";
+import { todayYMD } from "../../lib/today";
 
 interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
 
@@ -14,7 +15,7 @@ const CYCLE_STATUS: Record<string, { label: string; badge: "active" | "pending" 
   done: { label: "Kết thúc", badge: "completed" },
   closed: { label: "Đã đóng", badge: "completed" },
 };
-const emptyCycle = (firstPlotId = "", firstProcessId = ""): Cycle => ({ id: "", plotId: firstPlotId, crop: "Gấc", startDate: "2026-06-14", processId: firstProcessId, status: "active" });
+const emptyCycle = (firstPlotId = "", firstProcessId = ""): Cycle => ({ id: "", plotId: firstPlotId, crop: "Gấc", startDate: todayYMD(), processId: firstProcessId, status: "active" });
 const cropOrder = (crop: string) => (crop === "Gấc" ? 0 : crop === "Sâm" ? 1 : 2);
 
 export function CropCycleManagement() {
@@ -123,7 +124,7 @@ export function CropCycleManagement() {
   const goToPlot = (plotId: string) => navigate(`/admin/zones?plot=${plotId}`);
 
   const cycleProgress = (cycle: Cycle): number => {
-    const days = Math.floor((new Date("2026-06-14").getTime() - new Date(cycle.startDate).getTime()) / 86400000);
+    const days = Math.floor((new Date().getTime() - new Date(cycle.startDate).getTime()) / 86400000);
     return Math.min(Math.max(Math.round((days / 90) * 100), 0), 100);
   };
 

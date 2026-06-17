@@ -16,8 +16,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { getTodayTasks, getMyPlots } from "../../lib/queries";
+import { todayYMD } from "../../lib/today";
 
-const TODAY = "2026-06-14";
+const TODAY = todayYMD();
 
 // Định dạng ngày kiểu Việt Nam (Thứ X, dd tháng MM, yyyy)
 function formatVNDate(iso: string) {

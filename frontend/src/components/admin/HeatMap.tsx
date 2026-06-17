@@ -6,6 +6,7 @@ import { Filter, Calendar, MapPin, Sprout, User, AlertTriangle, CheckCircle2, Cl
 import { Button } from "../ui/button";
 import { getHeatmap, getAnomalies, getCalendar } from "../../lib/queries";
 import { buildGeo, type GeoEntry, type LatLng } from "../../lib/geo";
+import { todayYMD } from "../../lib/today";
 
 type StatusKey = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
 
@@ -144,7 +145,7 @@ function SatelliteMap({
 export function HeatMap() {
   const [selectedPlot, setSelectedPlot] = React.useState<string | null>(null);
   const [selectedZone, setSelectedZone] = React.useState<string | null>(null);
-  const [filterDate, setFilterDate] = React.useState("2026-06-14");
+  const [filterDate, setFilterDate] = React.useState(todayYMD());
   const [filterZone, setFilterZone] = React.useState("all");
   const [filterCrop, setFilterCrop] = React.useState("all");
 

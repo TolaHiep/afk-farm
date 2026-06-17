@@ -3,12 +3,14 @@ import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X } fr
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask } from "../../lib/queries";
+import { todayYMD } from "../../lib/today";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 type Task = { id: string; title: string; plotId: string; crop: string; date: string; status: string; teamLeaderId: string; requirePhoto?: boolean; priority?: string };
 
-const TODAY = new Date("2026-06-14");
-const FROM_DATE = "2026-06-14";
+const TODAY = new Date();
+TODAY.setHours(0, 0, 0, 0);
+const FROM_DATE = todayYMD();
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 const fmtYMD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

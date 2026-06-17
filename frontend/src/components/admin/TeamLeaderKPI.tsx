@@ -5,8 +5,9 @@ import { KPICard } from "../ui/KPICard";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getTeamKpi, getTeamLeaders, getReports, getSupport } from "../../lib/queries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { todayYMD } from "../../lib/today";
 
-const REPORT_DATE = "2026-06-14";
+const REPORT_DATE = todayYMD();
 
 type CropFilter = "all" | "Gấc" | "Sâm";
 
@@ -118,7 +119,7 @@ export function TeamLeaderKPI() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Đến:</span>
-            <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-sm" defaultValue="2026-06-14" />
+            <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-sm" defaultValue={todayYMD()} />
           </div>
           <Button variant="secondary" size="sm">
             <Download className="w-4 h-4 mr-2" />
