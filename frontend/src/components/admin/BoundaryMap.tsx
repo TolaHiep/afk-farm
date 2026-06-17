@@ -25,17 +25,20 @@ export function BoundaryMap({
   onChange,
   initial,
   constraint,
+  splitPreview,
 }: {
   onChange?: (area: number, points: Pt[]) => void;
   // Ranh giới đã lưu (dùng khi sửa) — nạp sẵn lên map
   initial?: Pt[];
   // Vùng cha — bắt buộc các điểm phải nằm trong polygon này (lô trong vùng)
   constraint?: Pt[];
+  splitPreview?: { label: string; polygon: Pt[] }[];
 }) {
   const elRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<L.Map | null>(null);
   const layerRef = React.useRef<L.LayerGroup | null>(null);
   const constraintLayerRef = React.useRef<L.LayerGroup | null>(null);
+  const previewLayerRef = React.useRef<L.LayerGroup | null>(null);
   const [points, setPoints] = React.useState<Pt[]>(initial ?? []);
   const [area, setArea] = React.useState(0);
 
@@ -47,6 +50,10 @@ export function BoundaryMap({
   // Ref tới constraint mới nhất để event handler trong useEffect-init không bị stale
   const constraintRef = React.useRef<Pt[] | undefined>(constraint);
   React.useEffect(() => { constraintRef.current = constraint; }, [constraint]);
+
+  // Ref tới splitPreview mới nhất để click handler trong useEffect-init không bị stale
+  const splitPreviewRef = React.useRef(splitPreview);
+  React.useEffect(() => { splitPreviewRef.current = splitPreview; }, [splitPreview]);
 
   // Đồng bộ points khi initial đổi (form async load xong mới có polygon)
   const seededRef = React.useRef(false);
@@ -68,7 +75,9 @@ export function BoundaryMap({
     ).addTo(map);
     constraintLayerRef.current = L.layerGroup().addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
+    previewLayerRef.current = L.layerGroup().addTo(map);
     map.on("click", (e: L.LeafletMouseEvent) => {
+      if (splitPreviewRef.current && splitPreviewRef.current.length) return; // chế độ xem trước: chỉ đọc
       const p = { lat: e.latlng.lat, lng: e.latlng.lng };
       const c = constraintRef.current;
       if (c && c.length >= 3 && !pointInPolygon(p, c)) {
@@ -109,6 +118,7 @@ export function BoundaryMap({
     const layer = layerRef.current;
     if (!layer) return;
     layer.clearLayers();
+    if (splitPreview && splitPreview.length) { onChange?.(0, []); return; } // đang xem trước: không vẽ tay
     const latlngs = points.map((p) => [p.lat, p.lng] as [number, number]);
     if (points.length >= 3) {
       L.polygon(latlngs, { color: "#16a34a", weight: 2, fillColor: "#16a34a", fillOpacity: 0.25 }).addTo(layer);
@@ -137,6 +147,30 @@ export function BoundaryMap({
     onChange?.(a, points);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points]);
+
+  // Vẽ xem trước chia lô (chỉ đọc) + canh khung nhìn
+  React.useEffect(() => {
+    const map = mapRef.current, layer = previewLayerRef.current;
+    if (!map || !layer) return;
+    layer.clearLayers();
+    if (!splitPreview || !splitPreview.length) return;
+    const all: [number, number][] = [];
+    splitPreview.forEach((item, i) => {
+      const latlngs = item.polygon.map((p) => [p.lat, p.lng] as [number, number]);
+      all.push(...latlngs);
+      L.polygon(latlngs, {
+        color: "#2563eb", weight: 2,
+        fillColor: i % 2 ? "#3b82f6" : "#60a5fa", fillOpacity: 0.25,
+      }).addTo(layer);
+      const c = latlngs.reduce((acc, [la, ln]) => [acc[0] + la, acc[1] + ln], [0, 0]);
+      const center: [number, number] = [c[0] / latlngs.length, c[1] / latlngs.length];
+      L.marker(center, {
+        interactive: false,
+        icon: L.divIcon({ className: "akf-plot-label", html: `<span>${item.label}</span>` }),
+      }).addTo(layer);
+    });
+    if (all.length) map.fitBounds(L.latLngBounds(all), { padding: [20, 20], maxZoom: 18 });
+  }, [splitPreview]);
 
   // Tìm khu vực theo tên (OpenStreetMap Nominatim — miễn phí, không cần key)
   const doSearch = async () => {
