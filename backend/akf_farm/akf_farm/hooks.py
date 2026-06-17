@@ -159,6 +159,9 @@ doc_events = {
 	"User": {
 		"on_update": "akf_farm.events.user_on_update"
 	},
+	"Crop Cycle": {
+		"after_insert": "akf_farm.events.crop_cycle_after_insert"
+	},
 }
 
 # Testing

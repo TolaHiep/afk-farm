@@ -1,5 +1,15 @@
 import frappe
-from akf_farm.engine.task_generator import reassign_inactive_leader
+from akf_farm.engine.task_generator import reassign_inactive_leader, generate_tasks
+
+
+def crop_cycle_after_insert(doc, method=None):
+    """Tạo Crop Cycle = bắt đầu trồng một cây trên một lô → sinh ngay việc cho cửa sổ
+    10 ngày (idempotent). Bổ sung cho job daily để có phản hồi tức thì. Lỗi sinh việc
+    không được chặn việc lưu chu kỳ — log lại để job daily lo tiếp."""
+    try:
+        generate_tasks()
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "crop_cycle_after_insert: generate_tasks failed")
 
 
 def user_on_update(doc, method=None):
