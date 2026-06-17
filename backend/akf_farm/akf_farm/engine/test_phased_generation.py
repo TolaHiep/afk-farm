@@ -190,3 +190,20 @@ class TestGenerateScopedToCycle(FrappeTestCase):
 class TestSetupDoneOnRemoved(FrappeTestCase):
     def test_setup_done_on_field_removed(self):
         self.assertFalse(frappe.get_meta("Crop Cycle").has_field("setup_done_on"))
+
+
+class TestFreqFields(FrappeTestCase):
+    def test_times_per_period_field_and_default(self):
+        if frappe.db.exists("Cultivation Process", "QT TPP"):
+            frappe.delete_doc("Cultivation Process", "QT TPP", force=True)
+        p = frappe.get_doc({
+            "doctype": "Cultivation Process", "process_name": "QT TPP", "crop": "Gấc",
+            "steps": [
+                {"step": 1, "description": "A", "frequency_type": "daily"},
+                {"step": 2, "description": "B", "frequency_type": "n_per_period",
+                 "frequency_value": 1, "times_per_period": 2},
+            ],
+        }).insert()
+        self.assertEqual(p.steps[0].times_per_period, 1)   # default
+        self.assertEqual(p.steps[1].times_per_period, 2)
+        self.assertEqual(p.steps[1].frequency_type, "n_per_period")

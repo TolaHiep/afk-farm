@@ -10,6 +10,7 @@
   "mandays_per_ha",
   "frequency_type",
   "frequency_value",
+  "times_per_period",
   "scope",
   "require_photo",
   "offset_days",
@@ -39,13 +40,19 @@
    "fieldname": "frequency_type",
    "fieldtype": "Select",
    "label": "Loại tần suất",
-   "options": "one_time\ndaily\nevery_n_days\nn_per_day"
+   "options": "one_time\ndaily\nn_per_period"
   },
   {
    "default": "1",
    "fieldname": "frequency_value",
    "fieldtype": "Int",
    "label": "Giá trị tần suất"
+  },
+  {
+   "default": "1",
+   "fieldname": "times_per_period",
+   "fieldtype": "Int",
+   "label": "Số lần mỗi chu kỳ lặp"
   },
   {
    "default": "per_crop",
