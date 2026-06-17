@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess, importProcessExcel, PROCESS_TEMPLATE_URL } from "../../lib/queries";
 
-interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; scope: string; scopeRaw: string; requirePhoto: boolean; }
+interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; }
 interface Process { id: string; name: string; crop: string; steps: Step[]; }
 
 const FREQ_OPTIONS: { value: string; label: string }[] = [
@@ -15,12 +15,12 @@ const FREQ_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const emptyProcess = (): Process => ({ id: "", name: "", crop: "Gấc", steps: [] });
-const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "one_time", frequencyValue: 1, scope: "", scopeRaw: "shared", requirePhoto: false });
+const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "one_time", frequencyValue: 1, scope: "", scopeRaw: "shared", requirePhoto: false, offsetDays: -1 });
 
 // Chuẩn hóa bước để gửi lên API (chỉ field backend cần)
 const toApiSteps = (steps: Step[]) =>
   steps.map((s) => ({ description: s.description, workPerHa: s.workPerHa, frequencyType: s.frequencyType,
-    frequencyValue: s.frequencyValue, scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto }));
+    frequencyValue: s.frequencyValue, scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto, offsetDays: s.offsetDays }));
 
 type ProcModal = { mode: "add" | "edit"; data: Process } | null;
 type StepModal = { mode: "add" | "edit"; procId: string; index: number; data: Step } | null;
@@ -211,13 +211,14 @@ export function ProcessManagement() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Công/ha</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tần suất</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phạm vi</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu sau</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Yêu cầu ảnh</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {selected.steps.length === 0 && (
-                    <tr><td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-400">Chưa có bước nào. Bấm "Thêm bước" để bắt đầu.</td></tr>
+                    <tr><td colSpan={8} className="px-4 py-6 text-center text-sm text-gray-400">Chưa có bước nào. Bấm "Thêm bước" để bắt đầu.</td></tr>
                   )}
                   {selected.steps.map((step, index) => (
                     <tr key={index} className="hover:bg-gray-50">
@@ -226,6 +227,7 @@ export function ProcessManagement() {
                       <td className="px-4 py-4 text-sm text-gray-600">{step.workPerHa}</td>
                       <td className="px-4 py-4 text-sm text-gray-600">{step.frequency}</td>
                       <td className="px-4 py-4 text-sm text-gray-600">{step.scope}</td>
+                      <td className="px-4 py-4 text-sm text-gray-600">{step.offsetDays >= 0 ? `${step.offsetDays} ngày` : "Tự động"}</td>
                       <td className="px-4 py-4 text-center">
                         {step.requirePhoto ? <span className="text-green-600 font-medium">✓</span> : <span className="text-gray-400">—</span>}
                       </td>
@@ -284,6 +286,10 @@ export function ProcessManagement() {
                       <div className="flex justify-between gap-3">
                         <span className="text-gray-500">Phạm vi</span>
                         <span className="text-gray-900 text-right break-words">{step.scope || "—"}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Bắt đầu sau</span>
+                        <span className="text-gray-900 text-right break-words">{step.offsetDays >= 0 ? `${step.offsetDays} ngày` : "Tự động"}</span>
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="text-gray-500">Yêu cầu ảnh</span>
@@ -376,6 +382,12 @@ function StepForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit"; d
           <option value="shared">Dùng chung</option>
           <option value="per_crop">Theo cây</option>
         </select>
+      </Field>
+      <Field label="Bắt đầu sau khi gieo (ngày)">
+        <input type="number" min={0}
+          value={form.offsetDays >= 0 ? form.offsetDays : ""}
+          onChange={(e) => setForm({ ...form, offsetDays: e.target.value === "" ? -1 : Number(e.target.value) })}
+          placeholder="Để trống = tự động theo giai đoạn" className={inputCls} />
       </Field>
       <label className="flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" checked={form.requirePhoto} onChange={(e) => setForm({ ...form, requirePhoto: e.target.checked })} className="w-4 h-4" />
