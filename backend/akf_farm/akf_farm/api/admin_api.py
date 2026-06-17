@@ -49,11 +49,30 @@ def delete_zone(name):
 
 # ---- CRUD lô ----
 
+def _norm_crops(crops):
+    """Chuẩn hoá crops (list / JSON / chuỗi) -> 'Gấc,Sâm' hoặc None."""
+    if not crops:
+        return None
+    if isinstance(crops, str):
+        try:
+            parsed = frappe.parse_json(crops)
+        except Exception:
+            parsed = None
+        if isinstance(parsed, list):
+            crops = parsed
+        else:
+            return crops.strip() or None
+    if isinstance(crops, (list, tuple)):
+        items = [str(c).strip() for c in crops if str(c).strip()]
+        return ",".join(items) or None
+    return str(crops).strip() or None
+
+
 @frappe.whitelist()
-def create_plot(block_name, zone, area, team_leader=None, boundary=None, status="good"):
+def create_plot(block_name, zone, area, team_leader=None, boundary=None, status="good", crops=None):
     doc = frappe.get_doc({"doctype": "Farm Block", "block_name": block_name, "zone": zone,
                           "area": area, "team_leader": team_leader, "boundary": boundary,
-                          "status": status}).insert()
+                          "status": status, "crops": _norm_crops(crops)}).insert()
     return serialize_plot(doc.name)
 
 
@@ -63,6 +82,8 @@ def update_plot(name, **kwargs):
     for f in ("block_name", "zone", "area", "team_leader", "boundary", "status"):
         if f in kwargs:
             doc.set(f, kwargs[f])
+    if "crops" in kwargs:
+        doc.set("crops", _norm_crops(kwargs["crops"]))
     doc.save()
     return serialize_plot(doc.name)
 

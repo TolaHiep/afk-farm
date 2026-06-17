@@ -22,6 +22,12 @@ def serialize_crop_on_plot(block, crop):
     return {"crop": crop, "done": done, "total": total, "status": status}
 
 
+def _crop_tags(raw):
+    if not raw:
+        return []
+    return [c.strip() for c in str(raw).split(",") if c.strip()]
+
+
 def serialize_plot(block_name):
     """Trả lô đúng shape mockData: id, name, zoneId, area, teamLeader(Id), crops[], status (worst-of)."""
     b = frappe.get_doc("Farm Block", block_name)
@@ -34,6 +40,7 @@ def serialize_plot(block_name):
         "teamLeader": (frappe.db.get_value("User", b.team_leader, "full_name") if b.team_leader else ""),
         "teamLeaderId": b.team_leader or "",
         "crops": crop_objs, "crop": " + ".join(crops),
+        "cropTags": _crop_tags(b.crops),
         "done": sum(c["done"] for c in crop_objs), "total": sum(c["total"] for c in crop_objs),
         "status": rollup_status(statuses),
         "boundary": _parse_boundary(b.boundary),

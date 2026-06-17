@@ -11,6 +11,7 @@
   "area",
   "boundary",
   "team_leader",
+  "crops",
   "status"
  ],
  "fields": [
@@ -45,6 +46,11 @@
    "fieldtype": "Link",
    "label": "Tổ trưởng",
    "options": "User"
+  },
+  {
+   "fieldname": "crops",
+   "fieldtype": "Small Text",
+   "label": "Cây trồng (nhãn)"
   },
   {
    "default": "good",
