@@ -1,61 +1,6 @@
 import datetime as dt
 
 
-def setup_step_indices(steps):
-    """steps: list (frequency_type, offset_days). Trả set index thuộc khối setup:
-    bước one_time + auto (offset<0) liên tiếp từ đầu; bước offset>=0 trong suốt (bỏ qua,
-    không phá chuỗi); dừng ở bước định kỳ auto đầu tiên."""
-    out = set()
-    for i, (ftype, offset) in enumerate(steps):
-        if offset is not None and offset >= 0:
-            continue
-        if ftype == "one_time":
-            out.add(i)
-        else:
-            break
-    return out
-
-
-def _setup_complete(cycle_name, setup_descs):
-    """Mọi việc setup của cycle (theo title=description) đã completed?"""
-    import frappe
-
-    for desc in setup_descs:
-        t = frappe.get_all("Farm Task", filters={"cycle": cycle_name, "title": desc},
-                           fields=["status"], limit=1)
-        if not t or t[0].status != "completed":
-            return False
-    return True
-
-
-def stamp_setup_if_done(cycle_name):
-    """Nếu setup của cycle đã xong mà chưa đánh dấu -> set setup_done_on (KHÔNG gọi generate_tasks).
-    Trả setup_done_on (date) hoặc None."""
-    import frappe
-    from frappe.utils import getdate
-
-    cyc = frappe.db.get_value("Crop Cycle", cycle_name,
-                              ["cultivation_process", "setup_done_on", "start_date"], as_dict=True)
-    if not cyc:
-        return None
-    if cyc.setup_done_on:
-        return getdate(cyc.setup_done_on)
-    if not cyc.cultivation_process:
-        return None
-    proc = frappe.get_doc("Cultivation Process", cyc.cultivation_process)
-    steps = list(proc.steps)
-    setup_descs = [steps[i].description for i in
-                   setup_step_indices([(s.frequency_type, s.offset_days) for s in steps])]
-    done = None
-    if not setup_descs:
-        done = getdate(cyc.start_date)
-    elif _setup_complete(cycle_name, setup_descs):
-        done = getdate()
-    if done:
-        frappe.db.set_value("Crop Cycle", cycle_name, "setup_done_on", str(done))
-    return done
-
-
 def _prereq_anchor(cycle_name, prereq_title):
     """Ngày neo cho bước phụ thuộc = max(completed_on) của task prereq (theo title) đã hoàn thành
     trong cycle. None nếu chưa có task prereq nào completed. Fallback task_date nếu completed_on rỗng."""

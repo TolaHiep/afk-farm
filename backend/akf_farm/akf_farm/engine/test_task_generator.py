@@ -1,6 +1,6 @@
 import unittest
 import datetime as dt
-from akf_farm.engine.task_generator import compute_mandays, due_dates, dedupe_shared, setup_step_indices
+from akf_farm.engine.task_generator import compute_mandays, due_dates, dedupe_shared
 
 
 class TestComputeMandays(unittest.TestCase):
@@ -71,18 +71,3 @@ class TestDedupeShared(unittest.TestCase):
         self.assertEqual(rows[0]["crop"], "Gấc")  # original unchanged
 
 
-class TestSetupStepIndices(unittest.TestCase):
-    def test_leading_one_time_block(self):
-        steps = [("one_time", -1), ("one_time", -1), ("every_n_days", -1), ("daily", -1)]
-        self.assertEqual(setup_step_indices(steps), {0, 1})
-
-    def test_offset_step_is_transparent(self):
-        # bước có offset (idx1) bị bỏ qua nhưng không phá chuỗi setup
-        steps = [("one_time", -1), ("one_time", 5), ("one_time", -1), ("daily", -1)]
-        self.assertEqual(setup_step_indices(steps), {0, 2})
-
-    def test_no_leading_one_time(self):
-        self.assertEqual(setup_step_indices([("daily", -1), ("one_time", -1)]), set())
-
-    def test_empty(self):
-        self.assertEqual(setup_step_indices([]), set())

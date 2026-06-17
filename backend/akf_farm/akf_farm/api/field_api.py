@@ -1,7 +1,7 @@
 import json
 import frappe
 from frappe.utils import getdate
-from akf_farm.engine.task_generator import stamp_setup_if_done, generate_tasks
+from akf_farm.engine.task_generator import generate_tasks
 
 
 def _as_list(photos):
@@ -33,11 +33,9 @@ def complete_task(task, client_uuid=None, photos=None):
     doc.client_uuid = client_uuid
     doc.set("photos", [{"image": p} for p in photos])
     doc.save()
+    doc.db_set("completed_on", str(getdate()))
     if doc.cycle:
-        before = frappe.db.get_value("Crop Cycle", doc.cycle, "setup_done_on")
-        done = stamp_setup_if_done(doc.cycle)
-        if done and not before:
-            generate_tasks()  # setup vừa xong -> sinh việc bảo trì ngay
+        generate_tasks()  # mở khóa các bước có prereq trỏ tới việc vừa xong
     return {"ok": True}
 
 

@@ -2,6 +2,7 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import getdate, add_days
 from akf_farm.engine.task_generator import generate_tasks
+from akf_farm.api import field_api
 
 
 class TestExplicitFields(FrappeTestCase):
@@ -107,3 +108,20 @@ class TestExplicitGeneration(FrappeTestCase):
         generate_tasks()
         cnt = frappe.db.count("Farm Task", {"block": "B SH", "title": "Họp SH", "task_date": str(getdate())})
         self.assertEqual(cnt, 1)  # gộp 1 task/lô dù 2 cây
+
+
+class TestCompleteSetsCompletedOn(FrappeTestCase):
+    def test_complete_sets_completed_on_and_unlocks(self):
+        _proc("QT CT", [
+            {"step": 1, "description": "Gieo CT", "frequency_type": "one_time", "scope": "per_crop"},
+            {"step": 2, "description": "Tưới CT", "frequency_type": "daily", "scope": "per_crop",
+             "prerequisite": "Gieo CT"},
+        ])
+        _block("B CT")
+        name = _cycle("B CT", "QT CT")
+        today = getdate()
+        self.assertFalse(_has(name, "Tưới CT", today))
+        gieo = frappe.get_all("Farm Task", filters={"cycle": name, "title": "Gieo CT"})[0].name
+        field_api.complete_task(gieo)
+        self.assertEqual(str(frappe.db.get_value("Farm Task", gieo, "completed_on")), str(today))
+        self.assertTrue(_has(name, "Tưới CT", today))  # mở khóa bước phụ thuộc ngay
