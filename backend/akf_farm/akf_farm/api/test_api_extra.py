@@ -14,10 +14,10 @@ class TestApiExtra(FrappeTestCase):
         if not frappe.db.exists("Cultivation Process", "P EX"):
             frappe.get_doc({"doctype": "Cultivation Process", "process_name": "P EX", "crop": "Gấc",
                 "steps": [{"step": 1, "description": "Tưới", "mandays_per_ha": 2,
-                           "frequency_type": "every_n_days", "frequency_value": 7, "scope": "per_crop"}]}).insert()
+                           "frequency_type": "n_per_period", "frequency_value": 7, "scope": "per_crop"}]}).insert()
         procs = admin_api.list_processes()
         p = next(x for x in procs if x["id"] == "P EX")
-        self.assertEqual(p["steps"][0]["frequency"], "7 ngày/lần")
+        self.assertEqual(p["steps"][0]["frequency"], "1 lần / 7 ngày")
         self.assertEqual(p["steps"][0]["scope"], "Theo cây")
 
     def test_crop_cycles_and_dashboard(self):

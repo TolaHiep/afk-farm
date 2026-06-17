@@ -12,7 +12,7 @@ class TestGenerate(FrappeTestCase):
         if not frappe.db.exists("Cultivation Process", "P GEN"):
             frappe.get_doc({"doctype": "Cultivation Process", "process_name": "P GEN", "crop": "Gấc",
                 "steps": [{"step": 1, "description": "Tưới", "mandays_per_ha": 2,
-                           "frequency_type": "every_n_days", "frequency_value": 2, "scope": "per_crop"}]}).insert()
+                           "frequency_type": "n_per_period", "frequency_value": 2, "scope": "per_crop"}]}).insert()
         # Dọn để chạy sạch
         frappe.db.delete("Farm Task", {"block": "B GEN"})
         frappe.db.delete("Crop Cycle", {"block": "B GEN"})
