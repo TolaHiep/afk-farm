@@ -1,11 +1,11 @@
 import React from "react";
-import { Plus, Edit2, Trash2, Upload, Download } from "lucide-react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
-import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess, importProcessExcel, PROCESS_TEMPLATE_URL } from "../../lib/queries";
+import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess } from "../../lib/queries";
 
-interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; }
-interface Process { id: string; name: string; crop: string; steps: Step[]; }
+interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; prerequisite: string; }
+interface Process { id: string; name: string; crop: string; cycleLengthDays: number; steps: Step[]; }
 
 const FREQ_OPTIONS: { value: string; label: string }[] = [
   { value: "one_time", label: "1 lần/chu kỳ" },
@@ -14,13 +14,14 @@ const FREQ_OPTIONS: { value: string; label: string }[] = [
   { value: "n_per_day", label: "N lần/ngày" },
 ];
 
-const emptyProcess = (): Process => ({ id: "", name: "", crop: "Gấc", steps: [] });
-const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "one_time", frequencyValue: 1, scope: "", scopeRaw: "shared", requirePhoto: false, offsetDays: -1 });
+const emptyProcess = (): Process => ({ id: "", name: "", crop: "Gấc", cycleLengthDays: 0, steps: [] });
+const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "one_time", frequencyValue: 1, scope: "", scopeRaw: "shared", requirePhoto: false, offsetDays: 0, prerequisite: "" });
 
 // Chuẩn hóa bước để gửi lên API (chỉ field backend cần)
 const toApiSteps = (steps: Step[]) =>
   steps.map((s) => ({ description: s.description, workPerHa: s.workPerHa, frequencyType: s.frequencyType,
-    frequencyValue: s.frequencyValue, scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto, offsetDays: s.offsetDays }));
+    frequencyValue: s.frequencyValue, scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto,
+    offsetDays: s.offsetDays, prerequisite: s.prerequisite }));
 
 type ProcModal = { mode: "add" | "edit"; data: Process } | null;
 type StepModal = { mode: "add" | "edit"; procId: string; index: number; data: Step } | null;
@@ -33,9 +34,6 @@ export function ProcessManagement() {
   const [procModal, setProcModal] = React.useState<ProcModal>(null);
   const [stepModal, setStepModal] = React.useState<StepModal>(null);
   const [confirm, setConfirm] = React.useState<Confirm>(null);
-  const [importing, setImporting] = React.useState(false);
-  const [overwrite, setOverwrite] = React.useState<{ name: string; b64: string } | null>(null);
-  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const reload = (selectId?: string) =>
     getProcesses().then((data: Process[]) => {
@@ -56,10 +54,10 @@ export function ProcessManagement() {
     if (!data.name.trim()) return;
     try {
       if (data.id) {
-        const res = await updateProcess(data.id, { process_name: data.name, crop: data.crop });
+        const res = await updateProcess(data.id, { process_name: data.name, crop: data.crop, cycle_length_days: data.cycleLengthDays });
         await reload(res?.id ?? data.id);
       } else {
-        const res = await createProcess({ process_name: data.name, crop: data.crop, steps: [] });
+        const res = await createProcess({ process_name: data.name, crop: data.crop, steps: [], cycle_length_days: data.cycleLengthDays });
         await reload(res?.id);
       }
       setProcModal(null);
@@ -81,7 +79,7 @@ export function ProcessManagement() {
   const persistSteps = async (procId: string, steps: Step[]) => {
     const proc = procs.find((p) => p.id === procId);
     if (!proc) return;
-    await updateProcess(procId, { process_name: proc.name, crop: proc.crop, steps: toApiSteps(steps) });
+    await updateProcess(procId, { process_name: proc.name, crop: proc.crop, cycle_length_days: proc.cycleLengthDays, steps: toApiSteps(steps) });
     await reload(procId);
   };
   const saveStep = async (procId: string, index: number, data: Step) => {
@@ -109,44 +107,6 @@ export function ProcessManagement() {
     setConfirm(null);
   };
 
-  const readB64 = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => {
-        const s = String(r.result);
-        resolve(s.slice(s.indexOf(",") + 1)); // bỏ tiền tố data:...;base64,
-      };
-      r.onerror = () => reject(new Error("Không đọc được file"));
-      r.readAsDataURL(file);
-    });
-
-  const doImport = async (b64: string, replace: boolean) => {
-    if (replace) setOverwrite(null);
-    setImporting(true);
-    try {
-      const res = await importProcessExcel(b64, replace);
-      if (res.exists) {
-        setOverwrite({ name: res.name, b64 });
-      } else {
-        setOverwrite(null);
-        await reload(res.name);
-        alert(`Đã nhập "${res.name}" (${res.steps} bước).`);
-      }
-    } catch (e) {
-      alert("Nhập thất bại: " + (e as Error).message);
-    } finally {
-      setImporting(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  };
-
-  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const b64 = await readB64(file);
-    await doImport(b64, false);
-  };
-
   return (
     <div className="space-y-6">
       {/* Process list */}
@@ -154,14 +114,6 @@ export function ProcessManagement() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Danh sách quy trình</h3>
           <div className="flex gap-2">
-            <a href={PROCESS_TEMPLATE_URL}
-              className="inline-flex items-center px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-              <Download className="w-4 h-4 mr-2" /> Tải mẫu Excel
-            </a>
-            <Button variant="secondary" size="sm" disabled={importing} onClick={() => fileRef.current?.click()}>
-              <Upload className="w-4 h-4 mr-2" /> {importing ? "Đang nhập…" : "Nhập từ Excel"}
-            </Button>
-            <input ref={fileRef} type="file" accept=".xlsx" hidden onChange={onPickFile} />
             <Button variant="primary" size="sm" onClick={() => setProcModal({ mode: "add", data: emptyProcess() })}>
               <Plus className="w-4 h-4 mr-2" /> Thêm quy trình
             </Button>
@@ -211,14 +163,15 @@ export function ProcessManagement() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Công/ha</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tần suất</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phạm vi</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu sau</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bắt đầu</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tiên quyết</th>
                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Yêu cầu ảnh</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {selected.steps.length === 0 && (
-                    <tr><td colSpan={8} className="px-4 py-6 text-center text-sm text-gray-400">Chưa có bước nào. Bấm "Thêm bước" để bắt đầu.</td></tr>
+                    <tr><td colSpan={9} className="px-4 py-6 text-center text-sm text-gray-400">Chưa có bước nào. Bấm "Thêm bước" để bắt đầu.</td></tr>
                   )}
                   {selected.steps.map((step, index) => (
                     <tr key={index} className="hover:bg-gray-50">
@@ -227,7 +180,8 @@ export function ProcessManagement() {
                       <td className="px-4 py-4 text-sm text-gray-600">{step.workPerHa}</td>
                       <td className="px-4 py-4 text-sm text-gray-600">{step.frequency}</td>
                       <td className="px-4 py-4 text-sm text-gray-600">{step.scope}</td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{step.offsetDays >= 0 ? `${step.offsetDays} ngày` : "Tự động"}</td>
+                      <td className="px-4 py-4 text-sm text-gray-600">{step.offsetDays > 0 ? `Sau ${step.offsetDays} ngày` : "Ngay"}</td>
+                      <td className="px-4 py-4 text-sm text-gray-600">{step.prerequisite || "—"}</td>
                       <td className="px-4 py-4 text-center">
                         {step.requirePhoto ? <span className="text-green-600 font-medium">✓</span> : <span className="text-gray-400">—</span>}
                       </td>
@@ -288,8 +242,12 @@ export function ProcessManagement() {
                         <span className="text-gray-900 text-right break-words">{step.scope || "—"}</span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <span className="text-gray-500">Bắt đầu sau</span>
-                        <span className="text-gray-900 text-right break-words">{step.offsetDays >= 0 ? `${step.offsetDays} ngày` : "Tự động"}</span>
+                        <span className="text-gray-500">Bắt đầu</span>
+                        <span className="text-gray-900 text-right break-words">{step.offsetDays > 0 ? `Sau ${step.offsetDays} ngày` : "Ngay"}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-gray-500">Tiên quyết</span>
+                        <span className="text-gray-900 text-right break-words">{step.prerequisite || "—"}</span>
                       </div>
                       <div className="flex justify-between gap-3">
                         <span className="text-gray-500">Yêu cầu ảnh</span>
@@ -314,7 +272,7 @@ export function ProcessManagement() {
       {procModal && <ProcessForm modal={procModal} onClose={() => setProcModal(null)} onSave={saveProcess} />}
 
       {/* Step modal */}
-      {stepModal && <StepForm modal={stepModal} onClose={() => setStepModal(null)} onSave={(d) => saveStep(stepModal.procId, stepModal.index, d)} />}
+      {stepModal && <StepForm modal={stepModal} otherSteps={(procs.find((p) => p.id === stepModal.procId)?.steps || []).filter((_, i) => i !== stepModal.index).map((s) => s.description)} onClose={() => setStepModal(null)} onSave={(d) => saveStep(stepModal.procId, stepModal.index, d)} />}
 
       {/* Confirm delete */}
       {confirm && (
@@ -323,14 +281,6 @@ export function ProcessManagement() {
           message={confirm.kind === "process" ? "Toàn bộ các bước trong quy trình này cũng sẽ bị xóa." : "Bạn có chắc muốn xóa bước này? Các bước sau sẽ được đánh số lại."}
           onCancel={() => setConfirm(null)}
           onConfirm={() => (confirm.kind === "process" ? deleteProcess(confirm.id) : deleteStep(confirm.procId, confirm.index))}
-        />
-      )}
-      {overwrite && (
-        <ConfirmDialog
-          title={`Quy trình "${overwrite.name}" đã tồn tại — ghi đè?`}
-          message="Toàn bộ các bước hiện tại của quy trình này sẽ bị thay bằng nội dung trong file."
-          onCancel={() => setOverwrite(null)}
-          onConfirm={() => doImport(overwrite.b64, true)}
         />
       )}
     </div>
@@ -350,12 +300,16 @@ function ProcessForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit"
           <option value="Sâm">Sâm</option>
         </select>
       </Field>
+      <Field label="Số ngày 1 chu kỳ (để trống = không giới hạn)">
+        <input type="number" min={0} value={form.cycleLengthDays || ""}
+          onChange={(e) => setForm({ ...form, cycleLengthDays: Number(e.target.value) })} className={inputCls} />
+      </Field>
       <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.name.trim()} />
     </Modal>
   );
 }
 
-function StepForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Step }; onClose: () => void; onSave: (d: Step) => void; }) {
+function StepForm({ modal, otherSteps, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Step }; otherSteps: string[]; onClose: () => void; onSave: (d: Step) => void; }) {
   const [form, setForm] = React.useState<Step>(modal.data);
   return (
     <Modal title={modal.mode === "add" ? "Thêm bước" : "Sửa bước"} onClose={onClose}>
@@ -383,11 +337,20 @@ function StepForm({ modal, onClose, onSave }: { modal: { mode: "add" | "edit"; d
           <option value="per_crop">Theo cây</option>
         </select>
       </Field>
-      <Field label="Bắt đầu sau khi gieo (ngày)">
-        <input type="number" min={0}
-          value={form.offsetDays >= 0 ? form.offsetDays : ""}
-          onChange={(e) => setForm({ ...form, offsetDays: e.target.value === "" ? -1 : Number(e.target.value) })}
-          placeholder="Để trống = tự động theo giai đoạn" className={inputCls} />
+      <Field label="Bắt đầu">
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1 text-sm"><input type="radio" checked={form.offsetDays === 0} onChange={() => setForm({ ...form, offsetDays: 0 })} /> Ngay</label>
+          <label className="flex items-center gap-1 text-sm"><input type="radio" checked={form.offsetDays > 0} onChange={() => setForm({ ...form, offsetDays: 1 })} /> Sau N ngày</label>
+          {form.offsetDays > 0 && (
+            <input type="number" min={1} value={form.offsetDays} onChange={(e) => setForm({ ...form, offsetDays: Math.max(1, Number(e.target.value)) })} className="w-24 px-2 py-1 border border-gray-300 rounded" />
+          )}
+        </div>
+      </Field>
+      <Field label="Bước tiên quyết (tùy chọn)">
+        <select value={form.prerequisite} onChange={(e) => setForm({ ...form, prerequisite: e.target.value })} className={inputCls}>
+          <option value="">— Không —</option>
+          {otherSteps.map((d) => <option key={d} value={d}>{d}</option>)}
+        </select>
       </Field>
       <label className="flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" checked={form.requirePhoto} onChange={(e) => setForm({ ...form, requirePhoto: e.target.checked })} className="w-4 h-4" />

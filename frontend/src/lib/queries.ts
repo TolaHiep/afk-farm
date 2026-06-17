@@ -52,17 +52,11 @@ export const updateTeamMember = (name: string, p: Record<string, unknown>) =>
 export const deleteTeamMember = (name: string) => api.post("admin_api.delete_team_member", { name });
 
 // Quy trình (CRUD)
-export const createProcess = (p: { process_name: string; crop?: string; steps?: unknown[] }) =>
+export const createProcess = (p: { process_name: string; crop?: string; steps?: unknown[]; cycle_length_days?: number }) =>
   api.post("admin_api.create_process", p);
 export const updateProcess = (name: string, p: Record<string, unknown>) =>
   api.post("admin_api.update_process", { name, ...p });
 export const deleteProcess = (name: string) => api.post("admin_api.delete_process", { name });
-
-// Nhập quy trình từ Excel
-export const PROCESS_TEMPLATE_URL = "/api/method/akf_farm.api.sheet_import.process_template";
-export const importProcessExcel = (fileB64: string, replace = false) =>
-  api.post("sheet_import.import_process_excel", { file_b64: fileB64, replace: replace ? 1 : 0 }) as
-    Promise<{ exists: boolean; name: string; crop?: string; steps?: number }>;
 
 // Chu kỳ cây trồng (CRUD)
 export const createCropCycle = (p: { block: string; crop: string; start_date: string; cultivation_process?: string; status?: string }) =>
