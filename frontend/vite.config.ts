@@ -23,6 +23,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Cho phép Host từ tunnel Cloudflare (subdomain ngẫu nhiên *.trycloudflare.com).
+    // Vite (bản mới) chặn Host lạ để chống DNS-rebinding; dấu "." đầu = khớp mọi subdomain.
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/api': backend,
       '/files': backend,
