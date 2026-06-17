@@ -1,8 +1,8 @@
 import React from "react";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Upload, Download } from "lucide-react";
 import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
-import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess } from "../../lib/queries";
+import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess, importProcessExcel, PROCESS_TEMPLATE_URL } from "../../lib/queries";
 
 interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; scope: string; scopeRaw: string; requirePhoto: boolean; }
 interface Process { id: string; name: string; crop: string; steps: Step[]; }
@@ -33,6 +33,9 @@ export function ProcessManagement() {
   const [procModal, setProcModal] = React.useState<ProcModal>(null);
   const [stepModal, setStepModal] = React.useState<StepModal>(null);
   const [confirm, setConfirm] = React.useState<Confirm>(null);
+  const [importing, setImporting] = React.useState(false);
+  const [overwrite, setOverwrite] = React.useState<{ name: string; b64: string } | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const reload = (selectId?: string) =>
     getProcesses().then((data: Process[]) => {
@@ -106,15 +109,62 @@ export function ProcessManagement() {
     setConfirm(null);
   };
 
+  const readB64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const s = String(r.result);
+        resolve(s.slice(s.indexOf(",") + 1)); // bỏ tiền tố data:...;base64,
+      };
+      r.onerror = () => reject(new Error("Không đọc được file"));
+      r.readAsDataURL(file);
+    });
+
+  const doImport = async (b64: string, replace: boolean) => {
+    setImporting(true);
+    try {
+      const res = await importProcessExcel(b64, replace);
+      if (res.exists) {
+        setOverwrite({ name: res.name, b64 });
+      } else {
+        setOverwrite(null);
+        await reload(res.name);
+        alert(`Đã nhập "${res.name}" (${res.steps} bước).`);
+      }
+    } catch (e) {
+      alert("Nhập thất bại: " + (e as Error).message);
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const b64 = await readB64(file);
+    await doImport(b64, false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Process list */}
       <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Danh sách quy trình</h3>
-          <Button variant="primary" size="sm" onClick={() => setProcModal({ mode: "add", data: emptyProcess() })}>
-            <Plus className="w-4 h-4 mr-2" /> Thêm quy trình
-          </Button>
+          <div className="flex gap-2">
+            <a href={PROCESS_TEMPLATE_URL}
+              className="inline-flex items-center px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+              <Download className="w-4 h-4 mr-2" /> Tải mẫu Excel
+            </a>
+            <Button variant="secondary" size="sm" disabled={importing} onClick={() => fileRef.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" /> {importing ? "Đang nhập…" : "Nhập từ Excel"}
+            </Button>
+            <input ref={fileRef} type="file" accept=".xlsx" hidden onChange={onPickFile} />
+            <Button variant="primary" size="sm" onClick={() => setProcModal({ mode: "add", data: emptyProcess() })}>
+              <Plus className="w-4 h-4 mr-2" /> Thêm quy trình
+            </Button>
+          </div>
         </div>
 
         {procs.length === 0 ? (
@@ -266,6 +316,14 @@ export function ProcessManagement() {
           message={confirm.kind === "process" ? "Toàn bộ các bước trong quy trình này cũng sẽ bị xóa." : "Bạn có chắc muốn xóa bước này? Các bước sau sẽ được đánh số lại."}
           onCancel={() => setConfirm(null)}
           onConfirm={() => (confirm.kind === "process" ? deleteProcess(confirm.id) : deleteStep(confirm.procId, confirm.index))}
+        />
+      )}
+      {overwrite && (
+        <ConfirmDialog
+          title={`Quy trình "${overwrite.name}" đã tồn tại — ghi đè?`}
+          message="Toàn bộ các bước hiện tại của quy trình này sẽ bị thay bằng nội dung trong file."
+          onCancel={() => setOverwrite(null)}
+          onConfirm={() => doImport(overwrite.b64, true)}
         />
       )}
     </div>

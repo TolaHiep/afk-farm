@@ -58,6 +58,12 @@ export const updateProcess = (name: string, p: Record<string, unknown>) =>
   api.post("admin_api.update_process", { name, ...p });
 export const deleteProcess = (name: string) => api.post("admin_api.delete_process", { name });
 
+// Nhập quy trình từ Excel
+export const PROCESS_TEMPLATE_URL = "/api/method/akf_farm.api.sheet_import.process_template";
+export const importProcessExcel = (fileB64: string, replace = false) =>
+  api.post("sheet_import.import_process_excel", { file_b64: fileB64, replace: replace ? 1 : 0 }) as
+    Promise<{ exists: boolean; name: string; crop?: string; steps?: number }>;
+
 // Chu kỳ cây trồng (CRUD)
 export const createCropCycle = (p: { block: string; crop: string; start_date: string; cultivation_process?: string; status?: string }) =>
   api.post("admin_api.create_crop_cycle", p);
