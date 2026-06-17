@@ -1,6 +1,21 @@
 import datetime as dt
 
 
+def setup_step_indices(steps):
+    """steps: list (frequency_type, offset_days). Trả set index thuộc khối setup:
+    bước one_time + auto (offset<0) liên tiếp từ đầu; bước offset>=0 trong suốt (bỏ qua,
+    không phá chuỗi); dừng ở bước định kỳ auto đầu tiên."""
+    out = set()
+    for i, (ftype, offset) in enumerate(steps):
+        if offset is not None and offset >= 0:
+            continue
+        if ftype == "one_time":
+            out.add(i)
+        else:
+            break
+    return out
+
+
 def compute_mandays(mandays_per_ha: float, area_m2: float) -> float:
     ha = (area_m2 or 0) / 10000.0
     return round((mandays_per_ha or 0) * ha, 2)
