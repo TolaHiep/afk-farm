@@ -117,25 +117,37 @@ export function PlotForm() {
     [parentBoundary]
   );
 
-  const buildWeights = (): number[] => {
-    if (splitBy === "count") return equalWeights(Math.max(1, Math.floor(splitCount)));
-    const n = plotCountByArea(zoneArea, splitArea);
-    return remainderMode === "keepSmall" ? keepSmallWeights(zoneArea, splitArea) : equalWeights(n);
-  };
-
   const hasRemainder = splitBy === "area" && areaRemainder(zoneArea, splitArea) > 1;
 
-  const handlePreview = () => {
-    setError("");
-    if (!parentBoundary || parentBoundary.length < 3) {
-      setError("Vùng cha chưa có ranh giới — không thể chia tự động. Hãy vẽ ranh giới vùng trước.");
-      return;
-    }
-    const weights = buildWeights();
-    const parts = splitPolygonByWeights(parentBoundary, weights);
-    const labels = splitLabels(prefix || "Lô", Math.max(1, Math.floor(startIndex)), parts.length);
-    setPreview(parts.map((polygon, i) => ({ label: labels[i], polygon, area: Math.round(geodesicArea(polygon)) })));
-  };
+  // Lý do chưa thể xem trước — hiện gợi ý nhẹ cho người dùng khi preview = null
+  const previewHint = !autoMode
+    ? null
+    : (!parentBoundary || parentBoundary.length < 3)
+      ? "Chọn vùng cha đã có ranh giới để xem trước."
+      : splitBy === "count" && Math.floor(splitCount) < 1
+        ? "Nhập số lô ≥ 1 để xem trước."
+        : splitBy === "area" && !(splitArea > 0 && zoneArea > 0)
+          ? "Nhập diện tích mỗi lô > 0 để xem trước."
+          : null;
+
+  // Tự động tính xem trước (debounce 350ms) mỗi khi đổi thông số chia — không cần bấm nút.
+  // Chạy lại khi: số lô / diện tích / cách chia / phần dư / tiền tố / STT / vùng cha thay đổi.
+  React.useEffect(() => {
+    if (!autoMode) return;
+    if (!parentBoundary || parentBoundary.length < 3) { setPreview(null); return; }
+    if (splitBy === "count" && Math.floor(splitCount) < 1) { setPreview(null); return; }
+    if (splitBy === "area" && !(splitArea > 0 && zoneArea > 0)) { setPreview(null); return; }
+    const t = setTimeout(() => {
+      const n = splitBy === "count" ? Math.max(1, Math.floor(splitCount)) : plotCountByArea(zoneArea, splitArea);
+      const weights = splitBy === "count"
+        ? equalWeights(n)
+        : remainderMode === "keepSmall" ? keepSmallWeights(zoneArea, splitArea) : equalWeights(n);
+      const parts = splitPolygonByWeights(parentBoundary, weights);
+      const labels = splitLabels(prefix || "Lô", Math.max(1, Math.floor(startIndex)), parts.length);
+      setPreview(parts.map((polygon, i) => ({ label: labels[i], polygon, area: Math.round(geodesicArea(polygon)) })));
+    }, 350);
+    return () => clearTimeout(t);
+  }, [autoMode, splitBy, splitCount, splitArea, remainderMode, prefix, startIndex, parentBoundary, zoneArea]);
 
   const handleBulkCreate = async () => {
     if (!preview || !preview.length) return;
@@ -221,7 +233,7 @@ export function PlotForm() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Vùng cha</label>
               <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={zoneId}
-                onChange={(e) => { setZoneId(e.target.value); setPreview(null); setPrefix(""); }}>
+                onChange={(e) => { setZoneId(e.target.value); setPrefix(""); }}>
                 <option value="">Chọn vùng</option>
                 {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
               </select>
@@ -231,28 +243,28 @@ export function PlotForm() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cách chia</label>
               <div className="flex gap-4 text-sm">
-                <label className="flex items-center gap-2"><input type="radio" checked={splitBy === "count"} onChange={() => { setSplitBy("count"); setPreview(null); }} /> Theo số lô</label>
-                <label className="flex items-center gap-2"><input type="radio" checked={splitBy === "area"} onChange={() => { setSplitBy("area"); setPreview(null); }} /> Theo diện tích</label>
+                <label className="flex items-center gap-2"><input type="radio" checked={splitBy === "count"} onChange={() => setSplitBy("count")} /> Theo số lô</label>
+                <label className="flex items-center gap-2"><input type="radio" checked={splitBy === "area"} onChange={() => setSplitBy("area")} /> Theo diện tích</label>
               </div>
             </div>
 
             {splitBy === "count" ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Số lô</label>
-                <input type="number" min={1} value={splitCount || ""} onChange={(e) => { setSplitCount(Number(e.target.value)); setPreview(null); }}
+                <input type="number" min={1} value={splitCount || ""} onChange={(e) => setSplitCount(Number(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
             ) : (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Diện tích mỗi lô (m²)</label>
-                <input type="number" min={1} value={splitArea || ""} onChange={(e) => { setSplitArea(Number(e.target.value)); setPreview(null); }}
+                <input type="number" min={1} value={splitArea || ""} onChange={(e) => setSplitArea(Number(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 {hasRemainder && (
                   <div className="mt-2 p-2 bg-amber-50 rounded text-sm text-amber-800">
                     {Math.round(zoneArea).toLocaleString()} m² ÷ {splitArea.toLocaleString()} m² dư {Math.round(areaRemainder(zoneArea, splitArea)).toLocaleString()} m².
                     <div className="flex gap-3 mt-1">
-                      <label className="flex items-center gap-1"><input type="radio" checked={remainderMode === "even"} onChange={() => { setRemainderMode("even"); setPreview(null); }} /> Chia đều ({Math.round(zoneArea / plotCountByArea(zoneArea, splitArea)).toLocaleString()} m²/lô)</label>
-                      <label className="flex items-center gap-1"><input type="radio" checked={remainderMode === "keepSmall"} onChange={() => { setRemainderMode("keepSmall"); setPreview(null); }} /> Giữ lô nhỏ</label>
+                      <label className="flex items-center gap-1"><input type="radio" checked={remainderMode === "even"} onChange={() => setRemainderMode("even")} /> Chia đều ({Math.round(zoneArea / plotCountByArea(zoneArea, splitArea)).toLocaleString()} m²/lô)</label>
+                      <label className="flex items-center gap-1"><input type="radio" checked={remainderMode === "keepSmall"} onChange={() => setRemainderMode("keepSmall")} /> Giữ lô nhỏ</label>
                     </div>
                   </div>
                 )}
@@ -262,12 +274,12 @@ export function PlotForm() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tiền tố tên</label>
-                <input value={prefix} onChange={(e) => { setPrefix(e.target.value); setPreview(null); }} placeholder="A"
+                <input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="A"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">STT bắt đầu</label>
-                <input type="number" min={1} value={startIndex || ""} onChange={(e) => { setStartIndex(Number(e.target.value)); setPreview(null); }}
+                <input type="number" min={1} value={startIndex || ""} onChange={(e) => setStartIndex(Number(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
             </div>
@@ -296,12 +308,13 @@ export function PlotForm() {
             {error && <p className="text-sm text-red-600">{error}</p>}
 
             <div className="flex gap-3 pt-2">
-              <Button type="button" variant="secondary" className="flex-1" onClick={handlePreview}>Xem trước</Button>
               <Button type="button" variant="primary" className="flex-1" disabled={!preview || saving} onClick={handleBulkCreate}>
                 {saving ? "Đang tạo..." : preview ? `Tạo ${preview.length} lô` : "Tạo lô"}
               </Button>
             </div>
-            {preview && <p className="text-xs text-gray-500">Đã xem trước {preview.length} lô — bấm "Tạo" để lưu, hoặc đổi thông số rồi xem trước lại.</p>}
+            {preview
+              ? <p className="text-xs text-gray-500">Xem trước {preview.length} lô — tự cập nhật khi đổi thông số. Bấm "Tạo" để lưu.</p>
+              : previewHint && <p className="text-xs text-amber-600">{previewHint}</p>}
           </div>
         )}
 
