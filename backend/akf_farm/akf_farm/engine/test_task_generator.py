@@ -20,8 +20,8 @@ class TestDueDates(unittest.TestCase):
     def d(self, s):
         return dt.date.fromisoformat(s)
 
-    def test_every_n_days(self):
-        out = due_dates(self.d("2026-01-01"), ("every_n_days", 20), self.d("2026-01-01"), self.d("2026-02-15"))
+    def test_n_per_period(self):
+        out = due_dates(self.d("2026-01-01"), ("n_per_period", 20), self.d("2026-01-01"), self.d("2026-02-15"))
         self.assertEqual(out, [self.d("2026-01-01"), self.d("2026-01-21"), self.d("2026-02-10")])
 
     def test_daily(self):
@@ -36,9 +36,9 @@ class TestDueDates(unittest.TestCase):
         out = due_dates(self.d("2025-12-01"), ("one_time", 1), self.d("2026-01-01"), self.d("2026-02-01"))
         self.assertEqual(out, [])
 
-    def test_every_n_days_start_before_window(self):
+    def test_n_per_period_start_before_window(self):
         # start 2026-01-01, step 20, window starts 2026-01-15 -> first due is 2026-01-21
-        out = due_dates(self.d("2026-01-01"), ("every_n_days", 20), self.d("2026-01-15"), self.d("2026-02-15"))
+        out = due_dates(self.d("2026-01-01"), ("n_per_period", 20), self.d("2026-01-15"), self.d("2026-02-15"))
         self.assertEqual(out, [self.d("2026-01-21"), self.d("2026-02-10")])
 
     def test_n_per_period_steps_by_period(self):
@@ -47,7 +47,7 @@ class TestDueDates(unittest.TestCase):
         self.assertEqual(out, [self.d("2026-01-01"), self.d("2026-01-03"), self.d("2026-01-05")])
 
     def test_cadence_empty_when_start_after_window(self):
-        out = due_dates(self.d("2026-03-01"), ("every_n_days", 5), self.d("2026-01-01"), self.d("2026-02-01"))
+        out = due_dates(self.d("2026-03-01"), ("n_per_period", 5), self.d("2026-01-01"), self.d("2026-02-01"))
         self.assertEqual(out, [])
 
 
