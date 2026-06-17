@@ -121,6 +121,7 @@ export function ProcessManagement() {
     });
 
   const doImport = async (b64: string, replace: boolean) => {
+    if (replace) setOverwrite(null);
     setImporting(true);
     try {
       const res = await importProcessExcel(b64, replace);
