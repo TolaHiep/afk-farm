@@ -1,145 +1,60 @@
-# Hướng dẫn xây dựng Quy trình canh tác
+# Hướng dẫn tạo Quy trình canh tác
 
-> Tài liệu gửi khách hàng. Mục đích: thu thập **quy trình chuẩn** cho từng loại cây (Gấc, Sâm) để hệ thống AKF **tự động sinh lịch công việc** cho tổ trưởng mỗi ngày.
+Hệ thống dùng quy trình để **tự sinh lịch công việc hằng ngày** cho tổ trưởng. Tài liệu này để khách
+cung cấp quy trình chuẩn cho từng cây (Gấc, Sâm).
 
----
+## Bước 1 — Thông tin quy trình
 
-## 1. Quy trình là gì?
+| Mục | Nhập gì |
+|---|---|
+| Tên quy trình | Ví dụ "Quy trình Gấc" |
+| Cây | Gấc hoặc Sâm |
+| Số ngày 1 chu kỳ | Một lứa kéo dài bao nhiêu ngày (Gấc ≈ 7300, Sâm ≈ 1095) |
 
-Một **quy trình** = danh sách các **bước công việc** cho **một loại cây**, thực hiện lặp lại theo chu kỳ trồng.
+## Bước 2 — Nhập từng bước công việc
 
-Khi một lô bắt đầu trồng (tạo một **chu kỳ cây**), hệ thống áp quy trình tương ứng và **tự sinh ra các đầu việc theo ngày** cho tổ trưởng — không phải giao việc thủ công.
+Mỗi bước điền các cột sau. Cột **Vì sao cần** giải thích ngắn gọn lý do hệ thống cần dữ liệu đó.
 
-Vì vậy quy trình càng khai báo đúng, lịch sinh ra càng sát thực tế.
-
----
-
-## 2. Vì sao phải khai báo chi tiết như vậy?
-
-Nếu chỉ liệt kê "các việc cần làm" mà **không** khai báo trình tự, tần suất chính xác và phạm vi, hệ thống không hiểu được nhịp canh tác thực tế và sẽ sinh lịch sai. Bảng dưới so sánh:
-
-| Khai báo sơ sài (cách thô sơ) | Khó khăn / hệ quả | Khai báo đúng (cách này) | Lợi ích |
-|---|---|---|---|
-| Không ghi **Bước tiên quyết** / **Bắt đầu** | Mọi việc dồn vào **ngày đầu** (vd 22 việc trong 1 ngày); tưới nước, tỉa cành hiện ra **trước cả khi gieo trồng** → vô lý, tổ trưởng rối không biết làm gì trước | Ghi rõ bước nào phải xong trước, bắt đầu sau bao lâu | Lịch **đúng trình tự**: gieo xong mới tới chăm sóc; ngày đầu chỉ có vài việc thiết lập |
-| Tần suất ghi chung chung ("nhiều lần") | "2 lần/ngày" chỉ sinh **1 việc** → thiếu việc, thiếu công, sai khối lượng | Tách rõ **số lần (X)** và **số ngày (Y)** | Đúng số việc/ngày ("lần 1/2", "lần 2/2"), tính **đủ công** |
-| Không phân biệt **Theo cây / Dùng chung** | Việc chung (họp, kiểm tra) bị **nhân đôi** khi lô trồng 2 cây; hoặc việc riêng bị gộp → thiếu | Đánh dấu phạm vi cho từng việc | Việc chung làm **1 lần/lô**, việc riêng **đủ** cho từng cây |
-| Bỏ trống **Công/ha** | Không tính được khối lượng → **chia tổ trưởng không công bằng** | Ghi công/ha cho việc tốn công | Hệ thống **cân tải, chia việc** tự động & công bằng |
-| Không có **Số ngày 1 chu kỳ** | Việc lặp **mãi không dừng**, không tính được % tiến độ | Khai báo độ dài chu kỳ | Việc dừng đúng cuối chu kỳ; có **thanh tiến độ** |
-
-**Tổng lợi ích khi khai báo đầy đủ:**
-- **Tự động hoá thật sự:** hệ thống tự sinh việc đúng ngày, tự **mở khoá** việc kế tiếp khi việc tiền đề được đánh dấu xong, tự **chia tổ trưởng** — giảm hẳn việc giao tay thủ công.
-- **Sát thực tế:** lịch phản ánh đúng cách canh tác (không dồn việc, không sinh việc vô lý như tưới trước khi gieo).
-- **Minh bạch & nghiệm thu:** mỗi lần làm = một đầu việc riêng, kèm yêu cầu ảnh khi cần → dễ kiểm chứng, tính công chính xác.
-- **Ít sai sót & dễ bảo trì:** khai báo một lần, dùng cho mọi lô/chu kỳ về sau; muốn đổi quy trình chỉ sửa một nơi, mọi lô áp dụng theo.
-
-> Nói ngắn gọn: **khai báo càng rõ "khi nào — bao nhiêu lần — ai làm — phải xong gì trước", hệ thống càng làm thay được nhiều, và lịch càng đúng thực tế.**
-
----
-
-## 3. Thông tin cần khai báo cho MỖI quy trình
-
-| Mục | Ý nghĩa | Ví dụ |
+| Cột | Nhập gì | Vì sao cần |
 |---|---|---|
-| **Tên quy trình** | Đặt tên dễ nhận | "Quy trình Gấc" |
-| **Cây** | Gấc hoặc Sâm | Gấc |
-| **Số ngày 1 chu kỳ** | Một lứa trồng kéo dài bao nhiêu ngày → việc lặp dừng khi hết chu kỳ | Gấc ≈ 7300 ngày (20 năm); Sâm ≈ 1095 ngày (3 năm) |
+| **Tên việc** | Mô tả công việc | Để hiển thị đầu việc cho tổ trưởng |
+| **Tần suất** | Chọn: *1 lần/chu kỳ* · *Hàng ngày* · *N lần / N ngày* (điền Số lần X + Mỗi Y ngày) | Để sinh đúng nhịp lặp |
+| **Số ngày ước lượng** | Chỉ với *1 lần/chu kỳ*: việc này làm xong trong mấy ngày | Để **dự báo** ngày các việc kế tiếp (việc sau bắt đầu khi việc trước ước lượng xong) |
+| **Công/ha** | Số công lao động cho 1 hecta (việc quản lý để trống) | Để chia tổ trưởng công bằng theo khối lượng |
+| **Phạm vi** | *Theo cây* (riêng từng cây) hoặc *Dùng chung* (1 lần cho cả lô) | Để không nhân đôi việc chung / không thiếu việc riêng |
+| **Bắt đầu** | *Ngay* hoặc *Sau N ngày* | Để đặt mốc thời gian |
+| **Bước tiên quyết** | Bước phải XONG trước (tùy chọn) | Để sắp đúng thứ tự — gieo xong mới tới chăm sóc |
+| **Yêu cầu ảnh** | "x" nếu cần chụp ảnh khi xong | Để nghiệm thu |
 
----
+**Vì sao phải nhập kỹ:** khai báo đủ tần suất, thứ tự (tiên quyết), ước lượng và phạm vi thì hệ thống
+mới **tự dự báo và lấp đủ lịch 10 ngày** đúng trình tự, đúng khối lượng — thay vì dồn mọi việc vào ngày
+đầu hoặc sinh việc vô lý (tưới trước khi gieo).
 
-## 4. Thông tin cần khai báo cho MỖI bước (việc)
+## Ví dụ — Quy trình Gấc (rút gọn)
 
-Mỗi bước trong quy trình gồm các cột sau:
+**Số ngày 1 chu kỳ:** 7300
 
-| Cột | Ý nghĩa | Cách điền |
-|---|---|---|
-| **1. STT** | Thứ tự thực hiện | 1, 2, 3… (đúng trình tự ngoài đồng) |
-| **2. Tên việc** | Mô tả công việc | "Đào hố trồng", "Tưới mát"… |
-| **3. Tần suất** | Việc lặp thế nào | Chọn 1 trong 3 loại (xem mục 4.1) |
-| **4. Công/ha** | Số công lao động cho 1 hecta (để tính khối lượng & chia tổ trưởng) | Số (vd 2). Việc không tốn công riêng (họp, kiểm tra) → để trống/0 |
-| **5. Phạm vi** | Làm riêng từng cây hay chung cả lô | "Theo cây" hoặc "Dùng chung" (xem 4.2) |
-| **6. Bắt đầu** | Bắt đầu ngay hay sau bao lâu | "Ngay" hoặc "Sau N ngày" |
-| **7. Bước tiên quyết** | Bước nào phải XONG trước thì việc này mới bắt đầu | Tên một bước trước đó, hoặc để trống |
-| **8. Yêu cầu ảnh** | Tổ trưởng phải chụp ảnh khi hoàn thành? | "x" = có, để trống = không |
+| STT | Tên việc | Tần suất | Số ngày ước lượng | Công/ha | Phạm vi | Bắt đầu | Bước tiên quyết | Ảnh |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Đào hố trồng 60x60cm | 1 lần/chu kỳ | 2 | 2 | Theo cây | Ngay | — | x |
+| 2 | Ép cọc giàn | 1 lần/chu kỳ | 2 | 2 | Theo cây | Ngay | Đào hố trồng 60x60cm | |
+| 3 | Ngâm ủ hỗn hợp | 1 lần/chu kỳ | 3 | 1 | Theo cây | Ngay | Ép cọc giàn | |
+| 4 | Xuống giống trồng | 1 lần/chu kỳ | 1 | 3 | Theo cây | Ngay | Ngâm ủ hỗn hợp | x |
+| 5 | Tưới mát | N lần / N ngày — 2 lần / 1 ngày | — | — | Dùng chung | Ngay | Xuống giống trồng | |
+| 6 | Bón phân nước | N lần / N ngày — 1 lần / 60 ngày | — | 2 | Theo cây | Ngay | Xuống giống trồng | |
+| 7 | Kiểm tra sâu, bệnh | Hàng ngày | — | — | Dùng chung | Ngay | Xuống giống trồng | |
+| 8 | Thu hoạch quả Gấc | N lần / N ngày — 1 lần / 7 ngày | — | 2 | Theo cây | Sau 240 ngày | Xuống giống trồng | x |
 
-### 4.1. Ba loại Tần suất
+Đọc nhanh: Đào hố làm 2 ngày → Ép cọc bắt đầu sau đó → Ngâm ủ 3 ngày → Xuống giống. Các việc chăm sóc
+(tưới, bón, kiểm tra) chỉ bắt đầu sau khi gieo. "Tưới mát 2 lần/ngày" → mỗi ngày 2 đầu việc.
 
-| Loại | Khi nào dùng | Cần điền thêm |
-|---|---|---|
-| **1 lần/chu kỳ** | Việc chỉ làm đúng 1 lần mỗi lứa trồng (đào hố, gieo, ép cọc…) | — |
-| **Hàng ngày** | Việc làm mỗi ngày | — |
-| **N lần / N ngày** | Mọi nhịp khác — điền **Số lần (X)** và **Mỗi (Y) ngày** | X và Y |
+## Mẫu trống (điền cho mỗi cây)
 
-Ví dụ "N lần / N ngày":
-- Tưới mát **2 lần mỗi ngày** → X = **2**, Y = **1**.
-- Bón phân **1 lần mỗi 60 ngày** → X = **1**, Y = **60**.
-- Họp tuần **1 lần mỗi 7 ngày** → X = **1**, Y = **7**.
+**Quy trình:** ____________ · **Cây:** Gấc / Sâm · **Số ngày 1 chu kỳ:** ______
 
-> Khi X > 1, mỗi ngày hệ thống sinh **X đầu việc** ("lần 1/2", "lần 2/2") để tổ trưởng đánh dấu từng lần.
-
-### 4.2. Phạm vi: "Theo cây" vs "Dùng chung"
-
-Mỗi lô trồng đồng thời **Gấc (giàn trên)** + **Sâm (dưới đất)**. Vì vậy:
-- **Theo cây**: việc làm riêng cho từng cây → mỗi lô sinh 2 việc (Gấc riêng, Sâm riêng). VD: bón phân, tỉa cành, thu hoạch.
-- **Dùng chung**: việc làm **1 lần cho cả lô** dù trồng 2 cây → chỉ sinh 1 việc. VD: họp đầu ca, kiểm tra hệ thống tưới, loại cỏ dại, tưới mát.
-
----
-
-## 5. Cách hệ thống sinh lịch (để hiểu logic)
-
-- **Bước KHÔNG có tiên quyết**: bắt đầu từ **ngày gieo trồng** + số ngày ở cột "Bắt đầu".
-- **Bước CÓ tiên quyết**: **chỉ xuất hiện sau khi** bước tiên quyết được tổ trưởng **đánh dấu hoàn thành**; tính mốc từ ngày hoàn thành đó + "Bắt đầu sau N ngày".
-- Việc lặp (Hàng ngày / N lần-N ngày) lặp **đến khi hết "Số ngày 1 chu kỳ"**.
-
-> **Lợi ích:** Ngày đầu chỉ hiện các việc thiết lập (đào hố, gieo…). Việc chăm sóc (tưới, tỉa) chỉ xuất hiện **sau khi gieo trồng xong** — đúng thực tế, không bị dồn hàng chục việc vào ngày đầu.
-
----
-
-## 6. Yêu cầu khi cung cấp quy trình (checklist cho khách)
-
-- [ ] Liệt kê **đầy đủ** các bước theo **đúng thứ tự** thực hiện ngoài đồng.
-- [ ] Mỗi bước ghi rõ **tần suất** (nếu "N lần/N ngày" thì ghi cả X và Y).
-- [ ] Ghi **công/ha** cho việc có tốn công lao động (để chia tổ trưởng); việc quản lý/kiểm tra để trống.
-- [ ] Phân loại **phạm vi** (Theo cây / Dùng chung) cho từng bước.
-- [ ] Chỉ rõ **bước tiên quyết**: đặc biệt nhóm **thiết lập** (đào hố → gieo → tưới vi sinh) phải hoàn thành trước nhóm **chăm sóc** (tưới, tỉa…). Cách làm: đặt các bước chăm sóc có "Bước tiên quyết" = bước gieo trồng.
-- [ ] Cung cấp **Số ngày 1 chu kỳ** của mỗi cây.
-- [ ] Việc **thu hoạch**: ghi "Bắt đầu sau bao nhiêu ngày kể từ trồng" + nhịp lặp (X lần / Y ngày).
-
----
-
-## 7. Ví dụ minh hoạ — Quy trình Gấc (rút gọn)
-
-**Cây:** Gấc · **Số ngày 1 chu kỳ:** 7300 (20 năm)
-
-| STT | Tên việc | Tần suất | Công/ha | Phạm vi | Bắt đầu | Bước tiên quyết | Ảnh |
-|---|---|---|---|---|---|---|---|
-| 1 | Đào hố trồng 60x60cm | 1 lần/chu kỳ | 2 | Theo cây | Ngay | — | x |
-| 2 | Ép cọc giàn | 1 lần/chu kỳ | 2 | Theo cây | Ngay | Đào hố trồng 60x60cm | |
-| 3 | Xuống giống trồng | 1 lần/chu kỳ | 3 | Theo cây | Ngay | Ép cọc giàn | x |
-| 4 | Tưới vi sinh dinh dưỡng | 1 lần/chu kỳ | 2 | Theo cây | Sau 1 ngày | Xuống giống trồng | |
-| 5 | Tưới mát | N lần/N ngày — **2 lần / 1 ngày** | — | Dùng chung | Ngay | Xuống giống trồng | |
-| 6 | Dẫn ngọn leo giàn | Hàng ngày | 1 | Theo cây | Ngay | Xuống giống trồng | |
-| 7 | Bón phân nước định kỳ | N lần/N ngày — **1 lần / 60 ngày** | 2 | Theo cây | Ngay | Xuống giống trồng | |
-| 8 | Kiểm tra sâu, bệnh | Hàng ngày | — | Dùng chung | Ngay | — | |
-| 9 | Thu hoạch quả Gấc | N lần/N ngày — **1 lần / 7 ngày** | 2 | Theo cây | Sau 240 ngày | Xuống giống trồng | x |
-
-**Đọc hiểu ví dụ:**
-- Ngày gieo: hệ thống sinh bước 1 (Đào hố). Bước 2, 3 chờ bước trước hoàn thành mới hiện (chuỗi tiên quyết).
-- Sau khi "Xuống giống" xong: các bước 4–7, 9 mới bắt đầu (vì tiên quyết = Xuống giống). Bước 8 (kiểm tra) chạy hàng ngày độc lập.
-- Bước 5 "Tưới mát" 2 lần/ngày → mỗi ngày 2 việc "(lần 1/2)", "(lần 2/2)", và là **Dùng chung** nên cả lô chỉ 1 cặp việc dù trồng 2 cây.
-- Bước 9 "Thu hoạch" bắt đầu sau 240 ngày kể từ trồng, rồi lặp mỗi 7 ngày tới hết chu kỳ.
-
----
-
-## 8. Mẫu trống để khách điền
-
-**Quy trình:** ____________  · **Cây:** Gấc / Sâm  · **Số ngày 1 chu kỳ:** ______
-
-| STT | Tên việc | Tần suất (loại + X lần/Y ngày) | Công/ha | Phạm vi | Bắt đầu (ngay / sau N ngày) | Bước tiên quyết | Ảnh |
-|---|---|---|---|---|---|---|---|
-| 1 | | | | | | | |
-| 2 | | | | | | | |
-| 3 | | | | | | | |
-| 4 | | | | | | | |
-| … | | | | | | | |
-
-> Khách điền 1 bảng cho **mỗi loại cây**. Gửi lại file này (hoặc bảng tương đương) cho đội kỹ thuật để nhập vào hệ thống.
+| STT | Tên việc | Tần suất | Số ngày ước lượng | Công/ha | Phạm vi | Bắt đầu | Bước tiên quyết | Ảnh |
+|---|---|---|---|---|---|---|---|---|
+| 1 | | | | | | | | |
+| 2 | | | | | | | | |
+| 3 | | | | | | | | |
+| … | | | | | | | | |
