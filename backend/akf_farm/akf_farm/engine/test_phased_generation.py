@@ -58,7 +58,7 @@ class TestExplicitGeneration(FrappeTestCase):
         self.assertFalse(_has(name, "Sau3 NP", today))
         self.assertTrue(_has(name, "Sau3 NP", add_days(today, 3)))
 
-    def test_prereq_gates_and_anchors(self):
+    def test_prereq_forecast_anchored(self):
         _proc("QT PR", [
             {"step": 1, "description": "Gieo PR", "frequency_type": "one_time", "scope": "per_crop"},
             {"step": 2, "description": "Tưới PR", "frequency_type": "daily", "scope": "per_crop",
@@ -67,11 +67,10 @@ class TestExplicitGeneration(FrappeTestCase):
         _block("B PR")
         name = _cycle("B PR", "QT PR")
         today = getdate()
-        self.assertFalse(_has(name, "Tưới PR", today))  # prereq chưa xong
-        gieo = frappe.get_all("Farm Task", filters={"cycle": name, "title": "Gieo PR"})[0].name
-        frappe.db.set_value("Farm Task", gieo, {"status": "completed", "completed_on": str(today)})
-        generate_tasks()
-        self.assertTrue(_has(name, "Tưới PR", today))  # neo từ completed_on
+        # forecast: Gieo hôm nay; Tưới bắt đầu ngày mai (Gieo est=1 -> finish hôm nay, +1)
+        self.assertTrue(_has(name, "Gieo PR", today))
+        self.assertFalse(_has(name, "Tưới PR", today))
+        self.assertTrue(_has(name, "Tưới PR", add_days(today, 1)))
 
     def test_cycle_length_stops_recurring(self):
         _proc("QT CL", [
@@ -132,40 +131,17 @@ class TestProcessApi(FrappeTestCase):
 
 
 class TestCompleteSetsCompletedOn(FrappeTestCase):
-    def test_complete_sets_completed_on_and_unlocks(self):
+    def test_complete_sets_completed_on(self):
         _proc("QT CT", [
             {"step": 1, "description": "Gieo CT", "frequency_type": "one_time", "scope": "per_crop"},
-            {"step": 2, "description": "Tưới CT", "frequency_type": "daily", "scope": "per_crop",
-             "prerequisite": "Gieo CT"},
         ])
         _block("B CT")
         name = _cycle("B CT", "QT CT")
         today = getdate()
-        self.assertFalse(_has(name, "Tưới CT", today))
         gieo = frappe.get_all("Farm Task", filters={"cycle": name, "title": "Gieo CT"})[0].name
         field_api.complete_task(gieo)
         self.assertEqual(str(frappe.db.get_value("Farm Task", gieo, "completed_on")), str(today))
-        self.assertTrue(_has(name, "Tưới CT", today))  # mở khóa bước phụ thuộc ngay
 
-
-class TestPrereqIsolatedAcrossCycles(FrappeTestCase):
-    def test_prereq_isolated_per_cycle(self):
-        _proc("QT ISO", [
-            {"step": 1, "description": "Gieo ISO", "frequency_type": "one_time", "scope": "per_crop"},
-            {"step": 2, "description": "Tưới ISO", "frequency_type": "daily", "scope": "per_crop",
-             "prerequisite": "Gieo ISO"},
-        ])
-        _block("B ISO1")
-        _block("B ISO2")
-        c1 = _cycle("B ISO1", "QT ISO")
-        c2 = _cycle("B ISO2", "QT ISO")
-        today = getdate()
-        # hoàn thành prereq CHỈ ở chu kỳ 1
-        g1 = frappe.get_all("Farm Task", filters={"cycle": c1, "title": "Gieo ISO"})[0].name
-        frappe.db.set_value("Farm Task", g1, {"status": "completed", "completed_on": str(today)})
-        generate_tasks()
-        self.assertTrue(_has(c1, "Tưới ISO", today))   # chu kỳ 1 mở khóa
-        self.assertFalse(_has(c2, "Tưới ISO", today))  # chu kỳ 2 KHÔNG bị mở khóa nhầm
 
 
 class TestGenerateScopedToCycle(FrappeTestCase):

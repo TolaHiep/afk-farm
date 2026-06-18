@@ -1,8 +1,6 @@
 import json
 import frappe
 from frappe.utils import getdate
-from akf_farm.engine.task_generator import generate_tasks
-
 
 def _as_list(photos):
     if isinstance(photos, list):
@@ -34,8 +32,6 @@ def complete_task(task, client_uuid=None, photos=None):
     doc.set("photos", [{"image": p} for p in photos])
     doc.save()
     doc.db_set("completed_on", str(getdate()))
-    if doc.cycle:
-        generate_tasks(cycle=doc.cycle)  # mở khóa bước phụ thuộc của ĐÚNG chu kỳ vừa xong
     return {"ok": True}
 
 
