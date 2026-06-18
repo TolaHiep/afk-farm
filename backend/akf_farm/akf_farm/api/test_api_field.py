@@ -113,3 +113,26 @@ class TestFieldApi(FrappeTestCase):
         self.assertEqual(len(doc.photos), 1)
         self.assertTrue(doc.photos[0].image.startswith("/private/files/"))
         self.assertEqual(self._file_count("Support Request", r["name"]), 1)
+
+    def test_photo_count_capped_at_5(self):
+        frappe.set_user(self.leader)
+        six_photos = [self._PNG_1PX] * 6
+        field_api.complete_task(self.t.name, client_uuid="cap5", photos=six_photos)
+        self.assertEqual(self._file_count("Farm Task", self.t.name), 5)
+
+    def test_disallowed_ext_skipped(self):
+        frappe.set_user(self.leader)
+        svg_url = "data:image/svg+xml;base64,PHN2Zy8+"
+        field_api.complete_task(self.t.name, client_uuid="svgskip", photos=[svg_url])
+        self.assertEqual(self._file_count("Farm Task", self.t.name), 0)
+
+    def test_oversized_photo_skipped(self):
+        from akf_farm.api import field_api as _fa
+        orig = _fa._MAX_PHOTO_BYTES
+        _fa._MAX_PHOTO_BYTES = 10
+        try:
+            frappe.set_user(self.leader)
+            field_api.complete_task(self.t.name, client_uuid="big1", photos=[self._PNG_1PX])
+        finally:
+            _fa._MAX_PHOTO_BYTES = orig
+        self.assertEqual(self._file_count("Farm Task", self.t.name), 0)

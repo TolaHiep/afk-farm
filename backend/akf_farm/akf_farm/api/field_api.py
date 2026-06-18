@@ -7,10 +7,15 @@ from frappe.utils import getdate
 
 _DATA_URL = re.compile(r"^data:image/(\w+);base64,(.+)$", re.DOTALL)
 
+_MAX_PHOTOS_SAVE = 5
+_MAX_PHOTO_BYTES = 10 * 1024 * 1024  # 10MB / anh sau decode
+_ALLOWED_EXT = {"jpg", "jpeg", "png", "webp"}
+
 
 def _save_photos(parent_doc, photos):
     """Doi moi data URL base64 thanh File private dinh vao parent_doc; giu nguyen URL da co (replay)."""
     urls = []
+    created = 0
     for i, p in enumerate(_as_list(photos)):
         if not isinstance(p, str):
             continue
@@ -19,9 +24,18 @@ def _save_photos(parent_doc, photos):
             urls.append(p)
             continue
         try:
-            ext = m.group(1)
-            content = base64.b64decode(m.group(2))
+            ext = m.group(1).lower()
             ext = "jpg" if ext == "jpeg" else ext
+            if ext not in _ALLOWED_EXT:
+                frappe.log_error(f"akf_farm: extension khong cho phep: {ext}", "akf_farm photo save failed")
+                continue
+            content = base64.b64decode(m.group(2))
+            if len(content) > _MAX_PHOTO_BYTES:
+                frappe.log_error(f"akf_farm: anh vuot kich thuoc {len(content)} > {_MAX_PHOTO_BYTES}", "akf_farm photo save failed")
+                continue
+            if created >= _MAX_PHOTOS_SAVE:
+                frappe.log_error(f"akf_farm: da dat gioi han {_MAX_PHOTOS_SAVE} anh, bo qua phan con lai", "akf_farm photo save failed")
+                continue
             _file = frappe.get_doc({
                 "doctype": "File",
                 "file_name": f"{parent_doc.doctype}-{parent_doc.name}-{i}.{ext}",
@@ -31,6 +45,7 @@ def _save_photos(parent_doc, photos):
                 "content": content,
             }).insert(ignore_permissions=True)
             urls.append(_file.file_url)
+            created += 1
         except Exception:
             frappe.log_error(frappe.get_traceback(), "akf_farm photo save failed")
             continue

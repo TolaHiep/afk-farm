@@ -1,12 +1,11 @@
 import React from "react";
 import { useNavigate, Link } from "react-router";
-import { ArrowLeft, Camera, Send, HelpCircle, MessageSquare } from "lucide-react";
+import { ArrowLeft, Camera, Send, HelpCircle, MessageSquare, Trash2 } from "lucide-react";
 import { supportTypes } from "../../lib/mockData";
 import { submitSupport, getMySupport, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
 import { usePhotoPicker } from "../../lib/usePhotoPicker";
 import { compressImage, dataUrlBytes, ONLINE, OFFLINE } from "../../lib/image";
-import { Trash2 } from "lucide-react";
 
 type SupportRequest = {
   id: string;
