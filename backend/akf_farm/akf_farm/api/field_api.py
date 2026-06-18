@@ -23,6 +23,10 @@ def today_tasks(date=None):
 def complete_task(task, client_uuid=None, photos=None):
     photos = _as_list(photos)
     doc = frappe.get_doc("Farm Task", task)
+    user = frappe.session.user
+    if doc.team_leader and doc.team_leader != user \
+            and user != "Administrator" and "AKF Admin" not in frappe.get_roles(user):
+        frappe.throw("Không có quyền hoàn thành việc này", frappe.PermissionError)
     if doc.require_photo and not photos:
         frappe.throw("Việc này bắt buộc đính kèm ảnh")
     if client_uuid and doc.client_uuid == client_uuid and doc.status == "completed":
