@@ -248,3 +248,18 @@ class TestFreqFields(FrappeTestCase):
         self.assertEqual(p.steps[0].times_per_period, 1)   # default
         self.assertEqual(p.steps[1].times_per_period, 2)
         self.assertEqual(p.steps[1].frequency_type, "n_per_period")
+
+
+class TestEstimatedDaysField(FrappeTestCase):
+    def test_estimated_days_default_and_store(self):
+        if frappe.db.exists("Cultivation Process", "QT ED"):
+            frappe.delete_doc("Cultivation Process", "QT ED", force=True)
+        p = frappe.get_doc({
+            "doctype": "Cultivation Process", "process_name": "QT ED", "crop": "Gấc",
+            "steps": [
+                {"step": 1, "description": "A", "frequency_type": "daily"},
+                {"step": 2, "description": "B", "frequency_type": "one_time", "estimated_days": 3},
+            ],
+        }).insert()
+        self.assertEqual(p.steps[0].estimated_days, 1)
+        self.assertEqual(p.steps[1].estimated_days, 3)

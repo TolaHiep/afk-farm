@@ -11,6 +11,7 @@
   "frequency_type",
   "frequency_value",
   "times_per_period",
+  "estimated_days",
   "scope",
   "require_photo",
   "offset_days",
@@ -53,6 +54,12 @@
    "fieldname": "times_per_period",
    "fieldtype": "Int",
    "label": "Số lần mỗi chu kỳ lặp"
+  },
+  {
+   "default": "1",
+   "fieldname": "estimated_days",
+   "fieldtype": "Int",
+   "label": "Số ngày ước lượng hoàn thành"
   },
   {
    "default": "per_crop",
