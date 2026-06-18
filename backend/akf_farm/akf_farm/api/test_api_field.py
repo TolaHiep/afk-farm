@@ -107,6 +107,7 @@ class TestFieldApi(FrappeTestCase):
 
     def test_submit_support_saves_real_photo(self):
         frappe.set_user(self.leader)
+        frappe.db.delete("Support Request", {"content": "cần giúp"})
         r = field_api.submit_support(block="B FLD", type="Khác", content="cần giúp", photos=[self._PNG_1PX])
         doc = frappe.get_doc("Support Request", r["name"])
         self.assertEqual(len(doc.photos), 1)

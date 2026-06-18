@@ -18,18 +18,22 @@ def _save_photos(parent_doc, photos):
         if not m:
             urls.append(p)
             continue
-        ext = m.group(1)
-        content = base64.b64decode(m.group(2))
-        ext = "jpg" if ext == "jpeg" else ext
-        _file = frappe.get_doc({
-            "doctype": "File",
-            "file_name": f"{parent_doc.doctype}-{parent_doc.name}-{i}.{ext}",
-            "attached_to_doctype": parent_doc.doctype,
-            "attached_to_name": parent_doc.name,
-            "is_private": 1,
-            "content": content,
-        }).insert(ignore_permissions=True)
-        urls.append(_file.file_url)
+        try:
+            ext = m.group(1)
+            content = base64.b64decode(m.group(2))
+            ext = "jpg" if ext == "jpeg" else ext
+            _file = frappe.get_doc({
+                "doctype": "File",
+                "file_name": f"{parent_doc.doctype}-{parent_doc.name}-{i}.{ext}",
+                "attached_to_doctype": parent_doc.doctype,
+                "attached_to_name": parent_doc.name,
+                "is_private": 1,
+                "content": content,
+            }).insert(ignore_permissions=True)
+            urls.append(_file.file_url)
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "akf_farm photo save failed")
+            continue
     return urls
 
 
