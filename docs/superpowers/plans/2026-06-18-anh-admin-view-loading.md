@@ -16,7 +16,7 @@
 
 ---
 
-### Task A: Backend — `list_reports` trả photos + endpoint `task_photos`
+### Task 1: Backend — `list_reports` trả photos + endpoint `task_photos`
 
 **Files:**
 - Modify: `backend/akf_farm/akf_farm/api/admin_api.py`
@@ -105,7 +105,7 @@ git commit -m "feat: admin xem anh - list_reports tra photos + endpoint task_pho
 
 ---
 
-### Task B: Frontend — trạng thái đang-gửi (spinner + disable) ở 3 màn mobile
+### Task 2: Frontend — trạng thái đang-gửi (spinner + disable) ở 3 màn mobile
 
 **Files:**
 - Modify: `frontend/src/components/mobile/TaskDetail.tsx`
@@ -255,7 +255,7 @@ git commit -m "feat: trang thai dang gui (spinner + disable nut) khi nen+gui anh
 
 ---
 
-### Task C: Frontend — admin xem ảnh (popup Lịch + popup Báo cáo)
+### Task 3: Frontend — admin xem ảnh (popup Lịch + popup Báo cáo)
 
 **Files:**
 - Modify: `frontend/src/lib/queries.ts`
@@ -263,7 +263,7 @@ git commit -m "feat: trang thai dang gui (spinner + disable nut) khi nen+gui anh
 - Modify: `frontend/src/components/admin/TeamLeaderReports.tsx`
 
 **Interfaces:**
-- Consumes: `admin_api.task_photos` (Task A).
+- Consumes: `admin_api.task_photos` (Task 1).
 - Produces: `getTaskPhotos(task: string): Promise<string[]>` trong queries.ts.
 
 - [ ] **Step 1: queries.ts — thêm getTaskPhotos**
