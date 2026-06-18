@@ -125,6 +125,11 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "AKF Team Leader",
+   "write": 1
   }
  ],
  "sort_field": "modified",
