@@ -107,10 +107,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 - Lịch dạng cột (10 ngày)
 - Bộ lọc: vùng, lô, tổ trưởng, cây
 - Thẻ việc theo ngày
-- Click mở popup:
-  - Gán lại tổ trưởng
-  - Lùi lịch
-  - Chi tiết công việc
+- Mỗi việc có nút **Cập nhật** mở popup: đổi ngày và/hoặc đổi tổ trưởng rồi bấm **Cập nhật** (gộp chung, lưu một lần)
 
 ### 10. KPI Tổ Trưởng (`/admin/kpi`)
 **Bộ Lọc:**
@@ -175,8 +172,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 - SOP (hướng dẫn ngắn gọn)
 
 **Nút Lớn:**
-- "Bắt đầu" (nếu chưa làm)
-- "Hoàn thành"
+- "Hoàn thành" (bấm trực tiếp, không cần bước "Bắt đầu")
 - "Chụp ảnh" (nếu yêu cầu)
 
 ### 5. Xác Nhận Hoàn Thành

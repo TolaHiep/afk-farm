@@ -117,37 +117,22 @@ export function WorkCalendar() {
     setModalTask(null);
   };
 
-  const handleReschedule = async () => {
+  const handleUpdate = async () => {
     if (!modalTask) return;
-    if (!modalDate || modalDate === modalTask.date) {
-      alert("Vui lòng chọn ngày mới khác ngày hiện tại.");
+    const dateChanged = !!modalDate && modalDate !== modalTask.date;
+    const leaderChanged = !!modalLeader && modalLeader !== modalTask.teamLeaderId;
+    if (!dateChanged && !leaderChanged) {
+      alert("Chưa có thay đổi nào để cập nhật.");
       return;
     }
     setSaving(true);
     try {
-      await rescheduleTask(modalTask.id, modalDate);
+      if (dateChanged) await rescheduleTask(modalTask.id, modalDate);
+      if (leaderChanged) await reassignTask(modalTask.id, modalLeader);
       await reloadCalendar();
       setModalTask(null);
     } catch (e) {
-      alert("Không đổi được ngày công việc. Vui lòng thử lại.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleReassign = async () => {
-    if (!modalTask) return;
-    if (!modalLeader || modalLeader === modalTask.teamLeaderId) {
-      alert("Vui lòng chọn tổ trưởng khác tổ trưởng hiện tại.");
-      return;
-    }
-    setSaving(true);
-    try {
-      await reassignTask(modalTask.id, modalLeader);
-      await reloadCalendar();
-      setModalTask(null);
-    } catch (e) {
-      alert("Không đổi được tổ trưởng. Vui lòng thử lại.");
+      alert("Không cập nhật được công việc. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
@@ -310,8 +295,7 @@ export function WorkCalendar() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => openTaskModal(task)}>Gán lại</Button>
-                        <Button variant="ghost" size="sm" onClick={() => openTaskModal(task)}>Lùi lịch</Button>
+                        <Button variant="secondary" size="sm" onClick={() => openTaskModal(task)}>Cập nhật</Button>
                       </div>
                     </div>
                   ))}
@@ -350,41 +334,34 @@ export function WorkCalendar() {
               {/* Đổi ngày */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Đổi ngày</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={modalDate}
-                    onChange={(e) => setModalDate(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                  <Button variant="primary" size="sm" onClick={handleReschedule} disabled={saving}>
-                    {saving ? "Đang lưu..." : "Đổi ngày"}
-                  </Button>
-                </div>
+                <input
+                  type="date"
+                  value={modalDate}
+                  onChange={(e) => setModalDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
               </div>
 
               {/* Đổi tổ trưởng */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Đổi tổ trưởng</label>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={modalLeader}
-                    onChange={(e) => setModalLeader(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  >
-                    {teamLeaders.map((tl) => (
-                      <option key={tl.id} value={tl.id}>{tl.name}</option>
-                    ))}
-                  </select>
-                  <Button variant="primary" size="sm" onClick={handleReassign} disabled={saving}>
-                    {saving ? "Đang lưu..." : "Gán lại"}
-                  </Button>
-                </div>
+                <select
+                  value={modalLeader}
+                  onChange={(e) => setModalLeader(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  {teamLeaders.map((tl) => (
+                    <option key={tl.id} value={tl.id}>{tl.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="px-5 py-3 border-t border-gray-200 flex justify-end">
+            <div className="px-5 py-3 border-t border-gray-200 flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={closeTaskModal} disabled={saving}>Đóng</Button>
+              <Button variant="primary" size="sm" onClick={handleUpdate} disabled={saving}>
+                {saving ? "Đang lưu..." : "Cập nhật"}
+              </Button>
             </div>
           </div>
         </div>

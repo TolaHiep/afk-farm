@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Play } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy } from "lucide-react";
 import { getTaskDetail, completeTask, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid } from "../../lib/offline";
 
@@ -74,15 +74,8 @@ export function TaskDetail() {
     return <div className="p-4">Không tìm thấy công việc</div>;
   }
 
-  // "Bắt đầu" chỉ bấm được khi đang ở pending/overdue (chưa bắt đầu)
-  const canStart = status === "pending" || status === "overdue";
-  // "Hoàn thành" chỉ bấm được khi đã bắt đầu (in-progress)
-  const canComplete = status === "in-progress";
-
-  const handleStart = () => {
-    if (!canStart) return;
-    setStatus("in-progress");
-  };
+  // "Hoàn thành" bấm được khi việc chưa hoàn thành (bỏ bước "Bắt đầu")
+  const canComplete = status !== "completed";
 
   const handleComplete = () => {
     if (!canComplete) return;
@@ -255,35 +248,19 @@ export function TaskDetail() {
               <p className="text-lg font-bold text-green-900">Đã hoàn thành</p>
             </div>
           ) : (
-            <>
-              {/* Nút Bắt đầu: disable khi đã in-progress/completed */}
-              <button
-                onClick={handleStart}
-                disabled={!canStart}
-                className={`w-full py-4 rounded-xl text-lg font-bold transition-colors flex items-center justify-center gap-2 ${
-                  canStart
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-blue-600 text-white opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <Play className="w-5 h-5" />
-                Bắt đầu làm việc
-              </button>
-
-              {/* Nút Hoàn thành: disable khi chưa bắt đầu */}
-              <button
-                onClick={handleComplete}
-                disabled={!canComplete}
-                className={`w-full py-4 rounded-xl text-lg font-bold transition-colors flex items-center justify-center gap-2 ${
-                  canComplete
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-green-600 text-white opacity-50 cursor-not-allowed"
-                }`}
-              >
-                <CheckCircle className="w-5 h-5" />
-                Hoàn thành
-              </button>
-            </>
+            // Nút Hoàn thành: bấm trực tiếp, không cần bước Bắt đầu
+            <button
+              onClick={handleComplete}
+              disabled={!canComplete}
+              className={`w-full py-4 rounded-xl text-lg font-bold transition-colors flex items-center justify-center gap-2 ${
+                canComplete
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-green-600 text-white opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <CheckCircle className="w-5 h-5" />
+              Hoàn thành
+            </button>
           )}
 
           {/* Nút Yêu cầu hỗ trợ */}
