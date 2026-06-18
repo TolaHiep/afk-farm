@@ -2,7 +2,7 @@ import React from "react";
 import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask } from "../../lib/queries";
+import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask, getTaskPhotos } from "../../lib/queries";
 import { todayYMD } from "../../lib/today";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
@@ -105,12 +105,15 @@ export function WorkCalendar() {
   const [modalTask, setModalTask] = React.useState<Task | null>(null);
   const [modalDate, setModalDate] = React.useState("");
   const [modalLeader, setModalLeader] = React.useState("");
+  const [modalPhotos, setModalPhotos] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
 
   const openTaskModal = (task: Task) => {
     setModalTask(task);
     setModalDate(task.date);
     setModalLeader(task.teamLeaderId);
+    setModalPhotos([]);
+    getTaskPhotos(task.id).then(setModalPhotos).catch(() => setModalPhotos([]));
   };
   const closeTaskModal = () => {
     if (saving) return;
@@ -329,6 +332,22 @@ export function WorkCalendar() {
                   <span>{plotName(modalTask.plotId)}</span>
                   <span>· {modalTask.crop}</span>
                 </div>
+              </div>
+
+              {/* Ảnh hoàn thành của việc này */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh hoàn thành</label>
+                {modalPhotos.length === 0 ? (
+                  <p className="text-sm text-gray-400">Chưa có ảnh.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {modalPhotos.map((src) => (
+                      <a key={src} href={src} target="_blank" rel="noopener noreferrer">
+                        <img src={src} alt="ảnh việc" className="w-full h-24 object-cover rounded-lg border border-gray-200" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Đổi ngày */}
