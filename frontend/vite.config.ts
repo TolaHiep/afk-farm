@@ -29,6 +29,7 @@ export default defineConfig({
     proxy: {
       '/api': backend,
       '/files': backend,
+      '/private': backend,
       '/assets': backend,
     },
   },
