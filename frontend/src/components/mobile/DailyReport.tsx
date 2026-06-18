@@ -1,8 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList, Trash2, Loader2 } from "lucide-react";
 import { submitReport, getMyPlots } from "../../lib/queries";
-import { enqueueOffline, isNetworkError, uid } from "../../lib/offline";
+import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
+import { usePhotoPicker } from "../../lib/usePhotoPicker";
+import { compressImage, dataUrlBytes, ONLINE, OFFLINE } from "../../lib/image";
 
 const ANOMALY_TYPES = [
   { value: "ung", label: "Úng nước" },
@@ -63,7 +65,7 @@ export function DailyReport() {
   const [hasAnomaly, setHasAnomaly] = React.useState(false);
   const [anomalyType, setAnomalyType] = React.useState("");
   const [anomalyDesc, setAnomalyDesc] = React.useState("");
-  const [anomalyPhoto, setAnomalyPhoto] = React.useState(false);
+  const picker = usePhotoPicker();
   const [submitting, setSubmitting] = React.useState(false);
 
   const total = reportItems.length;
@@ -76,7 +78,7 @@ export function DailyReport() {
     setHasAnomaly(false);
     setAnomalyType("");
     setAnomalyDesc("");
-    setAnomalyPhoto(false);
+    picker.clear();
   };
 
   const openItem = (itemId: string) => {
@@ -101,7 +103,7 @@ export function DailyReport() {
       alert("Vui lòng nhập mô tả bất thường!");
       return;
     }
-    if (hasAnomaly && !anomalyPhoto) {
+    if (hasAnomaly && picker.files.length === 0) {
       alert("Bạn cần chụp ảnh bất thường!");
       return;
     }
@@ -114,43 +116,44 @@ export function DailyReport() {
     ].filter(Boolean);
     const content = lines.join("\n");
 
-    // Ảnh: khi có bất thường, người dùng bắt buộc đính kèm ảnh
-    const photos = hasAnomaly && anomalyPhoto
-      ? ["https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=400"]
-      : undefined;
-
     const pad = (n: number) => String(n).padStart(2, "0");
     const now = new Date();
     const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-
-    const payload = {
-      block: activeItem.plotId, // map lô -> block
-      crop: activeItem.crop,
-      date,
-      content,
-      photos,
-      abnormal: hasAnomaly ? 1 : 0,
-      client_uuid: `${activeItem.id}-${uid()}`,
-    };
+    const clientUuid = `${activeItem.id}-${uid()}`;
 
     setSubmitting(true);
     try {
+      const photos = hasAnomaly
+        ? await Promise.all(picker.files.map((f) => compressImage(f, ONLINE.maxDim, ONLINE.quality)))
+        : undefined;
+      const payload = {
+        block: activeItem.plotId, crop: activeItem.crop, date, content,
+        photos, abnormal: hasAnomaly ? 1 : 0, client_uuid: clientUuid,
+      };
       await submitReport(payload);
-      setReportedIds((prev) =>
-        prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]
-      );
+      setReportedIds((prev) => (prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]));
       navigate("/mobile/success");
     } catch (err: any) {
       if (isNetworkError(err)) {
-        // Mất mạng: lưu tạm, sẽ tự gửi lại ở màn Đồng bộ
+        const small = hasAnomaly
+          ? await Promise.all(picker.files.map((f) => compressImage(f, OFFLINE.maxDim, OFFLINE.quality)))
+          : undefined;
+        const adding = (small ?? []).reduce((s, d) => s + dataUrlBytes(d), 0);
+        if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
+          alert("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
+          setSubmitting(false);
+          return;
+        }
+        const payload = {
+          block: activeItem.plotId, crop: activeItem.crop, date, content,
+          photos: small, abnormal: hasAnomaly ? 1 : 0, client_uuid: clientUuid,
+        };
         enqueueOffline({
-          id: payload.client_uuid, kind: "report", payload,
+          id: clientUuid, kind: "report", payload,
           title: `${activeItem.plotName} · ${activeItem.crop}`,
           date: new Date().toISOString(),
         });
-        setReportedIds((prev) =>
-          prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]
-        );
+        setReportedIds((prev) => (prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]));
         navigate("/mobile/success");
       } else {
         alert(err?.message || "Gửi báo cáo thất bại. Vui lòng thử lại.");
@@ -271,25 +274,30 @@ export function DailyReport() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setAnomalyPhoto(!anomalyPhoto)}
-                    className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                      anomalyPhoto
-                        ? "bg-green-600 text-white"
-                        : "bg-red-600 text-white hover:bg-red-700"
-                    }`}
+                    onClick={picker.open}
+                    className="w-full py-3 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700"
                   >
-                    {anomalyPhoto ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <CheckCircle className="w-5 h-5" />
-                        Đã chụp ảnh
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        <Camera className="w-5 h-5" />
-                        Chụp ảnh ngay
-                      </span>
-                    )}
+                    <span className="flex items-center justify-center gap-2">
+                      <Camera className="w-5 h-5" /> Thêm ảnh
+                    </span>
                   </button>
+                  <input {...picker.inputProps} />
+                  {picker.files.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-3">
+                      {picker.thumbs.map((src, i) => (
+                        <div key={src} className="relative">
+                          <img src={src} alt="" className="w-full h-20 object-cover rounded-lg" />
+                          <button
+                            type="button"
+                            onClick={() => picker.removeAt(i)}
+                            className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -299,8 +307,9 @@ export function DailyReport() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg disabled:opacity-60"
+            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
           >
+            {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
             {submitting ? "Đang gửi..." : "Gửi báo cáo lô này"}
           </button>
         </form>

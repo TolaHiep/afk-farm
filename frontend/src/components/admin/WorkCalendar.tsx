@@ -1,8 +1,8 @@
 import React from "react";
-import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
+import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X, CheckCircle2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
-import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask } from "../../lib/queries";
+import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask, getTaskPhotos } from "../../lib/queries";
 import { todayYMD } from "../../lib/today";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
@@ -117,6 +117,22 @@ export function WorkCalendar() {
     setModalTask(null);
   };
 
+  // Modal chi tiết việc (xem ảnh hoàn thành) — tách khỏi popup Cập nhật
+  const [detailTask, setDetailTask] = React.useState<Task | null>(null);
+  const [detailPhotos, setDetailPhotos] = React.useState<string[]>([]);
+  const [detailLoading, setDetailLoading] = React.useState(false);
+
+  const openDetail = (task: Task) => {
+    setDetailTask(task);
+    setDetailPhotos([]);
+    setDetailLoading(true);
+    getTaskPhotos(task.id)
+      .then(setDetailPhotos)
+      .catch(() => setDetailPhotos([]))
+      .finally(() => setDetailLoading(false));
+  };
+  const closeDetail = () => setDetailTask(null);
+
   const handleUpdate = async () => {
     if (!modalTask) return;
     const dateChanged = !!modalDate && modalDate !== modalTask.date;
@@ -151,6 +167,7 @@ export function WorkCalendar() {
   const monthLabel = `Tháng ${viewMonth.getMonth() + 1}/${viewMonth.getFullYear()}`;
   const selTasks = tasksOn(selectedDay);
   const selGrouped = groupByPlot(selTasks);
+  const selCompleted = selTasks.filter((t) => t.status === "completed");
 
   if (loading) {
     return <div className="p-10 text-center text-gray-400">Đang tải lịch công việc…</div>;
@@ -306,6 +323,82 @@ export function WorkCalendar() {
         </div>
       </div>
       </div>
+
+      {/* Vùng việc đã hoàn thành của ngày đang chọn — bấm "Chi tiết" để xem ảnh */}
+      <div className="bg-white rounded-lg shadow border border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
+            <CheckCircle2 className="w-5 h-5 text-green-600" /> Việc đã hoàn thành
+            <span className="font-normal text-gray-500 text-sm">
+              · {selectedDay.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" })}
+              {sameDay(selectedDay, TODAY) && <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Hôm nay</span>}
+            </span>
+          </h3>
+          <span className="text-sm text-gray-600">{selCompleted.length} việc</span>
+        </div>
+        {selCompleted.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-gray-400 italic">Chưa có việc nào hoàn thành trong ngày này</div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {selCompleted.map((task) => (
+              <div key={task.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-green-600" />{plotName(task.plotId)}</span>
+                    <span>{task.crop}</span>
+                    <span className="flex items-center gap-1"><UserCircle className="w-3 h-3" />{leaderName(task.teamLeaderId)}</span>
+                  </div>
+                </div>
+                <Button variant="secondary" size="sm" onClick={() => openDetail(task)}>Chi tiết</Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modal chi tiết việc — xem ảnh hoàn thành */}
+      {detailTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeDetail}>
+          <div className="w-full max-w-md bg-white rounded-lg shadow-xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h3 className="text-base font-semibold text-gray-900">Chi tiết công việc</h3>
+              <button onClick={closeDetail} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <div className="text-sm font-medium text-gray-900">{detailTask.title}</div>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  <MapPin className="w-3.5 h-3.5 text-green-600" />
+                  <span>{plotName(detailTask.plotId)}</span>
+                  <span>· {detailTask.crop}</span>
+                  <span className="flex items-center gap-1"><UserCircle className="w-3 h-3" />{leaderName(detailTask.teamLeaderId)}</span>
+                  <span>· {detailTask.date}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh hoàn thành</label>
+                {detailLoading ? (
+                  <p className="text-sm text-gray-400">Đang tải ảnh…</p>
+                ) : detailPhotos.length === 0 ? (
+                  <p className="text-sm text-gray-400">Chưa có ảnh.</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {detailPhotos.map((src) => (
+                      <a key={src} href={src} target="_blank" rel="noopener noreferrer">
+                        <img src={src} alt="ảnh việc" className="w-full h-24 object-cover rounded-lg border border-gray-200" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-5 py-3 border-t border-gray-200 flex justify-end">
+              <Button variant="ghost" size="sm" onClick={closeDetail}>Đóng</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal đổi lịch / đổi tổ trưởng cho 1 việc */}
       {modalTask && (

@@ -240,11 +240,26 @@ def list_reports():
     rows = frappe.get_all("Team Leader Report",
         fields=["name", "team_leader", "block", "crop", "report_date", "content", "abnormal", "status", "reply"],
         order_by="report_date desc")
-    return [{"id": r.name, "teamLeaderId": r.team_leader or "",
-             "reporter": frappe.db.get_value("User", r.team_leader, "full_name") if r.team_leader else "",
-             "plotId": r.block, "crop": r.crop, "date": str(r.report_date) if r.report_date else "",
-             "content": r.content or "", "abnormal": bool(r.abnormal), "status": r.status,
-             "reply": r.reply or ""} for r in rows]
+    out = []
+    for r in rows:
+        photos = [p.image for p in frappe.get_all(
+            "Farm Task Photo", filters={"parent": r.name, "parenttype": "Team Leader Report"},
+            fields=["image"], order_by="idx asc") if p.image]
+        out.append({"id": r.name, "teamLeaderId": r.team_leader or "",
+                    "reporter": frappe.db.get_value("User", r.team_leader, "full_name") if r.team_leader else "",
+                    "plotId": r.block, "crop": r.crop, "date": str(r.report_date) if r.report_date else "",
+                    "content": r.content or "", "abnormal": bool(r.abnormal), "status": r.status,
+                    "reply": r.reply or "", "photos": photos})
+    return out
+
+
+@frappe.whitelist()
+def task_photos(task):
+    """Danh sach file_url anh hoan thanh cua 1 Farm Task (cho admin xem trong Lich)."""
+    rows = frappe.get_all("Farm Task Photo",
+        filters={"parent": task, "parenttype": "Farm Task"},
+        fields=["image"], order_by="idx asc")
+    return [r.image for r in rows if r.image]
 
 
 @frappe.whitelist()

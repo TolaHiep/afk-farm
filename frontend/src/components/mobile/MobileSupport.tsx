@@ -1,9 +1,11 @@
 import React from "react";
 import { useNavigate, Link } from "react-router";
-import { ArrowLeft, Camera, CheckCircle, Send, HelpCircle, MessageSquare } from "lucide-react";
+import { ArrowLeft, Camera, Send, HelpCircle, MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { supportTypes } from "../../lib/mockData";
 import { submitSupport, getMySupport, getMyPlots } from "../../lib/queries";
-import { enqueueOffline, isNetworkError, uid } from "../../lib/offline";
+import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
+import { usePhotoPicker } from "../../lib/usePhotoPicker";
+import { compressImage, dataUrlBytes, ONLINE, OFFLINE } from "../../lib/image";
 
 type SupportRequest = {
   id: string;
@@ -24,9 +26,10 @@ export function MobileSupport() {
   const [plotId, setPlotId] = React.useState("");
   const [type, setType] = React.useState(supportTypes[0] ?? "");
   const [content, setContent] = React.useState("");
-  const [hasPhoto, setHasPhoto] = React.useState(false);
+  const picker = usePhotoPicker();
   const [myRequests, setMyRequests] = React.useState<SupportRequest[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -71,27 +74,38 @@ export function MobileSupport() {
       return;
     }
 
-    const payload = { block: plotId, type, content: content.trim() };
+    if (submitting) return;
+    setSubmitting(true);
+    const base = { block: plotId, type, content: content.trim() };
     try {
-      await submitSupport(payload);
+      const photos = await Promise.all(picker.files.map((f) => compressImage(f, ONLINE.maxDim, ONLINE.quality)));
+      await submitSupport({ ...base, photos });
       setContent("");
-      setHasPhoto(false);
+      picker.clear();
       alert("Đã gửi yêu cầu hỗ trợ");
       await loadRequests();
     } catch (err) {
       if (isNetworkError(err)) {
+        const small = await Promise.all(picker.files.map((f) => compressImage(f, OFFLINE.maxDim, OFFLINE.quality)));
+        const adding = small.reduce((s, d) => s + dataUrlBytes(d), 0);
+        if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
+          alert("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
+          return;
+        }
         enqueueOffline({
-          id: uid(), kind: "support", payload,
+          id: uid(), kind: "support", payload: { ...base, photos: small },
           title: `${plotName(plotId)} · ${type}`,
           date: new Date().toISOString(),
         });
         setContent("");
-        setHasPhoto(false);
+        picker.clear();
         alert("Mất mạng — đã lưu tạm, sẽ tự gửi khi có mạng (xem màn Đồng bộ).");
       } else {
         console.error("Failed to submit support request:", err);
         alert("Gửi yêu cầu thất bại");
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -193,27 +207,40 @@ export function MobileSupport() {
             </label>
             <button
               type="button"
-              onClick={() => setHasPhoto(!hasPhoto)}
-              className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                hasPhoto
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-gray-700 border-2 border-gray-300 hover:bg-gray-200"
-              }`}
+              onClick={picker.open}
+              className="w-full py-3 rounded-lg font-semibold bg-gray-100 text-gray-700 border-2 border-gray-300 hover:bg-gray-200"
             >
               <span className="flex items-center justify-center gap-2">
-                {hasPhoto ? <CheckCircle className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
-                {hasPhoto ? "Đã chụp ảnh" : "Chụp ảnh"}
+                <Camera className="w-5 h-5" /> Thêm ảnh
               </span>
             </button>
+            <input {...picker.inputProps} />
+            {picker.files.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {picker.thumbs.map((src, i) => (
+                  <div key={src} className="relative">
+                    <img src={src} alt="" className="w-full h-20 object-cover rounded-lg" />
+                    <button
+                      type="button"
+                      onClick={() => picker.removeAt(i)}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Nút gửi */}
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg flex items-center justify-center gap-2"
+            disabled={submitting}
+            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            <Send className="w-5 h-5" />
-            Gửi yêu cầu
+            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+            {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
           </button>
         </form>
 

@@ -214,7 +214,13 @@ export function TeamLeaderReports() {
             <div className="text-sm text-gray-500">{current.reporter} · {plotLabel(current.plotId)} · {current.crop}</div>
             <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">{current.content}</div>
             {(current.photos ?? []).length > 0 && (
-              <img src={current.photos[0]} alt="ảnh báo cáo" className="w-full h-48 object-cover rounded-lg border border-gray-200" />
+              <div className="grid grid-cols-3 gap-2">
+                {current.photos.map((src: string) => (
+                  <a key={src} href={src} target="_blank" rel="noopener noreferrer">
+                    <img src={src} alt="ảnh báo cáo" className="w-full h-28 object-cover rounded-lg border border-gray-200" />
+                  </a>
+                ))}
+              </div>
             )}
             {current.abnormal && (
               <div className="inline-flex items-center gap-1 text-red-600 text-sm font-medium"><AlertTriangle className="w-4 h-4" /> Có bất thường</div>

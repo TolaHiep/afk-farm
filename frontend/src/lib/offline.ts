@@ -14,6 +14,8 @@ export type OfflineItem = {
 
 const KEY = "akf_offline_queue";
 
+export const OFFLINE_BUDGET = 4_500_000; // ~4.5MB: tran an toan duoi gioi han localStorage ~5MB
+
 export function uid(): string {
   try {
     if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -40,6 +42,19 @@ export function listOffline(): OfflineItem[] {
 export function offlineCount(): number {
   return read().length;
 }
+
+export function currentQueueBytes(): number {
+  try {
+    return (localStorage.getItem(KEY) || "").length;
+  } catch {
+    return 0;
+  }
+}
+
+export function withinBudget(queueBytes: number, addingBytes: number, budget: number): boolean {
+  return queueBytes + addingBytes <= budget;
+}
+
 export function enqueueOffline(item: OfflineItem) {
   const items = read();
   items.push(item);

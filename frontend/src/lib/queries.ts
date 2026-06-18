@@ -30,6 +30,7 @@ export const rescheduleTask = (task: string, newDate: string) =>
   api.post("admin_api.reschedule_task", { task, new_date: newDate });
 export const reassignTask = (task: string, teamLeader: string) =>
   api.post("admin_api.reassign_task", { task, team_leader: teamLeader });
+export const getTaskPhotos = (task: string) => api.get("admin_api.task_photos", { task }) as Promise<string[]>;
 
 // Admin — tổ, quy trình, chu kỳ
 export const getTeamLeaders = () => api.get("admin_api.list_team_leaders") as Promise<any[]>;
