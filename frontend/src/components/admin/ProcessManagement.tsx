@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess } from "../../lib/queries";
 
-interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; timesPerPeriod: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; prerequisite: string; }
+interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; timesPerPeriod: number; estimatedDays: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; prerequisite: string; }
 interface Process { id: string; name: string; crop: string; cycleLengthDays: number; steps: Step[]; }
 
 const FREQ_OPTIONS: { value: string; label: string }[] = [
@@ -14,13 +14,13 @@ const FREQ_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const emptyProcess = (): Process => ({ id: "", name: "", crop: "Gấc", cycleLengthDays: 0, steps: [] });
-const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "daily", frequencyValue: 1, timesPerPeriod: 1, scope: "", scopeRaw: "shared", requirePhoto: false, offsetDays: 0, prerequisite: "" });
+const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "daily", frequencyValue: 1, timesPerPeriod: 1, estimatedDays: 1, scope: "", scopeRaw: "shared", requirePhoto: false, offsetDays: 0, prerequisite: "" });
 
 // Chuẩn hóa bước để gửi lên API (chỉ field backend cần)
 const toApiSteps = (steps: Step[]) =>
   steps.map((s) => ({ description: s.description, workPerHa: s.workPerHa, frequencyType: s.frequencyType,
-    frequencyValue: s.frequencyValue, timesPerPeriod: s.timesPerPeriod, scopeRaw: s.scopeRaw,
-    requirePhoto: s.requirePhoto, offsetDays: s.offsetDays, prerequisite: s.prerequisite }));
+    frequencyValue: s.frequencyValue, timesPerPeriod: s.timesPerPeriod, estimatedDays: s.estimatedDays,
+    scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto, offsetDays: s.offsetDays, prerequisite: s.prerequisite }));
 
 type ProcModal = { mode: "add" | "edit"; data: Process } | null;
 type StepModal = { mode: "add" | "edit"; procId: string; index: number; data: Step } | null;
@@ -336,6 +336,12 @@ function StepForm({ modal, otherSteps, onClose, onSave }: { modal: { mode: "add"
               onChange={(e) => setForm({ ...form, frequencyValue: Math.max(1, Number(e.target.value)) })} className={inputCls} />
           </Field>
         </div>
+      )}
+      {form.frequencyType === "one_time" && (
+        <Field label="Số ngày ước lượng hoàn thành">
+          <input type="number" min={1} value={form.estimatedDays || ""}
+            onChange={(e) => setForm({ ...form, estimatedDays: Math.max(1, Number(e.target.value)) })} className={inputCls} />
+        </Field>
       )}
       <Field label="Phạm vi">
         <select value={form.scopeRaw} onChange={(e) => setForm({ ...form, scopeRaw: e.target.value })} className={inputCls}>
