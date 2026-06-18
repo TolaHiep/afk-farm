@@ -173,7 +173,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 
 **Nút Lớn:**
 - "Hoàn thành" (bấm trực tiếp, không cần bước "Bắt đầu")
-- "Chụp ảnh" (nếu yêu cầu)
+- "Chụp ảnh" (nếu yêu cầu): chụp hoặc chọn ảnh thật từ máy (tối đa 5 ảnh), tự nén chuẩn HD, lưu kèm bản ghi
 
 ### 5. Xác Nhận Hoàn Thành
 **Popup:**
@@ -191,7 +191,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 - Nếu có:
   - Chọn loại: úng, hạn, sâu bệnh, hỏng giàn, khác
   - Ghi chú
-  - **Chụp ảnh bắt buộc** (màu đỏ)
+  - **Chụp ảnh bắt buộc** (tối thiểu 1 ảnh): chụp hoặc chọn ảnh thật từ máy (tối đa 5), tự nén chuẩn HD, lưu kèm bản ghi
 
 ### 7. Gửi Thành Công (`/mobile/success`)
 - Icon check lớn

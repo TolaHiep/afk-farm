@@ -56,7 +56,7 @@ Tạo 2 vùng, 4 lô, 2 tổ trưởng, quy trình **Gấc + Sâm**, chu kỳ + 
 5. **KPI tổ trưởng, Báo cáo, Yêu cầu hỗ trợ, Thông báo:** giám sát & phản hồi.
 
 ## 6. Luồng tổ trưởng (mobile)
-Việc hôm nay → bấm việc → Hoàn thành (đính ảnh nếu việc yêu cầu) → Báo cáo cuối ngày (số liệu + bất thường kèm ảnh). Xem lịch sử báo cáo, gửi yêu cầu hỗ trợ.
+Việc hôm nay → bấm việc → Hoàn thành (đính ảnh thật nếu việc yêu cầu) → Báo cáo cuối ngày (số liệu + bất thường kèm ảnh thật). Ảnh là ảnh thật chụp hoặc tải từ máy (tối đa 5 ảnh/lần), tự nén chuẩn HD, lưu kèm bản ghi. Hoạt động offline: khi mất mạng, ảnh và báo cáo tạm lưu; khi có mạng, tự động đồng bộ (hoặc bấm "Đồng bộ ngay"). Báo cáo bất thường bắt buộc ít nhất 1 ảnh. Xem lịch sử báo cáo, gửi yêu cầu hỗ trợ.
 
 > Khi tổ trưởng hoàn thành một việc **tiên quyết** (vd "Xuống giống"), hệ thống tự mở khoá và sinh các việc phụ thuộc (vd tưới, chăm sóc) ngay.
 
