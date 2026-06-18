@@ -1,8 +1,10 @@
 import React from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Trash2 } from "lucide-react";
 import { getTaskDetail, completeTask, getMyPlots } from "../../lib/queries";
-import { enqueueOffline, isNetworkError, uid } from "../../lib/offline";
+import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
+import { usePhotoPicker } from "../../lib/usePhotoPicker";
+import { compressImage, dataUrlBytes, ONLINE, OFFLINE } from "../../lib/image";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 
@@ -32,8 +34,8 @@ export function TaskDetail() {
   const [task, setTask] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [status, setStatus] = React.useState<TaskStatus>("pending");
-  const [hasPhoto, setHasPhoto] = React.useState(false);
   const [showConfirmation, setShowConfirmation] = React.useState(false);
+  const picker = usePhotoPicker();
   const [error, setError] = React.useState<string | null>(null);
   // Map plotId -> tên lô thật (lấy từ API)
   const [plotNames, setPlotNames] = React.useState<Record<string, string>>({});
@@ -79,7 +81,7 @@ export function TaskDetail() {
 
   const handleComplete = () => {
     if (!canComplete) return;
-    if (task.requirePhoto && !hasPhoto) {
+    if (task.requirePhoto && picker.files.length === 0) {
       alert("Bạn cần chụp ảnh trước khi hoàn thành!");
       return;
     }
@@ -89,18 +91,28 @@ export function TaskDetail() {
   const confirmCompletion = async () => {
     if (!id) return;
     setError(null);
-    const photos = task.photos ?? [];
     const clientUuid = uid();
     try {
+      const photos = await Promise.all(
+        picker.files.map((f) => compressImage(f, ONLINE.maxDim, ONLINE.quality))
+      );
       await completeTask(id, clientUuid, photos);
       setStatus("completed");
       setShowConfirmation(false);
       navigate("/mobile/success");
     } catch (e: any) {
       if (isNetworkError(e)) {
+        const small = await Promise.all(
+          picker.files.map((f) => compressImage(f, OFFLINE.maxDim, OFFLINE.quality))
+        );
+        const adding = small.reduce((s, d) => s + dataUrlBytes(d), 0);
+        if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
+          setError("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
+          return;
+        }
         enqueueOffline({
           id: clientUuid, kind: "task",
-          payload: { task: id, client_uuid: clientUuid, photos },
+          payload: { task: id, client_uuid: clientUuid, photos: small },
           title: task.title,
           date: new Date().toISOString(),
         });
@@ -205,40 +217,38 @@ export function TaskDetail() {
           </div>
         </div>
 
-        {/* Photo Requirement */}
-        {task.requirePhoto && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <Camera className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-semibold text-yellow-900 mb-2">Yêu cầu chụp ảnh</p>
-                <p className="text-sm text-yellow-800 mb-3">
-                  Công việc này cần chụp ảnh để xác nhận hoàn thành
-                </p>
-                <button
-                  onClick={() => setHasPhoto(!hasPhoto)}
-                  className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                    hasPhoto
-                      ? "bg-green-600 text-white"
-                      : "bg-yellow-600 text-white hover:bg-yellow-700"
-                  }`}
-                >
-                  {hasPhoto ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      Đã chụp ảnh
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <Camera className="w-5 h-5" />
-                      Chụp ảnh ngay
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
+        {/* Chọn/Chụp ảnh thật */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-semibold text-gray-900">
+              Ảnh {task.requirePhoto ? <span className="text-red-600">(bắt buộc)</span> : "(tùy chọn)"}
+            </p>
+            <button
+              onClick={picker.open}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
+            >
+              <Camera className="w-4 h-4" /> Thêm ảnh
+            </button>
           </div>
-        )}
+          <input {...picker.inputProps} />
+          {picker.files.length === 0 ? (
+            <p className="text-sm text-gray-500">Chưa có ảnh.</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {picker.thumbs.map((src, i) => (
+                <div key={src} className="relative">
+                  <img src={src} alt="" className="w-full h-24 object-cover rounded-lg" />
+                  <button
+                    onClick={() => picker.removeAt(i)}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Action Buttons */}
         <div className="space-y-3 pt-4">
