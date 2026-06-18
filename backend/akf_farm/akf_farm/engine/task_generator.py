@@ -22,6 +22,42 @@ def compute_mandays(mandays_per_ha: float, area_m2: float) -> float:
     return round((mandays_per_ha or 0) * ha, 2)
 
 
+def planned_starts(steps, start_date):
+    """Tính ngày bắt đầu DỰ KIẾN cho mỗi bước theo chuỗi tiên quyết. Hàm thuần.
+
+    steps: list dict (description, prerequisite, frequency_type, frequency_value,
+    offset_days, estimated_days). Trả {description: date}.
+    """
+    by_desc = {s["description"]: s for s in steps}
+
+    def est_days(s):
+        ft = s.get("frequency_type")
+        if ft == "n_per_period":
+            return max(1, int(s.get("frequency_value") or 1))
+        if ft == "daily":
+            return 1
+        return max(1, int(s.get("estimated_days") or 1))  # one_time / khác
+
+    memo = {}
+
+    def start_of(desc, stack):
+        if desc in memo:
+            return memo[desc]
+        s = by_desc[desc]
+        prereq = s.get("prerequisite")
+        if prereq and prereq in by_desc and prereq not in stack:
+            ps = start_of(prereq, stack | {desc})
+            finish = ps + dt.timedelta(days=est_days(by_desc[prereq]) - 1)
+            base = finish + dt.timedelta(days=1)
+        else:
+            base = start_date
+        val = base + dt.timedelta(days=int(s.get("offset_days") or 0))
+        memo[desc] = val
+        return val
+
+    return {s["description"]: start_of(s["description"], set()) for s in steps}
+
+
 def due_dates(start, freq, from_date, to_date):
     """freq=(type,value). Trả list ngày (date) trong [from_date,to_date]."""
     ftype, fval = freq

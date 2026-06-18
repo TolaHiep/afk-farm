@@ -1,6 +1,7 @@
 import unittest
 import datetime as dt
 from akf_farm.engine.task_generator import compute_mandays, due_dates, dedupe_shared
+from akf_farm.engine.task_generator import planned_starts
 
 
 class TestComputeMandays(unittest.TestCase):
@@ -71,4 +72,52 @@ class TestDedupeShared(unittest.TestCase):
         dedupe_shared(rows)
         self.assertEqual(rows[0]["crop"], "Gấc")  # original unchanged
 
+
+class TestPlannedStarts(unittest.TestCase):
+    def d(self, s):
+        return dt.date.fromisoformat(s)
+
+    def test_chain_one_day_each(self):
+        steps = [
+            {"description": "A", "frequency_type": "one_time"},
+            {"description": "B", "frequency_type": "one_time", "prerequisite": "A"},
+            {"description": "C", "frequency_type": "one_time", "prerequisite": "B"},
+        ]
+        ps = planned_starts(steps, self.d("2026-01-01"))
+        self.assertEqual(ps["A"], self.d("2026-01-01"))
+        self.assertEqual(ps["B"], self.d("2026-01-02"))
+        self.assertEqual(ps["C"], self.d("2026-01-03"))
+
+    def test_estimated_days_pushes_next(self):
+        steps = [
+            {"description": "A", "frequency_type": "one_time", "estimated_days": 3},
+            {"description": "B", "frequency_type": "one_time", "prerequisite": "A"},
+        ]
+        ps = planned_starts(steps, self.d("2026-01-01"))
+        self.assertEqual(ps["B"], self.d("2026-01-04"))  # A finish 01-03, +1
+
+    def test_n_per_period_duration_is_period(self):
+        steps = [
+            {"description": "A", "frequency_type": "n_per_period", "frequency_value": 2},
+            {"description": "B", "frequency_type": "one_time", "prerequisite": "A"},
+        ]
+        ps = planned_starts(steps, self.d("2026-01-01"))
+        self.assertEqual(ps["B"], self.d("2026-01-03"))  # A finish 01-02, +1
+
+    def test_offset_adds(self):
+        steps = [
+            {"description": "A", "frequency_type": "one_time"},
+            {"description": "B", "frequency_type": "daily", "prerequisite": "A", "offset_days": 5},
+        ]
+        ps = planned_starts(steps, self.d("2026-01-01"))
+        self.assertEqual(ps["B"], self.d("2026-01-07"))  # A finish 01-01, +1 +5
+
+    def test_cyclic_prereq_falls_back(self):
+        steps = [
+            {"description": "A", "frequency_type": "one_time", "prerequisite": "B"},
+            {"description": "B", "frequency_type": "one_time", "prerequisite": "A"},
+        ]
+        ps = planned_starts(steps, self.d("2026-01-01"))
+        self.assertEqual(ps["B"], self.d("2026-01-01"))
+        self.assertEqual(ps["A"], self.d("2026-01-02"))
 
