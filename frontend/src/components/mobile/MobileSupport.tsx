@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, Link } from "react-router";
-import { ArrowLeft, Camera, Send, HelpCircle, MessageSquare, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Send, HelpCircle, MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { supportTypes } from "../../lib/mockData";
 import { submitSupport, getMySupport, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
@@ -29,6 +29,7 @@ export function MobileSupport() {
   const picker = usePhotoPicker();
   const [myRequests, setMyRequests] = React.useState<SupportRequest[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -73,6 +74,8 @@ export function MobileSupport() {
       return;
     }
 
+    if (submitting) return;
+    setSubmitting(true);
     const base = { block: plotId, type, content: content.trim() };
     try {
       const photos = await Promise.all(picker.files.map((f) => compressImage(f, ONLINE.maxDim, ONLINE.quality)));
@@ -101,6 +104,8 @@ export function MobileSupport() {
         console.error("Failed to submit support request:", err);
         alert("Gửi yêu cầu thất bại");
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -231,10 +236,11 @@ export function MobileSupport() {
           {/* Nút gửi */}
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg flex items-center justify-center gap-2"
+            disabled={submitting}
+            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            <Send className="w-5 h-5" />
-            Gửi yêu cầu
+            {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+            {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
           </button>
         </form>
 

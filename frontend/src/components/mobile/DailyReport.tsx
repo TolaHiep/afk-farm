@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ChevronRight, ClipboardList, Trash2, Loader2 } from "lucide-react";
 import { submitReport, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
 import { usePhotoPicker } from "../../lib/usePhotoPicker";
@@ -307,8 +307,9 @@ export function DailyReport() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg disabled:opacity-60"
+            className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-bold hover:bg-green-700 transition-colors shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
           >
+            {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
             {submitting ? "Đang gửi..." : "Gửi báo cáo lô này"}
           </button>
         </form>

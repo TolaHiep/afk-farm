@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useParams, useNavigate } from "react-router";
-import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Trash2, Loader2 } from "lucide-react";
 import { getTaskDetail, completeTask, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
 import { usePhotoPicker } from "../../lib/usePhotoPicker";
@@ -37,6 +37,7 @@ export function TaskDetail() {
   const [showConfirmation, setShowConfirmation] = React.useState(false);
   const picker = usePhotoPicker();
   const [error, setError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
   // Map plotId -> tên lô thật (lấy từ API)
   const [plotNames, setPlotNames] = React.useState<Record<string, string>>({});
 
@@ -89,8 +90,9 @@ export function TaskDetail() {
   };
 
   const confirmCompletion = async () => {
-    if (!id) return;
+    if (!id || submitting) return;
     setError(null);
+    setSubmitting(true);
     const clientUuid = uid();
     try {
       const photos = await Promise.all(
@@ -122,6 +124,8 @@ export function TaskDetail() {
       } else {
         setError(e?.message || "Không thể hoàn thành công việc. Vui lòng thử lại.");
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -303,12 +307,15 @@ export function TaskDetail() {
             <div className="space-y-3">
               <button
                 onClick={confirmCompletion}
-                className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700"
+                disabled={submitting}
+                className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                Xác nhận
+                {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                {submitting ? "Đang gửi..." : "Xác nhận"}
               </button>
               <button
                 onClick={() => setShowConfirmation(false)}
+                disabled={submitting}
                 className="w-full bg-gray-200 text-gray-900 py-3 rounded-xl font-bold hover:bg-gray-300"
               >
                 Hủy
