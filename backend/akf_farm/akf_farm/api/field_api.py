@@ -1,6 +1,37 @@
+import base64
 import json
+import re
+
 import frappe
 from frappe.utils import getdate
+
+_DATA_URL = re.compile(r"^data:image/(\w+);base64,(.+)$", re.DOTALL)
+
+
+def _save_photos(parent_doc, photos):
+    """Doi moi data URL base64 thanh File private dinh vao parent_doc; giu nguyen URL da co (replay)."""
+    urls = []
+    for i, p in enumerate(_as_list(photos)):
+        if not isinstance(p, str):
+            continue
+        m = _DATA_URL.match(p)
+        if not m:
+            urls.append(p)
+            continue
+        ext = m.group(1)
+        content = base64.b64decode(m.group(2))
+        ext = "jpg" if ext == "jpeg" else ext
+        _file = frappe.get_doc({
+            "doctype": "File",
+            "file_name": f"{parent_doc.doctype}-{parent_doc.name}-{i}.{ext}",
+            "attached_to_doctype": parent_doc.doctype,
+            "attached_to_name": parent_doc.name,
+            "is_private": 1,
+            "content": content,
+        }).insert(ignore_permissions=True)
+        urls.append(_file.file_url)
+    return urls
+
 
 def _as_list(photos):
     if isinstance(photos, list):
@@ -33,8 +64,9 @@ def complete_task(task, client_uuid=None, photos=None):
         return {"ok": True}  # idempotent
     doc.status = "completed"
     doc.client_uuid = client_uuid
-    doc.set("photos", [{"image": p} for p in photos])
-    doc.save()
+    urls = _save_photos(doc, photos)
+    doc.set("photos", [{"image": u} for u in urls])
+    doc.save(ignore_permissions=True)
     doc.db_set("completed_on", str(getdate()))
     return {"ok": True}
 
@@ -138,8 +170,12 @@ def submit_support(block, type, content, photos=None, client_uuid=None):
     doc = frappe.get_doc({
         "doctype": "Support Request", "team_leader": frappe.session.user, "block": block,
         "type": type, "content": content, "sent_at": frappe.utils.now(), "status": "pending",
-        "photos": [{"image": p} for p in photos],
-    }).insert()
+        "photos": [],
+    }).insert(ignore_permissions=True)
+    urls = _save_photos(doc, photos)
+    if urls:
+        doc.set("photos", [{"image": u} for u in urls])
+        doc.save(ignore_permissions=True)
     return {"ok": True, "name": doc.name}
 
 
@@ -161,6 +197,10 @@ def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uu
         "doctype": "Team Leader Report", "team_leader": frappe.session.user,
         "block": block, "crop": crop, "report_date": date, "content": content,
         "abnormal": int(abnormal or 0), "client_uuid": client_uuid,
-        "photos": [{"image": p} for p in photos],
-    }).insert()
+        "photos": [],
+    }).insert(ignore_permissions=True)
+    urls = _save_photos(doc, photos)
+    if urls:
+        doc.set("photos", [{"image": u} for u in urls])
+        doc.save(ignore_permissions=True)
     return {"ok": True, "name": doc.name}

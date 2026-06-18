@@ -63,3 +63,52 @@ class TestFieldApi(FrappeTestCase):
         self.assertEqual(frappe.db.count("Team Leader Report", {"client_uuid": "rL"}), 1)
         r = field_api.submit_support(block="B FLD", type="Khác", content="cần hỗ trợ")
         self.assertTrue(r["ok"])
+
+    # 1x1 px PNG hợp lệ, base64
+    _PNG_1PX = (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    )
+
+    def _file_count(self, dt, dn):
+        return frappe.db.count("File", {"attached_to_doctype": dt, "attached_to_name": dn})
+
+    def test_complete_task_saves_real_photo(self):
+        frappe.set_user(self.leader)
+        field_api.complete_task(self.t.name, client_uuid="ph1", photos=[self._PNG_1PX])
+        urls = [r.image for r in frappe.get_doc("Farm Task", self.t.name).photos]
+        self.assertEqual(len(urls), 1)
+        self.assertTrue(urls[0].startswith("/private/files/"))
+        self.assertEqual(self._file_count("Farm Task", self.t.name), 1)
+
+    def test_complete_task_photo_replay_no_duplicate_file(self):
+        frappe.set_user(self.leader)
+        field_api.complete_task(self.t.name, client_uuid="ph2", photos=[self._PNG_1PX])
+        # replay cung client_uuid sau khi da completed -> khong tao file thu 2
+        field_api.complete_task(self.t.name, client_uuid="ph2", photos=[self._PNG_1PX])
+        self.assertEqual(self._file_count("Farm Task", self.t.name), 1)
+
+    def test_existing_url_kept_not_reuploaded(self):
+        frappe.set_user(self.leader)
+        field_api.complete_task(self.t.name, client_uuid="ph3", photos=["/private/files/already.jpg"])
+        urls = [r.image for r in frappe.get_doc("Farm Task", self.t.name).photos]
+        self.assertEqual(urls, ["/private/files/already.jpg"])
+        self.assertEqual(self._file_count("Farm Task", self.t.name), 0)
+
+    def test_submit_report_saves_real_photo(self):
+        frappe.set_user(self.leader)
+        frappe.db.delete("Team Leader Report", {"client_uuid": "phR"})
+        r = field_api.submit_report(block="B FLD", crop="Gấc", date="2026-06-14",
+                                    content="bất thường", photos=[self._PNG_1PX], abnormal=1, client_uuid="phR")
+        doc = frappe.get_doc("Team Leader Report", r["name"])
+        self.assertEqual(len(doc.photos), 1)
+        self.assertTrue(doc.photos[0].image.startswith("/private/files/"))
+        self.assertEqual(self._file_count("Team Leader Report", r["name"]), 1)
+
+    def test_submit_support_saves_real_photo(self):
+        frappe.set_user(self.leader)
+        r = field_api.submit_support(block="B FLD", type="Khác", content="cần giúp", photos=[self._PNG_1PX])
+        doc = frappe.get_doc("Support Request", r["name"])
+        self.assertEqual(len(doc.photos), 1)
+        self.assertTrue(doc.photos[0].image.startswith("/private/files/"))
+        self.assertEqual(self._file_count("Support Request", r["name"]), 1)
