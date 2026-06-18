@@ -207,6 +207,7 @@ def list_processes():
             "scope": _scope_text(s.scope), "scopeRaw": s.scope or "shared",
             "requirePhoto": bool(s.require_photo),
             "offsetDays": s.offset_days or 0, "prerequisite": s.prerequisite or "",
+            "estimatedDays": s.estimated_days or 1,
         } for s in doc.steps]
         out.append({"id": p.name, "name": p.process_name, "crop": p.crop,
                     "cycleLengthDays": doc.cycle_length_days or 0, "steps": steps})
@@ -487,6 +488,7 @@ def _apply_steps(doc, steps):
             "require_photo": 1 if s.get("requirePhoto") else 0,
             "offset_days": _norm_offset(s.get("offsetDays")),
             "prerequisite": (s.get("prerequisite") or None),
+            "estimated_days": max(1, int(s.get("estimatedDays") or 1)),
         })
 
 

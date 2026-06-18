@@ -239,3 +239,19 @@ class TestEstimatedDaysField(FrappeTestCase):
         }).insert()
         self.assertEqual(p.steps[0].estimated_days, 1)
         self.assertEqual(p.steps[1].estimated_days, 3)
+
+
+class TestEstimatedApi(FrappeTestCase):
+    def test_create_list_estimated_days(self):
+        if frappe.db.exists("Cultivation Process", "QT EDAPI"):
+            frappe.delete_doc("Cultivation Process", "QT EDAPI", force=True)
+        admin_api.create_process(process_name="QT EDAPI", crop="Gấc", steps=[
+            {"description": "Ngâm ủ", "frequencyType": "one_time", "scopeRaw": "per_crop", "estimatedDays": 3},
+            {"description": "Tưới", "frequencyType": "daily", "scopeRaw": "per_crop"},
+        ])
+        doc = frappe.get_doc("Cultivation Process", "QT EDAPI")
+        self.assertEqual(doc.steps[0].estimated_days, 3)
+        self.assertEqual(doc.steps[1].estimated_days, 1)
+        listed = [p for p in admin_api.list_processes() if p["id"] == "QT EDAPI"][0]
+        self.assertEqual(listed["steps"][0]["estimatedDays"], 3)
+        self.assertEqual(listed["steps"][1]["estimatedDays"], 1)
