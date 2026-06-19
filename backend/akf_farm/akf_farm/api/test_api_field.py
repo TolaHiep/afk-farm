@@ -136,3 +136,25 @@ class TestFieldApi(FrappeTestCase):
         finally:
             _fa._MAX_PHOTO_BYTES = orig
         self.assertEqual(self._file_count("Farm Task", self.t.name), 0)
+
+    # Polygon vuong ~110m quanh (11.94, 108.458) — GeoJSON [lng,lat], ring khep kin
+    _BOUNDARY = (
+        '{"type":"Polygon","coordinates":[[[108.4575,11.9395],[108.4585,11.9395],'
+        '[108.4585,11.9405],[108.4575,11.9405],[108.4575,11.9395]]]}'
+    )
+
+    def _mk_block_with_boundary(self):
+        if not frappe.db.exists("Farm Block", "B GEO"):
+            frappe.get_doc({"doctype": "Farm Block", "block_name": "B GEO", "zone": "Z FLD",
+                            "area": 10000, "boundary": self._BOUNDARY}).insert(ignore_permissions=True)
+        return "B GEO"
+
+    def test_geo_flag(self):
+        blk = self._mk_block_with_boundary()
+        self.assertEqual(field_api._geo_flag(blk, 11.9400, 108.4580)[0], "ok")        # trong polygon
+        self.assertEqual(field_api._geo_flag(blk, 11.94075, 108.4580)[0], "ok")       # ngoai ~27.8m <= 50
+        st, dist = field_api._geo_flag(blk, 11.9410, 108.4580)                        # ngoai ~55.7m > 50
+        self.assertEqual(st, "far")
+        self.assertGreater(dist, 50)
+        self.assertEqual(field_api._geo_flag(blk, None, None), ("missing", None))      # khong toa do
+        self.assertEqual(field_api._geo_flag("B FLD", 11.94, 108.458), ("missing", None))  # lo khong co boundary

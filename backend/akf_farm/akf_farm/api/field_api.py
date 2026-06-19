@@ -1,5 +1,6 @@
 import base64
 import json
+import math
 import re
 
 import frappe
@@ -56,6 +57,78 @@ def _as_list(photos):
     if isinstance(photos, list):
         return photos
     return json.loads(photos) if photos else []
+
+
+_GPS_TOLERANCE_M = 50  # ngoai polygon nhung <= 50m van coi la trong lo (dung sai GPS dien thoai)
+
+
+def _parse_boundary(block_name):
+    """Tra mang [(lat, lng)] tu field boundary GeoJSON Polygon; [] neu khong co/loi."""
+    raw = frappe.db.get_value("Farm Block", block_name, "boundary")
+    if not raw:
+        return []
+    try:
+        obj = json.loads(raw) if isinstance(raw, str) else raw
+        ring = obj["coordinates"][0] if obj.get("type") == "Polygon" else None
+        pts = [(float(c[1]), float(c[0])) for c in ring if len(c) >= 2]  # dao [lng,lat] -> (lat,lng)
+        if len(pts) > 1 and pts[0] == pts[-1]:
+            pts.pop()  # bo diem dong vong trung dau
+        return pts if len(pts) >= 3 else []
+    except Exception:
+        return []
+
+
+def _point_in_polygon(lat, lng, poly):
+    """Ray casting tren (lat,lng). poly = [(lat,lng)]."""
+    inside = False
+    n = len(poly)
+    j = n - 1
+    for i in range(n):
+        yi, xi = poly[i]
+        yj, xj = poly[j]
+        if (yi > lat) != (yj > lat) and lng < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def _distance_to_polygon_m(lat, lng, poly):
+    """Khoang cach (m) tu diem toi canh gan nhat cua polygon.
+
+    Chieu equirectangular quanh diem -> met (du chinh xac cho nguong 50m).
+    """
+    R = 6371000.0
+    p = math.pi / 180
+    cos_lat = math.cos(lat * p)
+
+    def to_xy(la, ln):
+        return ((ln - lng) * p * cos_lat * R, (la - lat) * p * R)
+
+    pts = [to_xy(py, px) for (py, px) in poly]
+    best = float("inf")
+    n = len(pts)
+    for i in range(n):
+        ax, ay = pts[i]
+        bx, by = pts[(i + 1) % n]
+        dx, dy = bx - ax, by - ay
+        seg2 = dx * dx + dy * dy
+        t = 0.0 if seg2 == 0 else max(0.0, min(1.0, -(ax * dx + ay * dy) / seg2))
+        cx, cy = ax + t * dx, ay + t * dy
+        best = min(best, math.hypot(cx, cy))
+    return best
+
+
+def _geo_flag(block_name, lat, lng):
+    """Tra (gps_status, distance_m). Tin cay phia server (client khong tu quyet co)."""
+    if lat is None or lng is None:
+        return ("missing", None)
+    poly = _parse_boundary(block_name)
+    if len(poly) < 3:
+        return ("missing", None)  # lo chua ve ranh gioi -> khong kiem tra duoc
+    if _point_in_polygon(lat, lng, poly):
+        return ("ok", 0.0)
+    dist = _distance_to_polygon_m(lat, lng, poly)
+    return (("ok" if dist <= _GPS_TOLERANCE_M else "far"), dist)
 
 
 @frappe.whitelist()
