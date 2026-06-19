@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask, getTaskPhotos } from "../../lib/queries";
 import { todayYMD } from "../../lib/today";
+import { photoFlag, type TaskPhoto } from "../../lib/capture";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 type Task = { id: string; title: string; plotId: string; crop: string; date: string; status: string; teamLeaderId: string; requirePhoto?: boolean; priority?: string };
@@ -119,7 +120,7 @@ export function WorkCalendar() {
 
   // Modal chi tiết việc (xem ảnh hoàn thành) — tách khỏi popup Cập nhật
   const [detailTask, setDetailTask] = React.useState<Task | null>(null);
-  const [detailPhotos, setDetailPhotos] = React.useState<string[]>([]);
+  const [detailPhotos, setDetailPhotos] = React.useState<TaskPhoto[]>([]);
   const [detailLoading, setDetailLoading] = React.useState(false);
 
   const openDetail = (task: Task) => {
@@ -383,12 +384,33 @@ export function WorkCalendar() {
                 ) : detailPhotos.length === 0 ? (
                   <p className="text-sm text-gray-400">Chưa có ảnh.</p>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {detailPhotos.map((src) => (
-                      <a key={src} href={src} target="_blank" rel="noopener noreferrer">
-                        <img src={src} alt="ảnh việc" className="w-full h-24 object-cover rounded-lg border border-gray-200" />
-                      </a>
-                    ))}
+                  <div className="grid grid-cols-2 gap-3">
+                    {detailPhotos.map((p) => {
+                      const flag = photoFlag(p);
+                      const tone = flag.tone === "bad"
+                        ? "bg-red-100 text-red-700"
+                        : flag.tone === "warn"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-green-100 text-green-700";
+                      return (
+                        <div key={p.url} className="space-y-1">
+                          <a href={p.url} target="_blank" rel="noopener noreferrer">
+                            <img src={p.url} alt="ảnh việc" className="w-full h-28 object-cover rounded-lg border border-gray-200" />
+                          </a>
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className={`text-xs px-1.5 py-0.5 rounded ${tone}`}>{flag.label}</span>
+                            {!p.inApp && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">Không chụp in-app</span>}
+                          </div>
+                          {p.lat != null && p.lng != null && (
+                            <a className="text-xs text-blue-600 underline" target="_blank" rel="noopener noreferrer"
+                               href={`https://www.google.com/maps?q=${p.lat},${p.lng}`}>
+                              {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
+                            </a>
+                          )}
+                          {p.capturedAt && <div className="text-[11px] text-gray-500">{p.capturedAt}</div>}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
