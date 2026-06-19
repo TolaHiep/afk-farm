@@ -180,6 +180,24 @@ class TestFieldApi(FrappeTestCase):
         self.assertEqual(row.gps_status, "missing")
         self.assertEqual(row.in_app, 0)
 
+    def test_complete_task_photo_meta_skip_then_align(self):
+        """Anh dau bi bo qua (sai ext) -> anh thu 2 phai nhan meta[1], khong lech index."""
+        frappe.set_user(self.leader)
+        blk = self._mk_block_with_boundary()
+        t = frappe.get_doc({"doctype": "Farm Task", "title": "Tưới", "block": blk, "crop": "Gấc",
+                            "task_date": "2026-06-14", "status": "pending", "require_photo": 1,
+                            "team_leader": self.leader}).insert(ignore_permissions=True)
+        svg = "data:image/svg;base64,PHN2Zy8+"  # ext 'svg' khong cho phep -> bi bo qua
+        meta = [
+            {"lat": 11.9000, "lng": 108.4000, "inApp": True},  # idx 0 (cho anh svg bi bo) - xa lo
+            {"lat": 11.9400, "lng": 108.4580, "inApp": True},  # idx 1 (cho anh PNG) - trong lo
+        ]
+        field_api.complete_task(t.name, client_uuid="skipalign", photos=[svg, self._PNG_1PX], photo_meta=meta)
+        rows = frappe.get_doc("Farm Task", t.name).photos
+        self.assertEqual(len(rows), 1)              # chi PNG duoc luu
+        self.assertEqual(rows[0].gps_status, "ok")  # dung meta[1] (trong lo), khong phai meta[0] (xa lo)
+        self.assertAlmostEqual(rows[0].lat, 11.9400, places=4)
+
     def test_admin_task_photos_returns_meta(self):
         from akf_farm.api import admin_api
         frappe.set_user(self.leader)
