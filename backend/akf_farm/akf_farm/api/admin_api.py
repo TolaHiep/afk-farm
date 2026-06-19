@@ -255,11 +255,17 @@ def list_reports():
 
 @frappe.whitelist()
 def task_photos(task):
-    """Danh sach file_url anh hoan thanh cua 1 Farm Task (cho admin xem trong Lich)."""
+    """Anh hoan thanh cua 1 Farm Task kem metadata GPS/c0 (cho admin xem trong Lich)."""
     rows = frappe.get_all("Farm Task Photo",
         filters={"parent": task, "parenttype": "Farm Task"},
-        fields=["image"], order_by="idx asc")
-    return [r.image for r in rows if r.image]
+        fields=["image", "lat", "lng", "gps_accuracy", "captured_at",
+                "gps_status", "distance_m", "in_app"], order_by="idx asc")
+    return [{
+        "url": r.image, "lat": r.lat, "lng": r.lng, "gpsAccuracy": r.gps_accuracy,
+        "capturedAt": str(r.captured_at) if r.captured_at else None,
+        "gpsStatus": r.gps_status or "missing", "distanceM": r.distance_m,
+        "inApp": bool(r.in_app),
+    } for r in rows if r.image]
 
 
 @frappe.whitelist()

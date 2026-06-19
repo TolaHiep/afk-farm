@@ -158,3 +158,40 @@ class TestFieldApi(FrappeTestCase):
         self.assertGreater(dist, 50)
         self.assertEqual(field_api._geo_flag(blk, None, None), ("missing", None))      # khong toa do
         self.assertEqual(field_api._geo_flag("B FLD", 11.94, 108.458), ("missing", None))  # lo khong co boundary
+
+    def test_complete_task_photo_meta_geo_ok(self):
+        frappe.set_user(self.leader)
+        blk = self._mk_block_with_boundary()
+        t = frappe.get_doc({"doctype": "Farm Task", "title": "Tưới", "block": blk, "crop": "Gấc",
+                            "task_date": "2026-06-14", "status": "pending", "require_photo": 1,
+                            "team_leader": self.leader}).insert(ignore_permissions=True)
+        meta = [{"lat": 11.9400, "lng": 108.4580, "accuracy": 8,
+                 "capturedAt": "2026-06-19 08:00:00", "inApp": True}]
+        field_api.complete_task(t.name, client_uuid="g1", photos=[self._PNG_1PX], photo_meta=meta)
+        row = frappe.get_doc("Farm Task", t.name).photos[0]
+        self.assertEqual(row.gps_status, "ok")
+        self.assertEqual(row.in_app, 1)
+        self.assertAlmostEqual(row.lat, 11.9400, places=4)
+
+    def test_complete_task_photo_missing_gps(self):
+        frappe.set_user(self.leader)
+        field_api.complete_task(self.t.name, client_uuid="g2", photos=[self._PNG_1PX], photo_meta=[])
+        row = frappe.get_doc("Farm Task", self.t.name).photos[0]
+        self.assertEqual(row.gps_status, "missing")
+        self.assertEqual(row.in_app, 0)
+
+    def test_admin_task_photos_returns_meta(self):
+        from akf_farm.api import admin_api
+        frappe.set_user(self.leader)
+        blk = self._mk_block_with_boundary()
+        t = frappe.get_doc({"doctype": "Farm Task", "title": "Tưới", "block": blk, "crop": "Gấc",
+                            "task_date": "2026-06-14", "status": "pending", "require_photo": 1,
+                            "team_leader": self.leader}).insert(ignore_permissions=True)
+        field_api.complete_task(t.name, client_uuid="ap1", photos=[self._PNG_1PX],
+                                photo_meta=[{"lat": 11.94, "lng": 108.458, "inApp": True}])
+        frappe.set_user("Administrator")
+        rows = admin_api.task_photos(t.name)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["gpsStatus"], "ok")
+        self.assertTrue(rows[0]["inApp"])
+        self.assertTrue(rows[0]["url"].startswith("/private/files/"))

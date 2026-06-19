@@ -24,8 +24,12 @@ class TestAdminPhotos(FrappeTestCase):
         t = frappe.get_doc({"doctype": "Farm Task", "title": "T ADP", "block": "B ADP", "crop": "Gấc",
                             "task_date": "2026-06-14", "status": "completed",
                             "photos": [{"image": "/private/files/t1.jpg"}, {"image": "/private/files/t2.jpg"}]}).insert(ignore_permissions=True)
-        urls = admin_api.task_photos(t.name)
-        self.assertEqual(urls, ["/private/files/t1.jpg", "/private/files/t2.jpg"])
+        rows = admin_api.task_photos(t.name)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["url"], "/private/files/t1.jpg")
+        self.assertEqual(rows[1]["url"], "/private/files/t2.jpg")
+        self.assertIn("gpsStatus", rows[0])
+        self.assertIn("inApp", rows[0])
 
 
 class TestAdminApi(FrappeTestCase):

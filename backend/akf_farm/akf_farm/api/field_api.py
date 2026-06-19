@@ -15,14 +15,14 @@ _ALLOWED_EXT = {"jpg", "jpeg", "png", "webp"}
 
 def _save_photos(parent_doc, photos):
     """Doi moi data URL base64 thanh File private dinh vao parent_doc; giu nguyen URL da co (replay)."""
-    urls = []
+    rows = []
     created = 0
     for i, p in enumerate(_as_list(photos)):
         if not isinstance(p, str):
             continue
         m = _DATA_URL.match(p)
         if not m:
-            urls.append(p)
+            rows.append({"image": p, "idx": i})
             continue
         try:
             ext = m.group(1).lower()
@@ -45,12 +45,12 @@ def _save_photos(parent_doc, photos):
                 "is_private": 1,
                 "content": content,
             }).insert(ignore_permissions=True)
-            urls.append(_file.file_url)
+            rows.append({"image": _file.file_url, "idx": i})
             created += 1
         except Exception:
             frappe.log_error(frappe.get_traceback(), "akf_farm photo save failed")
             continue
-    return urls
+    return rows
 
 
 def _as_list(photos):
@@ -143,8 +143,9 @@ def today_tasks(date=None):
 
 
 @frappe.whitelist()
-def complete_task(task, client_uuid=None, photos=None):
+def complete_task(task, client_uuid=None, photos=None, photo_meta=None):
     photos = _as_list(photos)
+    metas = _as_list(photo_meta)  # [{lat,lng,accuracy,capturedAt,inApp}] khop index voi photos
     doc = frappe.get_doc("Farm Task", task)
     user = frappe.session.user
     if doc.team_leader and doc.team_leader != user \
@@ -156,8 +157,22 @@ def complete_task(task, client_uuid=None, photos=None):
         return {"ok": True}  # idempotent
     doc.status = "completed"
     doc.client_uuid = client_uuid
-    urls = _save_photos(doc, photos)
-    doc.set("photos", [{"image": u} for u in urls])
+    rows = _save_photos(doc, photos)
+    child = []
+    for r in rows:
+        m = metas[r["idx"]] if r["idx"] < len(metas) else {}
+        lat = m.get("lat")
+        lng = m.get("lng")
+        status, dist = _geo_flag(doc.block, lat, lng)
+        cap = m.get("capturedAt")
+        child.append({
+            "image": r["image"], "lat": lat, "lng": lng,
+            "gps_accuracy": m.get("accuracy"),
+            "captured_at": frappe.utils.get_datetime(cap) if cap else None,
+            "in_app": 1 if m.get("inApp") else 0,
+            "gps_status": status, "distance_m": dist,
+        })
+    doc.set("photos", child)
     doc.save(ignore_permissions=True)
     doc.db_set("completed_on", str(getdate()))
     return {"ok": True}
@@ -264,9 +279,9 @@ def submit_support(block, type, content, photos=None, client_uuid=None):
         "type": type, "content": content, "sent_at": frappe.utils.now(), "status": "pending",
         "photos": [],
     }).insert(ignore_permissions=True)
-    urls = _save_photos(doc, photos)
-    if urls:
-        doc.set("photos", [{"image": u} for u in urls])
+    rows = _save_photos(doc, photos)
+    if rows:
+        doc.set("photos", [{"image": r["image"]} for r in rows])
         doc.save(ignore_permissions=True)
     return {"ok": True, "name": doc.name}
 
@@ -291,8 +306,8 @@ def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uu
         "abnormal": int(abnormal or 0), "client_uuid": client_uuid,
         "photos": [],
     }).insert(ignore_permissions=True)
-    urls = _save_photos(doc, photos)
-    if urls:
-        doc.set("photos", [{"image": u} for u in urls])
+    rows = _save_photos(doc, photos)
+    if rows:
+        doc.set("photos", [{"image": r["image"]} for r in rows])
         doc.save(ignore_permissions=True)
     return {"ok": True, "name": doc.name}
