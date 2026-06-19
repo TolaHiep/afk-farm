@@ -74,7 +74,7 @@ async function replayItem(item: OfflineItem): Promise<void> {
   else if (item.kind === "support") await submitSupport(item.payload);
   else if (item.kind === "task") {
     const p = item.payload;
-    await completeTask(p.task, p.client_uuid, p.photos);
+    await completeTask(p.task, p.client_uuid, p.photos, p.photo_meta);
   }
 }
 

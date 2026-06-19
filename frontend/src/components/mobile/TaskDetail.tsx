@@ -3,8 +3,9 @@ import { Link, useParams, useNavigate } from "react-router";
 import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Trash2, Loader2 } from "lucide-react";
 import { getTaskDetail, completeTask, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
-import { usePhotoPicker } from "../../lib/usePhotoPicker";
-import { compressImage, dataUrlBytes, ONLINE, OFFLINE } from "../../lib/image";
+import { compressImage, dataUrlBytes, ONLINE, OFFLINE, MAX_PHOTOS } from "../../lib/image";
+import { CameraCapture } from "./CameraCapture";
+import { toPhotoMeta, type CapturedPhoto } from "../../lib/capture";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 
@@ -35,7 +36,11 @@ export function TaskDetail() {
   const [loading, setLoading] = React.useState(true);
   const [status, setStatus] = React.useState<TaskStatus>("pending");
   const [showConfirmation, setShowConfirmation] = React.useState(false);
-  const picker = usePhotoPicker();
+  const [captured, setCaptured] = React.useState<CapturedPhoto[]>([]);
+  const [showCamera, setShowCamera] = React.useState(false);
+  const [cameraBlocked, setCameraBlocked] = React.useState(false);
+  const thumbs = React.useMemo(() => captured.map((c) => URL.createObjectURL(c.file)), [captured]);
+  React.useEffect(() => () => thumbs.forEach((u) => URL.revokeObjectURL(u)), [thumbs]);
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   // Map plotId -> tên lô thật (lấy từ API)
@@ -69,6 +74,21 @@ export function TaskDetail() {
     };
   }, [id]);
 
+  // Stable handlers for CameraCapture (useCallback to avoid effect re-firing)
+  const handleCapture = React.useCallback((p: CapturedPhoto) => {
+    setCaptured((prev) => (prev.length >= MAX_PHOTOS ? prev : [...prev, p]));
+    setShowCamera(false);
+  }, []);
+
+  const handleCameraClose = React.useCallback(() => {
+    setShowCamera(false);
+  }, []);
+
+  const handleCameraUnavailable = React.useCallback(() => {
+    setShowCamera(false);
+    setCameraBlocked(true);
+  }, []);
+
   if (loading) {
     return <div className="p-6 text-center text-gray-400">Đang tải…</div>;
   }
@@ -82,8 +102,8 @@ export function TaskDetail() {
 
   const handleComplete = () => {
     if (!canComplete) return;
-    if (task.requirePhoto && picker.files.length === 0) {
-      alert("Bạn cần chụp ảnh trước khi hoàn thành!");
+    if (task.requirePhoto && captured.length === 0) {
+      alert("Việc này bắt buộc chụp ảnh tại chỗ (trong app) trước khi hoàn thành!");
       return;
     }
     setShowConfirmation(true);
@@ -96,16 +116,17 @@ export function TaskDetail() {
     const clientUuid = uid();
     try {
       const photos = await Promise.all(
-        picker.files.map((f) => compressImage(f, ONLINE.maxDim, ONLINE.quality))
+        captured.map((c) => compressImage(c.file, ONLINE.maxDim, ONLINE.quality)),
       );
-      await completeTask(id, clientUuid, photos);
+      const photoMeta = captured.map(toPhotoMeta);
+      await completeTask(id, clientUuid, photos, photoMeta);
       setStatus("completed");
       setShowConfirmation(false);
       navigate("/mobile/success");
     } catch (e: any) {
       if (isNetworkError(e)) {
         const small = await Promise.all(
-          picker.files.map((f) => compressImage(f, OFFLINE.maxDim, OFFLINE.quality))
+          captured.map((c) => compressImage(c.file, OFFLINE.maxDim, OFFLINE.quality)),
         );
         const adding = small.reduce((s, d) => s + dataUrlBytes(d), 0);
         if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
@@ -114,7 +135,7 @@ export function TaskDetail() {
         }
         enqueueOffline({
           id: clientUuid, kind: "task",
-          payload: { task: id, client_uuid: clientUuid, photos: small },
+          payload: { task: id, client_uuid: clientUuid, photos: small, photo_meta: captured.map(toPhotoMeta) },
           title: task.title,
           date: new Date().toISOString(),
         });
@@ -221,29 +242,34 @@ export function TaskDetail() {
           </div>
         </div>
 
-        {/* Chọn/Chụp ảnh thật */}
+        {/* Chụp ảnh tại chỗ (camera in-app) — chống gian lận */}
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="font-semibold text-gray-900">
-              Ảnh {task.requirePhoto ? <span className="text-red-600">(bắt buộc)</span> : "(tùy chọn)"}
+              Ảnh {task.requirePhoto ? <span className="text-red-600">(bắt buộc, chụp tại chỗ)</span> : "(tùy chọn, chụp tại chỗ)"}
             </p>
             <button
-              onClick={picker.open}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
+              onClick={() => { setCameraBlocked(false); setShowCamera(true); }}
+              disabled={captured.length >= MAX_PHOTOS}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
             >
-              <Camera className="w-4 h-4" /> Thêm ảnh
+              <Camera className="w-4 h-4" /> Chụp ảnh
             </button>
           </div>
-          <input {...picker.inputProps} />
-          {picker.files.length === 0 ? (
-            <p className="text-sm text-gray-500">Chưa có ảnh.</p>
+          {cameraBlocked && (
+            <p className="mb-2 text-sm text-red-600">
+              Thiết bị không hỗ trợ hoặc chưa cấp quyền camera. Việc bắt buộc ảnh không thể hoàn thành cho tới khi bật camera.
+            </p>
+          )}
+          {captured.length === 0 ? (
+            <p className="text-sm text-gray-500">Chưa có ảnh. Bấm "Chụp ảnh" để chụp tại lô.</p>
           ) : (
             <div className="grid grid-cols-3 gap-2">
-              {picker.thumbs.map((src, i) => (
+              {thumbs.map((src, i) => (
                 <div key={src} className="relative">
                   <img src={src} alt="" className="w-full h-24 object-cover rounded-lg" />
                   <button
-                    onClick={() => picker.removeAt(i)}
+                    onClick={() => setCaptured((prev) => prev.filter((_, idx) => idx !== i))}
                     className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -287,6 +313,15 @@ export function TaskDetail() {
           </button>
         </div>
       </div>
+
+      {showCamera && (
+        <CameraCapture
+          plotName={plotNames[task.plotId] || task.plotId}
+          onCapture={handleCapture}
+          onClose={handleCameraClose}
+          onUnavailable={handleCameraUnavailable}
+        />
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmation && (

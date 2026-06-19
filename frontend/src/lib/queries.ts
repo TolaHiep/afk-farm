@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { PhotoMeta, TaskPhoto } from "./capture";
 
 export type User = { email: string; full_name: string; role: "admin" | "team_leader"; roles: string[] };
 
@@ -30,7 +31,7 @@ export const rescheduleTask = (task: string, newDate: string) =>
   api.post("admin_api.reschedule_task", { task, new_date: newDate });
 export const reassignTask = (task: string, teamLeader: string) =>
   api.post("admin_api.reassign_task", { task, team_leader: teamLeader });
-export const getTaskPhotos = (task: string) => api.get("admin_api.task_photos", { task }) as Promise<string[]>;
+export const getTaskPhotos = (task: string) => api.get("admin_api.task_photos", { task }) as Promise<TaskPhoto[]>;
 
 // Admin — tổ, quy trình, chu kỳ
 export const getTeamLeaders = () => api.get("admin_api.list_team_leaders") as Promise<any[]>;
@@ -89,8 +90,8 @@ export const getTodayTasks = (date?: string) =>
 export const getUpcomingTasks = (fromDate?: string, days = 10) =>
   api.get("field_api.upcoming_tasks", fromDate ? { from_date: fromDate, days: String(days) } : undefined) as Promise<any[]>;
 export const getTaskDetail = (task: string) => api.get("field_api.task_detail", { task }) as Promise<any>;
-export const completeTask = (task: string, clientUuid?: string, photos?: string[]) =>
-  api.post("field_api.complete_task", { task, client_uuid: clientUuid, photos });
+export const completeTask = (task: string, clientUuid?: string, photos?: string[], photoMeta?: PhotoMeta[]) =>
+  api.post("field_api.complete_task", { task, client_uuid: clientUuid, photos, photo_meta: photoMeta });
 export const submitReport = (p: { block: string; crop: string; date: string; content: string; photos?: string[]; abnormal?: number; client_uuid?: string }) =>
   api.post("field_api.submit_report", p);
 export const getMyReports = () => api.get("field_api.my_reports") as Promise<any[]>;
