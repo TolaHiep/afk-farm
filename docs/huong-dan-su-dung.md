@@ -52,11 +52,11 @@ Tạo 2 vùng, 4 lô, 2 tổ trưởng, quy trình **Gấc + Sâm**, chu kỳ + 
    - Sinh việc **theo giai đoạn (event-driven)**: bước không tiên quyết bắt đầu từ ngày gieo + offset; bước có tiên quyết chỉ xuất hiện **sau khi** bước tiên quyết được tổ trưởng đánh dấu hoàn thành. Việc lặp dừng khi hết "Số ngày 1 chu kỳ".
    - "N lần/ngày" → mỗi ngày sinh nhiều việc "(lần 1/2)", "(lần 2/2)".
    - **Xoá chu kỳ:** chưa có việc hoàn thành → xoá hẳn (gỡ việc chưa xong); đã có việc hoàn thành → tự **đóng** chu kỳ (giữ lịch sử) + gỡ việc chưa xong.
-4. **Lịch công việc / Bản đồ nhiệt:** theo dõi tiến độ; bản đồ tô màu theo trạng thái. Admin có thể **dời (lùi) từng việc** trong lịch.
+4. **Lịch công việc / Bản đồ nhiệt:** theo dõi tiến độ; bản đồ tô màu theo trạng thái. Admin có thể **dời (lùi) từng việc** trong lịch. Vùng "Việc đã hoàn thành" → **Chi tiết** xem ảnh nghiệm thu kèm **cờ GPS** (Trong lô / Ngoài lô ~Xm / Thiếu GPS) để phát hiện gian lận.
 5. **KPI tổ trưởng, Báo cáo, Yêu cầu hỗ trợ, Thông báo:** giám sát & phản hồi.
 
 ## 6. Luồng tổ trưởng (mobile)
-Việc hôm nay → bấm việc → Hoàn thành (đính ảnh thật nếu việc yêu cầu) → Báo cáo cuối ngày (số liệu + bất thường kèm ảnh thật). Ảnh là ảnh thật chụp hoặc tải từ máy (tối đa 5 ảnh/lần), tự nén chuẩn HD, lưu kèm bản ghi. Hoạt động offline: khi mất mạng, ảnh và báo cáo tạm lưu; khi có mạng, tự động đồng bộ (hoặc bấm "Đồng bộ ngay"). Báo cáo bất thường bắt buộc ít nhất 1 ảnh. Xem lịch sử báo cáo, gửi yêu cầu hỗ trợ.
+Việc hôm nay → bấm việc → Hoàn thành → Báo cáo cuối ngày (số liệu + bất thường kèm ảnh thật). **Ảnh hoàn thành việc bắt buộc chụp trực tiếp bằng camera trong app** (chống gian lận): tự lấy GPS + giờ chụp + đốt watermark lên ảnh; server tự đối chiếu toạ độ với ranh giới lô và gắn cờ cho admin (ngoài lô / thiếu GPS). Báo cáo & hỗ trợ vẫn chụp/chọn ảnh thường. Ảnh tự nén chuẩn HD, tối đa 5 ảnh/lần. Offline: camera + GPS chạy không cần mạng, ảnh tạm lưu rồi tự đồng bộ khi có mạng (hoặc "Đồng bộ ngay"); báo cáo bất thường bắt buộc ≥1 ảnh.
 
 > Khi tổ trưởng hoàn thành một việc **tiên quyết** (vd "Xuống giống"), hệ thống tự mở khoá và sinh các việc phụ thuộc (vd tưới, chăm sóc) ngay.
 

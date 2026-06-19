@@ -108,6 +108,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 - Bộ lọc: vùng, lô, tổ trưởng, cây
 - Thẻ việc theo ngày
 - Mỗi việc có nút **Cập nhật** mở popup: đổi ngày và/hoặc đổi tổ trưởng rồi bấm **Cập nhật** (gộp chung, lưu một lần)
+- Vùng **Việc đã hoàn thành** (dưới lịch) → nút **Chi tiết** xem ảnh nghiệm thu kèm **cờ GPS**: 🟢 Trong lô / 🔴 Ngoài lô (~Xm) / 🟡 Thiếu GPS, và nhãn *Không chụp in-app*; mỗi ảnh có toạ độ (mở Google Maps) + giờ chụp
 
 ### 10. KPI Tổ Trưởng (`/admin/kpi`)
 **Bộ Lọc:**
@@ -173,7 +174,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 
 **Nút Lớn:**
 - "Hoàn thành" (bấm trực tiếp, không cần bước "Bắt đầu")
-- "Chụp ảnh" (nếu yêu cầu): chụp hoặc chọn ảnh thật từ máy (tối đa 5 ảnh), tự nén chuẩn HD, lưu kèm bản ghi
+- "Chụp ảnh" (chống gian lận): mở **camera trong app** chụp trực tiếp tại lô (không chọn ảnh thư viện), tự lấy **GPS + giờ chụp** và đốt **watermark** (giờ · GPS · tên lô) lên ảnh; tối đa 5 ảnh, nén chuẩn HD. Việc bắt buộc ảnh mà thiết bị không cấp quyền/không hỗ trợ camera thì **không hoàn thành được**. Thiếu GPS vẫn cho hoàn thành (gắn cờ cho admin).
 
 ### 5. Xác Nhận Hoàn Thành
 **Popup:**
