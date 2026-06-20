@@ -261,12 +261,12 @@ export function TodayTasks() {
             <div key={group.plotId} className="bg-white rounded-xl shadow overflow-hidden">
               {/* Tiêu đề lô + tiến độ */}
               <div className="p-4 border-b border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-bold text-gray-900">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h4 className="font-bold text-gray-900 truncate min-w-0">
                     {group.name} · {group.crop}
                   </h4>
                   <span
-                    className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    className={`flex-shrink-0 whitespace-nowrap text-xs font-semibold px-2 py-1 rounded-full ${
                       group.finished
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-100 text-gray-600"

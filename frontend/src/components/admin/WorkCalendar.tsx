@@ -3,7 +3,6 @@ import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X, Che
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask, getTaskPhotos } from "../../lib/queries";
-import { todayYMD } from "../../lib/today";
 import { photoFlag, type TaskPhoto } from "../../lib/capture";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
@@ -11,7 +10,6 @@ type Task = { id: string; title: string; plotId: string; crop: string; date: str
 
 const TODAY = new Date();
 TODAY.setHours(0, 0, 0, 0);
-const FROM_DATE = todayYMD();
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 const fmtYMD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -27,21 +25,15 @@ export function WorkCalendar() {
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState("");
 
-  const reloadCalendar = React.useCallback(async () => {
-    const t = await getCalendar(FROM_DATE, 10);
-    setTasks((t as Task[]) ?? []);
-  }, []);
-
+  // Tải lô/vùng/tổ trưởng một lần
   React.useEffect(() => {
-    Promise.all([getCalendar(FROM_DATE, 10), getPlots(), getZones(), getTeamLeaders()])
-      .then(([t, p, z, tl]) => {
-        setTasks((t as Task[]) ?? []);
+    Promise.all([getPlots(), getZones(), getTeamLeaders()])
+      .then(([p, z, tl]) => {
         setPlots((p as any[]) ?? []);
         setZones((z as any[]) ?? []);
         setTeamLeaders((tl as any[]) ?? []);
       })
-      .catch(() => setLoadError("Không tải được lịch công việc từ máy chủ"))
-      .finally(() => setLoading(false));
+      .catch(() => setLoadError("Không tải được dữ liệu từ máy chủ"));
   }, []);
 
   // Helpers dựa trên dữ liệu đã tải (thay cho helper trong mockData)
@@ -89,6 +81,19 @@ export function WorkCalendar() {
       return d;
     });
   }, [viewMonth]);
+
+  // Tải việc cho đúng khoảng đang hiển thị (6 tuần) — gồm cả ngày quá khứ; refetch khi đổi tháng
+  const reloadCalendar = React.useCallback(async () => {
+    const t = await getCalendar(fmtYMD(cells[0]), 42);
+    setTasks((t as Task[]) ?? []);
+  }, [cells]);
+
+  React.useEffect(() => {
+    setLoading(true);
+    reloadCalendar()
+      .catch(() => setLoadError("Không tải được lịch công việc từ máy chủ"))
+      .finally(() => setLoading(false));
+  }, [reloadCalendar]);
 
   const groupByPlot = (dayTasks: Task[]) => {
     const map = new Map<string, Task[]>();
@@ -278,7 +283,7 @@ export function WorkCalendar() {
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg sticky top-0">
           <h3 className="text-base font-semibold text-gray-900">
             {selectedDay.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" })}
-            {sameDay(selectedDay, TODAY) && <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Hôm nay</span>}
+            {sameDay(selectedDay, TODAY) && <span className="ml-2 inline-block whitespace-nowrap text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Hôm nay</span>}
           </h3>
           <span className="text-sm text-gray-600">{selTasks.length} việc · {selGrouped.length} lô</span>
         </div>
@@ -303,10 +308,10 @@ export function WorkCalendar() {
                 <div className="divide-y divide-gray-100">
                   {plotTasks.map((task) => (
                     <div key={task.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium text-gray-900">{task.title}</span>
-                          <StatusBadge status={task.status as TaskStatus}>{statusLabel(task.status)}</StatusBadge>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 truncate">{task.title}</span>
+                          <span className="flex-shrink-0"><StatusBadge status={task.status as TaskStatus}>{statusLabel(task.status)}</StatusBadge></span>
                         </div>
                         <div className="mt-1 flex items-center gap-3 text-xs text-gray-600">
                           <span>{task.crop}</span>
@@ -333,7 +338,7 @@ export function WorkCalendar() {
             <CheckCircle2 className="w-5 h-5 text-green-600" /> Việc đã hoàn thành
             <span className="font-normal text-gray-500 text-sm">
               · {selectedDay.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" })}
-              {sameDay(selectedDay, TODAY) && <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Hôm nay</span>}
+              {sameDay(selectedDay, TODAY) && <span className="ml-2 inline-block whitespace-nowrap text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Hôm nay</span>}
             </span>
           </h3>
           <span className="text-sm text-gray-600">{selCompleted.length} việc</span>

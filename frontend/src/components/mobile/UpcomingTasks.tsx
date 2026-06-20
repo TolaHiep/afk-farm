@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { ArrowLeft, MapPin, Calendar } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, ChevronDown, ChevronRight } from "lucide-react";
 import { getUpcomingTasks, getMyPlots } from "../../lib/queries";
 import { todayYMD } from "../../lib/today";
 
@@ -64,6 +64,14 @@ export function UpcomingTasks() {
   const [range, setRange] = useState<RangeKey>("10");
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Ngày bị thu gọn (ẩn danh sách việc) — bấm tiêu đề ngày để mở/đóng
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleDate = (date: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(date) ? next.delete(date) : next.add(date);
+      return next;
+    });
   // Map plotId -> tên lô thật (lấy từ API)
   const [plotNames, setPlotNames] = useState<Record<string, string>>({});
 
@@ -152,20 +160,28 @@ export function UpcomingTasks() {
                 key={date}
                 className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden"
               >
-                {/* Tiêu đề ngày */}
-                <div className="bg-green-600 text-white p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm opacity-90">{dayOfWeek}</p>
-                    <p className="text-2xl font-bold">
-                      {day}/{month}
-                    </p>
+                {/* Tiêu đề ngày — bấm để thu gọn/mở */}
+                <button
+                  type="button"
+                  onClick={() => toggleDate(date)}
+                  className="w-full bg-green-600 text-white p-4 flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    {collapsed.has(date) ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    <div>
+                      <p className="text-sm opacity-90">{dayOfWeek}</p>
+                      <p className="text-2xl font-bold">
+                        {day}/{month}
+                      </p>
+                    </div>
                   </div>
                   <div className="bg-white text-green-600 rounded-full px-3 py-1 font-bold">
                     {totalTasks} việc
                   </div>
-                </div>
+                </button>
 
                 {/* Nhóm theo lô -> nhóm con theo cây */}
+                {!collapsed.has(date) && (
                 <div className="p-4 space-y-4">
                   {Object.keys(plotsOfDate).map((plotId) => {
                     // Gom việc trong lô theo từng cây (tầng giàn Gấc / dưới tán Sâm)
@@ -239,6 +255,7 @@ export function UpcomingTasks() {
                     );
                   })}
                 </div>
+                )}
               </div>
             );
           })}
