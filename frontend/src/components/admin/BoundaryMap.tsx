@@ -26,6 +26,7 @@ export function BoundaryMap({
   initial,
   constraint,
   splitPreview,
+  avoid,
 }: {
   onChange?: (area: number, points: Pt[]) => void;
   // Ranh giới đã lưu (dùng khi sửa) — nạp sẵn lên map
@@ -33,12 +34,15 @@ export function BoundaryMap({
   // Vùng cha — bắt buộc các điểm phải nằm trong polygon này (lô trong vùng)
   constraint?: Pt[];
   splitPreview?: { label: string; polygon: Pt[] }[];
+  // Các vùng đã có — hiển thị trên map (đỏ nét đứt) + chặn vẽ điểm vào trong (tránh chồng lấn)
+  avoid?: { label?: string; polygon: Pt[] }[];
 }) {
   const elRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<L.Map | null>(null);
   const layerRef = React.useRef<L.LayerGroup | null>(null);
   const constraintLayerRef = React.useRef<L.LayerGroup | null>(null);
   const previewLayerRef = React.useRef<L.LayerGroup | null>(null);
+  const avoidLayerRef = React.useRef<L.LayerGroup | null>(null);
   const [points, setPoints] = React.useState<Pt[]>(initial ?? []);
   const [area, setArea] = React.useState(0);
 
@@ -54,6 +58,10 @@ export function BoundaryMap({
   // Ref tới splitPreview mới nhất để click handler trong useEffect-init không bị stale
   const splitPreviewRef = React.useRef(splitPreview);
   React.useEffect(() => { splitPreviewRef.current = splitPreview; }, [splitPreview]);
+
+  // Ref tới avoid mới nhất để click/drag handler trong useEffect-init không bị stale
+  const avoidRef = React.useRef(avoid);
+  React.useEffect(() => { avoidRef.current = avoid; }, [avoid]);
 
   // Đồng bộ points khi initial đổi (form async load xong mới có polygon)
   const seededRef = React.useRef(false);
@@ -74,6 +82,7 @@ export function BoundaryMap({
       { maxZoom: 19 }
     ).addTo(map);
     constraintLayerRef.current = L.layerGroup().addTo(map);
+    avoidLayerRef.current = L.layerGroup().addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     previewLayerRef.current = L.layerGroup().addTo(map);
     map.on("click", (e: L.LeafletMouseEvent) => {
@@ -82,6 +91,11 @@ export function BoundaryMap({
       const c = constraintRef.current;
       if (c && c.length >= 3 && !pointInPolygon(p, c)) {
         setMsg("Điểm phải nằm trong ranh giới vùng cha (vùng vàng trên bản đồ).");
+        return;
+      }
+      const av = avoidRef.current;
+      if (av && av.some((z) => z.polygon.length >= 3 && pointInPolygon(p, z.polygon))) {
+        setMsg("Điểm nằm trong vùng đã có — không được chồng lấn. Hãy vẽ ra ngoài các vùng hiện có (đỏ).");
         return;
       }
       setMsg("");
@@ -138,6 +152,12 @@ export function BoundaryMap({
           setMsg("Điểm phải nằm trong ranh giới vùng cha (vùng vàng trên bản đồ).");
           return;
         }
+        const av = avoidRef.current;
+        if (av && av.some((z) => z.polygon.length >= 3 && pointInPolygon(next, z.polygon))) {
+          mk.setLatLng([p.lat, p.lng]); // revert
+          setMsg("Điểm nằm trong vùng đã có — không được chồng lấn.");
+          return;
+        }
         setMsg("");
         setPoints((prev) => prev.map((q, i) => (i === idx ? next : q)));
       });
@@ -171,6 +191,36 @@ export function BoundaryMap({
     });
     if (all.length) map.fitBounds(L.latLngBounds(all), { padding: [20, 20], maxZoom: 18 });
   }, [splitPreview]);
+
+  // Vẽ các vùng đã có (chỉ đọc, đỏ nét đứt) để tránh chồng lấn khi tạo vùng mới
+  React.useEffect(() => {
+    const map = mapRef.current, layer = avoidLayerRef.current;
+    if (!map || !layer) return;
+    layer.clearLayers();
+    if (!avoid || !avoid.length) return;
+    const all: [number, number][] = [];
+    avoid.forEach((z) => {
+      if (z.polygon.length < 3) return;
+      const latlngs = z.polygon.map((p) => [p.lat, p.lng] as [number, number]);
+      all.push(...latlngs);
+      L.polygon(latlngs, {
+        color: "#ef4444", weight: 1.5, dashArray: "5,4",
+        fillColor: "#ef4444", fillOpacity: 0.08, interactive: false,
+      }).addTo(layer);
+      if (z.label) {
+        const c = latlngs.reduce((acc, [la, ln]) => [acc[0] + la, acc[1] + ln], [0, 0]);
+        L.marker([c[0] / latlngs.length, c[1] / latlngs.length], {
+          interactive: false,
+          icon: L.divIcon({ className: "akf-plot-label", html: `<span>${z.label}</span>` }),
+        }).addTo(layer);
+      }
+    });
+    // Chưa vẽ tay & không có ranh giới sẵn -> canh khung nhìn để thấy các vùng đã có
+    if (all.length && points.length === 0 && (!initial || initial.length < 3) && (!constraint || constraint.length < 3)) {
+      map.fitBounds(L.latLngBounds(all), { padding: [30, 30], maxZoom: 17 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [avoid]);
 
   // Tìm khu vực theo tên (OpenStreetMap Nominatim — miễn phí, không cần key)
   const doSearch = async () => {

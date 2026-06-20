@@ -104,6 +104,14 @@ export function PlotForm() {
     return toPts(polygonFromGeoJSON(z?.boundary));
   }, [isZone, zoneId, zones]);
 
+  // Khi tạo VÙNG mới: hiển thị các vùng đã có (đỏ) trên map + chặn vẽ chồng lấn
+  const avoidZones = React.useMemo(() => {
+    if (!isZone) return undefined;
+    return zones
+      .map((z) => ({ label: z.name as string, polygon: toPts(polygonFromGeoJSON(z.boundary)) }))
+      .filter((z): z is { label: string; polygon: Pt[] } => !!z.polygon && z.polygon.length >= 3);
+  }, [isZone, zones]);
+
   const selectedZone = React.useMemo(
     () => zones.find((z) => z.id === (searchParams.get("zone") || zoneId)),
     [zones, zoneId, searchParams]
@@ -453,6 +461,7 @@ export function PlotForm() {
             onChange={(a, pts) => { setArea(a); setPoints(pts); }}
             initial={initialPoints}
             constraint={autoMode ? undefined : parentBoundary}
+            avoid={avoidZones}
             splitPreview={autoMode && preview ? preview.map((p) => ({ label: p.label, polygon: p.polygon })) : undefined}
           />
 
@@ -463,6 +472,9 @@ export function PlotForm() {
               <strong> Kéo các điểm</strong> để chỉnh lại ranh giới — diện tích tự cập nhật. Dùng "Hoàn tác" để bỏ điểm cuối, "Xóa hết" để vẽ lại.
               {!isZone && parentBoundary && (
                 <> <strong>Lô phải nằm trong ranh giới vùng cha</strong> (vùng vàng nét đứt) — các điểm ngoài vùng sẽ bị từ chối.</>
+              )}
+              {isZone && avoidZones && avoidZones.length > 0 && (
+                <> <strong>Các vùng đã có hiện màu đỏ nét đứt</strong> — không vẽ chồng lên chúng (điểm rơi vào vùng đỏ sẽ bị từ chối).</>
               )}
             </p>
           </div>
