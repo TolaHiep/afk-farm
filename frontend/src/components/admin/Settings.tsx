@@ -1,16 +1,18 @@
 import React from "react";
 import { Settings as SettingsIcon, Mail, Building2, Send } from "lucide-react";
-import { getSettings, saveSettings } from "../../lib/queries";
+import { getSettings, saveSettings, uploadLogo, sendTestEmail } from "../../lib/queries";
 
 type SettingsState = {
   appName: string;
   companyName: string;
   contact: string;
   logoText: string;
+  logoUrl: string;
   smtpHost: string;
   smtpPort: string;
   fromEmail: string;
   fromName: string;
+  smtpPassword: string;
   emailEnabled: boolean;
 };
 
@@ -19,10 +21,12 @@ const EMPTY: SettingsState = {
   companyName: "",
   contact: "",
   logoText: "",
+  logoUrl: "",
   smtpHost: "",
   smtpPort: "",
   fromEmail: "",
   fromName: "",
+  smtpPassword: "",
   emailEnabled: false,
 };
 
@@ -53,10 +57,12 @@ export function Settings() {
           companyName: s?.companyName ?? "",
           contact: s?.contact ?? "",
           logoText: s?.logoText ?? "",
+          logoUrl: s?.logoUrl ?? "",
           smtpHost: s?.smtpHost ?? "",
           smtpPort: s?.smtpPort != null ? String(s.smtpPort) : "",
           fromEmail: s?.fromEmail ?? "",
           fromName: s?.fromName ?? "",
+          smtpPassword: "",
           emailEnabled: !!s?.emailEnabled,
         });
       })
@@ -72,8 +78,38 @@ export function Settings() {
     return <div className="text-sm text-gray-500 p-6">Đang tải cài đặt…</div>;
   }
 
+  const logoInputRef = React.useRef<HTMLInputElement>(null);
+
   const save = (msg: string) => {
     saveSettings(data).then(() => alert(msg));
+  };
+
+  const onLogoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const dataUrl: string = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result as string);
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      const r = await uploadLogo(dataUrl);
+      setData((d) => ({ ...d, logoUrl: r.logoUrl }));
+      alert("Đã tải logo lên.");
+    } catch (err: any) {
+      alert(err?.message || "Tải logo thất bại. Vui lòng thử lại.");
+    }
+  };
+
+  const onTestEmail = async () => {
+    try {
+      const r = await sendTestEmail();
+      alert(r.ok ? "Đã gửi email thử nghiệm." : (r.reason || "Gửi email thất bại. Vui lòng kiểm tra cấu hình SMTP."));
+    } catch (err: any) {
+      alert(err?.message || "Gửi email thất bại. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -104,8 +140,13 @@ export function Settings() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-green-600 text-white grid place-items-center font-bold">{data.logoText}</div>
-              <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Tải logo lên</button>
+              {data.logoUrl ? (
+                <img src={data.logoUrl} alt="logo" className="w-12 h-12 rounded-lg object-cover border border-gray-200" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-green-600 text-white grid place-items-center font-bold">{data.logoText}</div>
+              )}
+              <input ref={logoInputRef} type="file" accept="image/*" hidden onChange={onLogoPick} />
+              <button onClick={() => logoInputRef.current?.click()} className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Tải logo lên</button>
             </div>
           </div>
           <button onClick={() => save("Đã lưu cài đặt phần mềm")}
@@ -120,7 +161,7 @@ export function Settings() {
             <Field label="SMTP port" value={data.smtpPort} onChange={(v) => setData({ ...data, smtpPort: v })} placeholder="587" />
             <Field label="Email gửi" value={data.fromEmail} onChange={(v) => setData({ ...data, fromEmail: v })} type="email" />
             <Field label="Tên người gửi" value={data.fromName} onChange={(v) => setData({ ...data, fromName: v })} />
-            <Field label="Mật khẩu / App password" value={""} onChange={() => {}} type="password" placeholder="••••••••" />
+            <Field label="Mật khẩu / App password" value={data.smtpPassword} onChange={(v) => setData({ ...data, smtpPassword: v })} type="password" placeholder="••••••••" />
           </div>
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={data.emailEnabled} onChange={(e) => setData({ ...data, emailEnabled: e.target.checked })}
@@ -130,7 +171,7 @@ export function Settings() {
           <div className="flex gap-2">
             <button onClick={() => save("Đã lưu cấu hình email")}
               className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Lưu cấu hình</button>
-            <button onClick={() => alert("(Demo) Đã gửi email thử nghiệm")}
+            <button onClick={onTestEmail}
               className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
               <Send className="w-4 h-4" /> Gửi email test
             </button>

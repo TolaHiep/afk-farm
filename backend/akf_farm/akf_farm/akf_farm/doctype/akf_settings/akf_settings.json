@@ -8,11 +8,13 @@
   "company_name",
   "contact",
   "logo_text",
+  "logo_url",
   "email_section",
   "smtp_host",
   "smtp_port",
   "from_email",
   "from_name",
+  "smtp_password",
   "email_enabled"
  ],
  "fields": [
@@ -20,11 +22,13 @@
   {"fieldname": "company_name", "fieldtype": "Data", "label": "Tên công ty"},
   {"fieldname": "contact", "fieldtype": "Data", "label": "Liên hệ"},
   {"fieldname": "logo_text", "fieldtype": "Data", "label": "Logo (chữ)"},
+  {"fieldname": "logo_url", "fieldtype": "Data", "label": "Logo (ảnh) URL"},
   {"fieldname": "email_section", "fieldtype": "Section Break", "label": "Email"},
   {"fieldname": "smtp_host", "fieldtype": "Data", "label": "SMTP Host"},
   {"fieldname": "smtp_port", "fieldtype": "Data", "label": "SMTP Port"},
   {"fieldname": "from_email", "fieldtype": "Data", "label": "From Email"},
   {"fieldname": "from_name", "fieldtype": "Data", "label": "From Name"},
+  {"fieldname": "smtp_password", "fieldtype": "Password", "label": "SMTP Password"},
   {"default": "0", "fieldname": "email_enabled", "fieldtype": "Check", "label": "Bật email"}
  ],
  "issingle": 1,

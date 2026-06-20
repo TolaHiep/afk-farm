@@ -41,9 +41,12 @@ export function SupportRequests() {
     }
     setSending(true);
     try {
-      await replySupport(id, text, status);
+      const res: any = await replySupport(id, text, status);
       setStatus(id, status, text);
       setReply("");
+      alert(res?.emailSent
+        ? "Đã gửi phản hồi và email cho tổ trưởng."
+        : "Đã lưu phản hồi (email chưa gửi — kiểm tra cấu hình email trong Cài đặt).");
     } catch (e) {
       alert("Không gửi được phản hồi. Vui lòng thử lại.");
     } finally {
@@ -177,13 +180,7 @@ export function SupportRequests() {
                   disabled={sending}
                   className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
                 >
-                  <MessageSquare className="w-4 h-4" /> {sending ? "Đang gửi..." : "Gửi phản hồi"}
-                </button>
-                <button
-                  onClick={() => alert(`(Demo) Đã gửi email phản hồi tới tổ trưởng ${current.reporter}`)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
-                >
-                  <Mail className="w-4 h-4" /> Gửi email
+                  <Mail className="w-4 h-4" /> {sending ? "Đang gửi..." : "Gửi phản hồi + email"}
                 </button>
               </div>
             </div>

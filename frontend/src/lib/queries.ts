@@ -80,6 +80,8 @@ export const replySupport = (name: string, reply: string, status = "replied") =>
 export const getNotifications = () => api.get("admin_api.list_notifications") as Promise<any[]>;
 export const getSettings = () => api.get("admin_api.get_settings") as Promise<any>;
 export const saveSettings = (s: Record<string, unknown>) => api.post("admin_api.save_settings", s);
+export const uploadLogo = (dataUrl: string) => api.post("admin_api.upload_logo", { data_url: dataUrl }) as Promise<{ ok: boolean; logoUrl: string }>;
+export const sendTestEmail = (to?: string) => api.post("admin_api.send_test_email", to ? { to } : {}) as Promise<{ ok: boolean; reason?: string }>;
 export const getDashboard = (date?: string) =>
   api.get("admin_api.dashboard", date ? { date } : undefined) as Promise<any>;
 export const getTeamKpi = () => api.get("admin_api.team_kpi") as Promise<any[]>;

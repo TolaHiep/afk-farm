@@ -301,7 +301,10 @@ def reply_support(name, reply, status="replied"):
     doc.reply = reply
     doc.status = status
     doc.save()
-    return {"ok": True}
+    # Gửi email phản hồi cho tổ trưởng (không chặn nếu email tắt/lỗi)
+    to = frappe.db.get_value("User", doc.team_leader, "email") if doc.team_leader else None
+    sent = _send_smtp(to, "Phản hồi yêu cầu hỗ trợ - AKF", reply) if to else {"ok": False, "reason": "Tổ trưởng không có email."}
+    return {"ok": True, "emailSent": bool(sent.get("ok")), "emailReason": sent.get("reason")}
 
 
 # ---- Cài đặt & dashboard ----
@@ -310,21 +313,80 @@ def reply_support(name, reply, status="replied"):
 def get_settings():
     s = frappe.get_single("AKF Settings")
     return {"appName": s.app_name or "", "companyName": s.company_name or "", "contact": s.contact or "",
-            "logoText": s.logo_text or "", "smtpHost": s.smtp_host or "", "smtpPort": s.smtp_port or "",
-            "fromEmail": s.from_email or "", "fromName": s.from_name or "", "emailEnabled": bool(s.email_enabled)}
+            "logoText": s.logo_text or "", "logoUrl": s.logo_url or "",
+            "smtpHost": s.smtp_host or "", "smtpPort": s.smtp_port or "",
+            "fromEmail": s.from_email or "", "fromName": s.from_name or "",
+            "hasSmtpPassword": bool(s.smtp_password), "emailEnabled": bool(s.email_enabled)}
 
 
 @frappe.whitelist()
 def save_settings(**kwargs):
     s = frappe.get_single("AKF Settings")
     mapping = {"appName": "app_name", "companyName": "company_name", "contact": "contact",
-               "logoText": "logo_text", "smtpHost": "smtp_host", "smtpPort": "smtp_port",
+               "logoText": "logo_text", "logoUrl": "logo_url", "smtpHost": "smtp_host", "smtpPort": "smtp_port",
                "fromEmail": "from_email", "fromName": "from_name", "emailEnabled": "email_enabled"}
     for k, field in mapping.items():
         if k in kwargs:
             s.set(field, kwargs[k])
+    # Mật khẩu SMTP chỉ cập nhật khi nhập mới (để trống = giữ nguyên, không xoá)
+    if kwargs.get("smtpPassword"):
+        s.smtp_password = kwargs["smtpPassword"]
     s.save()
     return {"ok": True}
+
+
+@frappe.whitelist()
+def upload_logo(data_url):
+    """Nhận ảnh logo dạng data URL base64 -> tạo File công khai -> lưu vào AKF Settings."""
+    import base64
+    import re as _re
+    m = _re.match(r"^data:image/(\w+);base64,(.+)$", data_url or "", _re.DOTALL)
+    if not m:
+        frappe.throw("Ảnh logo không hợp lệ.")
+    ext = m.group(1).lower()
+    ext = "jpg" if ext == "jpeg" else ext
+    content = base64.b64decode(m.group(2))
+    f = frappe.get_doc({"doctype": "File", "file_name": f"akf-logo.{ext}",
+                        "is_private": 0, "content": content}).insert(ignore_permissions=True)
+    s = frappe.get_single("AKF Settings")
+    s.logo_url = f.file_url
+    s.save(ignore_permissions=True)
+    return {"ok": True, "logoUrl": f.file_url}
+
+
+def _send_smtp(to, subject, body):
+    """Gửi email qua SMTP cấu hình trong AKF Settings. Trả {ok, reason}. Không raise (để không chặn nghiệp vụ)."""
+    s = frappe.get_single("AKF Settings")
+    if not s.email_enabled:
+        return {"ok": False, "reason": "Gửi email đang tắt trong Cài đặt."}
+    if not (s.smtp_host and s.from_email and to):
+        return {"ok": False, "reason": "Thiếu cấu hình SMTP hoặc người nhận."}
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.utils import formataddr
+    pwd = s.get_password("smtp_password") if s.smtp_password else ""
+    msg = MIMEText(body or "", "plain", "utf-8")
+    msg["Subject"] = subject
+    msg["From"] = formataddr((s.from_name or "AKF", s.from_email))
+    msg["To"] = to
+    try:
+        srv = smtplib.SMTP(s.smtp_host, int(s.smtp_port or 587), timeout=10)
+        srv.starttls()
+        if pwd:
+            srv.login(s.from_email, pwd)
+        srv.sendmail(s.from_email, [to], msg.as_string())
+        srv.quit()
+        return {"ok": True}
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "akf_farm send email failed")
+        return {"ok": False, "reason": str(e)[:200]}
+
+
+@frappe.whitelist()
+def send_test_email(to=None):
+    s = frappe.get_single("AKF Settings")
+    return _send_smtp(to or s.from_email, "Email thử nghiệm AKF",
+                      "Đây là email thử nghiệm từ hệ thống AKF. Nhận được email này nghĩa là cấu hình SMTP đã hoạt động.")
 
 
 @frappe.whitelist()

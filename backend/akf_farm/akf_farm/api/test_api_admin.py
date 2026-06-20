@@ -108,3 +108,19 @@ class TestAdminApi(FrappeTestCase):
         names = frappe.get_all("Farm Task", filters={"cycle": cyc["id"], "title": "Tưới"}, pluck="name")
         self.assertTrue(names)
         self.assertEqual(field_api.task_detail(names[0])["sop"], "- Tưới đều\n- Giữ ẩm 60-70%")
+
+    _PNG_1PX = ("data:image/png;base64,"
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
+
+    def test_upload_logo_sets_settings(self):
+        r = admin_api.upload_logo(self._PNG_1PX)
+        self.assertTrue(r["ok"])
+        self.assertTrue(r["logoUrl"].startswith("/files/"))
+        self.assertEqual(frappe.get_single("AKF Settings").logo_url, r["logoUrl"])
+
+    def test_send_test_email_graceful_when_disabled(self):
+        s = frappe.get_single("AKF Settings")
+        s.email_enabled = 0
+        s.save(ignore_permissions=True)
+        r = admin_api.send_test_email("x@example.com")
+        self.assertFalse(r["ok"])  # không raise, trả ok=False để UI báo nhẹ nhàng
