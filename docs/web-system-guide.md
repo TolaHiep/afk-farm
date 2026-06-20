@@ -19,9 +19,11 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 ## Web Admin - Hướng Dẫn Sử Dụng
 
 ### 1. Đăng Nhập Admin (`/`)
-- Email và mật khẩu
-- Ghi nhớ đăng nhập
-- Link chuyển sang Mobile
+- Email và mật khẩu (`admin/admin` mặc định).
+- Logo + tên phần mềm + phụ đề hiện theo Cài đặt — admin tải logo lên và đổi tên trong `/admin/settings`.
+- Link chuyển sang Mobile.
+
+> **Sidebar admin:** logo + tên ở đỉnh; avatar + tên admin ở chân — bấm avatar để hiện nút **Đăng xuất**.
 
 ### 2. Dashboard (`/admin/dashboard`)
 **KPI Cards:**
@@ -39,6 +41,7 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 **Tính Năng:**
 - Bản đồ polygon với màu theo trạng thái
 - Bộ lọc: ngày, vùng, cây
+- **Deep-link** từ trang khác: `?plot=<id>` hoặc `?zone=<id>` → tự lọc + chọn + zoom thẳng tới đối tượng; URL được dọn sạch sau khi áp dụng.
 - Click lô mở panel chi tiết:
   - Tên lô, diện tích, tổ trưởng
   - Công việc hôm nay
@@ -47,12 +50,11 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 
 ### 4. Quản Lý Vùng & Lô (`/admin/zones`)
 **Tính Năng:**
-- Bảng dạng cây (tree table)
-- Expand/collapse vùng
-- Tìm kiếm và lọc
-- Nút "Thêm vùng" và "Thêm lô"
-- Cột **Loại cây** hiển thị cây đã gắn cho lô (kể cả khi lô chưa có chu kỳ)
-- **Xóa vùng** = xóa luôn toàn bộ lô bên trong + dữ liệu phụ thuộc (việc/chu kỳ/báo cáo) — không hoàn tác
+- Toggle 2 chế độ xem ở góc phải: **Danh sách** (bảng cây, tìm kiếm, lọc) và **Lưới** (mỗi vùng = 1 card kèm mini-map ảnh vệ tinh chia lô tô màu theo trạng thái + chip lô dưới card). Lựa chọn được lưu trong localStorage.
+- Bấm lô trên mini-map hoặc chip → **mở Bản đồ nhiệt** zoom thẳng vào ranh giới lô (`/admin/heatmap?plot=ID`).
+- Bấm tên lô ở Danh sách → mở trang Sửa lô; bấm thanh tiến độ → mở Lịch công việc.
+- Cột **Loại cây** hiển thị cây đã gắn cho lô (kể cả khi lô chưa có chu kỳ).
+- **Xóa vùng** = xóa luôn toàn bộ lô bên trong + dữ liệu phụ thuộc (việc/chu kỳ/báo cáo) — không hoàn tác.
 
 ### 5. Form Thêm/Sửa Lô (`/admin/zones/add`)
 **2 chế độ tạo lô:**
@@ -138,13 +140,12 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 - Bất thường mới
 - Chưa gửi báo cáo
 
-**Filter Tabs:**
-- Tất cả, Chưa đọc, Quá hạn, Bất thường
+**Filter Tabs:** Tất cả / Chưa đọc / Quá hạn / Bất thường (mỗi tab kèm số đếm; bấm chuyển bộ lọc; "Đánh dấu (tất cả) đã đọc" bấm được; bấm 1 thông báo → tự đánh dấu đã đọc + nhảy đến đúng đối tượng — việc quá hạn mở thẳng popup Chi tiết việc trong Lịch). Trạng thái đã đọc lưu trong localStorage trình duyệt.
 
-**Email (thay push):** khi bật email trong Cài đặt, hệ thống gửi **email tổng hợp hằng ngày** cho admin (việc quá hạn + bất thường mới); trả lời yêu cầu hỗ trợ → gửi email cho tổ trưởng. (Web-push không dùng vì trình duyệt in-app Zalo/FB chặn + iOS hạn chế.)
+**Email (thay push):** khi bật email trong Cài đặt, hệ thống gửi **email tổng hợp hằng ngày** cho admin (việc quá hạn + bất thường mới). Trả lời báo cáo/yêu cầu hỗ trợ **không** kèm email — chỉ lưu vào hệ thống. (Web-push không dùng vì trình duyệt in-app Zalo/FB chặn + iOS hạn chế.)
 
 ### 11b. Cài Đặt (`/admin/settings`)
-- Tab **Phần mềm**: tên, công ty, liên hệ, **tải logo lên** (ảnh).
+- Tab **Phần mềm**: tên phần mềm, **2 phụ đề** (admin & mobile — hiện dưới tên ở trang đăng nhập), công ty, liên hệ, **tải logo lên** (ảnh). Lưu xong sidebar/topbar/login cập nhật ngay không cần reload.
 - Tab **Email (SMTP)**: host/port/email gửi/tên/**mật khẩu** + "Bật gửi email"; nút **Gửi email test** và **Gửi thông báo tổng hợp** (gửi ngay bản tổng hợp quá hạn + bất thường).
 
 ### 12. Chi Tiết Bất Thường (`/admin/anomaly/:id`)

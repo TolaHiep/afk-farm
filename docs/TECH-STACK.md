@@ -1,39 +1,52 @@
-# TECH STACK CHÍNH THỨC — DỰ ÁN AKF
+# TECH STACK — DỰ ÁN AKF
 
-*Cập nhật: 15/06/2026. Tài liệu này chốt công nghệ dùng chung cho toàn dự án để tránh lẫn lộn.*
+*Cập nhật: 20/06/2026.*
 
-## Frontend (ĐÃ CHỐT)
-
-Lấy bản thiết kế Figma làm chuẩn duy nhất. Đã loại bỏ 2 bản cũ (Next.js và HTML tĩnh).
+## Frontend (`frontend/`)
 
 | Thành phần | Công nghệ |
 |---|---|
 | Build tool | Vite 6 |
-| Thư viện UI | React 18 + TypeScript |
-| Định tuyến | React Router 7 |
+| Library | React 18 + TypeScript |
+| Routing | React Router 7 |
 | CSS | Tailwind CSS v4 |
-| Bộ component | shadcn/ui (trên Radix UI) |
-| Biểu đồ | Recharts |
+| Component primitives | Radix UI (qua shadcn/ui scaffolding — chỉ giữ những file đang dùng) |
+| Map | Leaflet 1.9 + Esri World Imagery (ảnh vệ tinh, miễn phí, không cần key) |
 | Icon | lucide-react |
-| Animation | motion |
-| Form | react-hook-form |
-| Toast | sonner |
+| Form | react-hook-form (chưa dùng nhiều) |
+| Toast | `lib/toast.tsx` (tự xây gọn — thay `sonner` cũ và `window.alert`) |
+| Test | Vitest (chỉ test hàm thuần: geo, image, watermark, split, capture) |
 
-Vị trí: `web/`. Chạy: `cd web && npm install && npm run dev`.
+**Self-built UI utilities** (`frontend/src/lib/`):
+- `toast.tsx` — toast queue + listener, không phụ thuộc context provider.
+- `useAppSettings.ts` — hook + cache cho tên/logo/phụ đề, fire event sau khi Settings lưu.
+- `notificationsRead.ts` — localStorage track ID thông báo đã đọc (per-trình duyệt).
+- `capture.ts` + `watermark.ts` — chuyển ảnh camera + GPS + giờ + tên lô thành blob có watermark.
+- `offline.ts` — hàng đợi gửi báo cáo/hỗ trợ/hoàn thành khi mất mạng (idempotent qua `client_uuid`).
+- `geo.ts` — parse GeoJSON polygon, tính diện tích trắc địa, point-in-polygon.
 
-**Đã dọn:** gỡ các thư viện thừa từ Figma không dùng tới (@mui/material, @emotion, react-slick, react-responsive-masonry, canvas-confetti, react-popper, @popperjs, react-dnd) — chỉ giữ shadcn/ui. Giảm từ 286 còn 216 gói. Build production OK.
+Chạy: `docker compose up -d --build` (xem `huong-dan-su-dung.md`).
 
-## Backend (CHỜ CHỐT)
+## Backend (`backend/akf_farm/`)
 
-Đang chờ xác nhận với nhà đầu tư: tài liệu AKF_v0 (tư vấn tham khảo) đề xuất "lõi ERPNext". Vì nay dùng frontend React riêng, ERPNext chỉ còn vai trò backend/API. Ba phương án:
+| Thành phần | Công nghệ |
+|---|---|
+| Framework | Frappe v15 (headless) |
+| App | `akf_farm` — custom DocTypes, engine sinh việc, REST API tại `/api/method/akf_farm.api.*` |
+| Database | MariaDB 11 |
+| Cache/queue | Redis (cache + queue tách 2 instance) |
+| Scheduler | Frappe scheduler (sinh việc cuốn chiếu, đánh dấu quá hạn, email tổng hợp hằng ngày) |
+| Worker | Frappe queue-short + queue-long |
+| Email | SMTP qua `smtplib` (cấu hình trong AKF Settings) |
+| Test | `bench run-tests --app akf_farm` — 132 test |
 
-1. **ERPNext/Frappe headless** — giữ đúng đề xuất tài liệu khách; React gọi REST API. Tận dụng module kho/kế toán/truy xuất cho GĐ2/GĐ3. Nặng vận hành hơn, cần người biết Frappe.
-2. **Node + NestJS + PostgreSQL** — cùng ngôn ngữ TypeScript với frontend (một stack, ít lẫn). Nhẹ, dễ bảo trì. Lệch đề xuất ERPNext.
-3. **Python + FastAPI + PostgreSQL** — gọn nhẹ, hợp khi cần thêm AI/xử lý ảnh về sau.
+**DocType chính**: Farm Zone, Farm Block, Cultivation Process + Cultivation Step (child), Crop Cycle, Farm Task + Farm Task Photo (child), Team Member, Team Leader Report, Support Request, Abnormal Report, Daily Production, AKF Settings (single).
 
-> Câu hỏi quyết định cho nhà đầu tư: muốn ERPNext vì **giao diện có sẵn** (nay đã thay bằng React → không còn cần) hay vì **module nghiệp vụ** kho/kế toán/truy xuất ở GĐ2–3 (→ nên giữ ERPNext làm backend)?
+**Engine** (`backend/akf_farm/akf_farm/engine/`): `task_generator` (sinh việc theo bước/tần suất/tiên quyết), `status_calculator` (3 màu worst-of), `assign_leaders` (cân tải).
 
 ## Hạ tầng
 
-- Đóng gói: Docker. Chạy thử: máy local. Production: VPS, HTTPS, backup hằng đêm.
-- Mã nguồn: Git (GitHub: TolaHiep/afk-farm).
+- **Docker Compose** một file gốc + override DEV. Stack: `backend`, `web-dev` (Vite dev / nginx prod), `db` (MariaDB), `redis-cache`, `redis-queue`, `scheduler`, `queue-short`, `queue-long`, `websocket`.
+- Đồng nhất same-origin (cổng `8080` mặc định) → frontend gọi `/api/method/...` qua proxy nginx/Vite, dùng chung phiên cookie Frappe.
+- **Repo**: GitHub `TolaHiep/afk-farm`.
+- **Bản đồ**: dùng ảnh vệ tinh Esri World Imagery (raster tile, không cần API key).

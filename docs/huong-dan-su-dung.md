@@ -31,8 +31,10 @@ docker compose exec backend bash -lc 'bench --site akf.localhost enable-schedule
 Scheduler chạy job hằng ngày: sinh việc cuốn chiếu + đánh dấu quá hạn. Nếu tắt, việc sẽ không tự cập nhật theo ngày.
 
 ## 3. Tài khoản
-- **Admin (web):** đăng nhập bằng tên đăng nhập **`admin`** / mật khẩu **`admin`** (đăng nhập bằng username đã được bật; cũng có thể dùng email `Administrator`).
-- **Tổ trưởng (mobile):** đăng nhập bằng **số điện thoại** (username) + mật khẩu. Tài khoản seed: `0901234567`, `0902345678` (mật khẩu `Akf@Farm2026`). Admin tạo tổ trưởng trong "Tổ & Tổ viên".
+- **Admin (web):** đăng nhập bằng tên đăng nhập **`admin`** / mật khẩu **`admin`** (đăng nhập bằng username đã được bật; cũng có thể dùng email `Administrator`). Avatar + tên admin nằm ở chân sidebar — bấm để hiện nút **Đăng xuất**.
+- **Tổ trưởng (mobile):** đăng nhập bằng **số điện thoại** (username) + mật khẩu. Tài khoản seed: `0901234567`, `0902345678` (mật khẩu `Akf@Farm2026`). Admin tạo tổ trưởng trong "Tổ & Tổ viên". Tổ trưởng tự đổi mật khẩu (≥ 6 ký tự) + cập nhật số điện thoại trong "Tài khoản".
+
+> Toast: mọi thông báo lỗi/thành công/cảnh báo dùng toast nổi góc trên-phải (đã thay `window.alert`); thông báo bằng tiếng Việt, ưu tiên hiển thị message thật từ backend khi có lỗi API.
 
 ## 4. Nạp dữ liệu mẫu
 ```
@@ -42,7 +44,7 @@ Tạo 2 vùng, 4 lô, 2 tổ trưởng, quy trình **Gấc + Sâm**, chu kỳ + 
 
 ## 5. Luồng nghiệp vụ (admin)
 
-1. **Vùng & Lô:** tạo vùng (vẽ ranh giới trên ảnh vệ tinh → tự tính diện tích). Tạo lô:
+1. **Vùng & Lô** (có 2 chế độ xem — toggle ở góc phải: **Danh sách** truyền thống và **Lưới** mỗi vùng = 1 thẻ kèm **mini-map ảnh vệ tinh** chia lô tô màu theo trạng thái; bấm lô trên mini-map hoặc chip dưới mỗi card → mở Bản đồ nhiệt zoom thẳng vào lô). Tạo vùng (vẽ ranh giới trên ảnh vệ tinh → tự tính diện tích). Tạo lô:
    - **Vẽ thủ công**: vẽ ranh giới lô trong vùng cha.
    - **Chia tự động**: chọn vùng + nhập **số lô** hoặc **diện tích/lô** → hệ thống cắt vùng thành các lô đều nhau (bisection), xem trước tự động rồi tạo hàng loạt; tên lô = tiền tố + STT (A1, A2…). Sửa một lô **không** ảnh hưởng các lô khác (mỗi lô là bản ghi độc lập).
    - Mỗi lô gắn **nhãn cây** (Gấc/Sâm hoặc cả hai) + tổ trưởng. "Loại cây" hiển thị theo cây đã gắn ngay cả khi lô **chưa có chu kỳ**.
@@ -57,8 +59,11 @@ Tạo 2 vùng, 4 lô, 2 tổ trưởng, quy trình **Gấc + Sâm**, chu kỳ + 
    - **Sửa chu kỳ** (đặc biệt **ngày bắt đầu**) → tự sinh lại việc theo lịch mới (giữ việc đã hoàn thành + quá khứ).
    - **Xoá chu kỳ:** chưa có việc hoàn thành → xoá hẳn (gỡ việc chưa xong); đã có việc hoàn thành → tự **đóng** chu kỳ (giữ lịch sử) + gỡ việc chưa xong.
 4. **Lịch công việc / Bản đồ nhiệt:** theo dõi tiến độ; bản đồ tô màu theo trạng thái. Admin có thể **dời (lùi) từng việc** trong lịch. Bấm **ô ngày bất kỳ** (gồm ngày quá khứ) để xem việc + trạng thái từng việc của ngày đó. Vùng "Việc đã hoàn thành" → **Chi tiết** xem ảnh nghiệm thu kèm **cờ GPS** (Trong lô / Ngoài lô ~Xm / Thiếu GPS); bấm ảnh để **phóng to**.
-5. **KPI tổ trưởng, Báo cáo, Yêu cầu hỗ trợ, Thông báo:** giám sát & phản hồi. Trả lời yêu cầu hỗ trợ → **tự gửi email** cho tổ trưởng (nếu đã cấu hình SMTP).
-6. **Cài đặt (Settings):** đổi tên/logo (tải ảnh logo lên), cấu hình **email SMTP** (host/port/email/mật khẩu) + "Bật gửi email" + nút gửi thử. Khi bật email, hệ thống **gửi email tổng hợp hằng ngày** cho admin: việc quá hạn + bất thường mới (cũng có nút "Gửi thông báo tổng hợp" để gửi ngay).
+5. **KPI tổ trưởng, Báo cáo, Yêu cầu hỗ trợ, Thông báo:** giám sát & phản hồi.
+   - **Báo cáo tổ trưởng:** bấm "Xem" → tự đánh dấu **Đã xem**; modal có ô nhập phản hồi + nút "Gửi phản hồi" (chỉ lưu vào hệ thống, **không** gửi email).
+   - **Yêu cầu hỗ trợ:** bấm Duyệt/Từ chối/Gửi phản hồi — chỉ lưu, **không** gửi email tự động.
+   - **Thông báo (admin):** tabs lọc **Tất cả / Chưa đọc / Quá hạn / Bất thường** (đếm số), bấm thông báo → tự đánh dấu đã đọc + nhảy đến đúng việc/bất thường (việc quá hạn mở thẳng popup chi tiết trong Lịch).
+6. **Cài đặt (Settings):** đổi **tên phần mềm + 2 phụ đề** (admin & mobile) + **tải ảnh logo lên** — logo và tên hiện ngay ở sidebar admin, topbar mobile và 2 trang đăng nhập (không cần reload). Cấu hình **email SMTP** (host/port/email/mật khẩu) + "Bật gửi email" + nút "Gửi email test"; nếu bật, hệ thống chạy job hằng ngày gửi email tổng hợp cho admin (việc quá hạn + bất thường mới — cũng có nút "Gửi thông báo tổng hợp" để gửi ngay). Email **chỉ** dùng cho tổng hợp hằng ngày; trả lời báo cáo/hỗ trợ không kèm email.
 
 ## 6. Luồng tổ trưởng (mobile)
 Việc hôm nay → bấm việc → Hoàn thành → Báo cáo cuối ngày (số liệu + bất thường kèm ảnh thật). **Ảnh hoàn thành việc bắt buộc chụp trực tiếp bằng camera trong app** (chống gian lận): tự lấy GPS + giờ chụp + đốt watermark lên ảnh; server tự đối chiếu toạ độ với ranh giới lô và gắn cờ cho admin (ngoài lô / thiếu GPS). Báo cáo & hỗ trợ vẫn chụp/chọn ảnh thường. Ảnh tự nén chuẩn HD, tối đa 5 ảnh/lần. Offline: camera + GPS chạy không cần mạng, ảnh tạm lưu rồi tự đồng bộ khi có mạng (hoặc "Đồng bộ ngay"); báo cáo bất thường bắt buộc ≥1 ảnh. **Báo cáo cuối ngày không gửi được nếu để trống** (phải nhập số công/diện tích, hoặc bật Bất thường). Màn "Các ngày tới" cho **thu gọn/mở từng ngày** để dễ xem. Mỗi việc hiển thị **Hướng dẫn (SOP)** lấy từ bước quy trình (admin nhập ở Quản lý quy trình).
