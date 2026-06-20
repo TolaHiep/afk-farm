@@ -244,40 +244,42 @@ export function TaskDetail() {
 
         {/* Chụp ảnh tại chỗ (camera in-app) — chống gian lận */}
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-baseline justify-between mb-1">
             <p className="font-semibold text-gray-900">
-              Ảnh {task.requirePhoto ? <span className="text-red-600">(bắt buộc, chụp tại chỗ)</span> : "(tùy chọn, chụp tại chỗ)"}
+              Ảnh{task.requirePhoto && <span className="text-red-600 ml-0.5">*</span>}
             </p>
-            <button
-              onClick={() => { setCameraBlocked(false); setShowCamera(true); }}
-              disabled={captured.length >= MAX_PHOTOS}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
-            >
-              <Camera className="w-4 h-4" /> Chụp ảnh
-            </button>
+            <span className="text-xs text-gray-400">{captured.length}/{MAX_PHOTOS}</span>
           </div>
+          <p className="text-xs text-gray-500 mb-3">Chụp trực tiếp tại lô{task.requirePhoto ? " · bắt buộc" : ""}</p>
           {cameraBlocked && (
-            <p className="mb-2 text-sm text-red-600">
-              Thiết bị không hỗ trợ hoặc chưa cấp quyền camera. Việc bắt buộc ảnh không thể hoàn thành cho tới khi bật camera.
+            <p className="mb-3 text-sm text-red-600">
+              Thiết bị chưa cấp quyền camera. Việc bắt buộc ảnh không hoàn thành được cho tới khi bật camera.
             </p>
           )}
-          {captured.length === 0 ? (
-            <p className="text-sm text-gray-500">Chưa có ảnh. Bấm "Chụp ảnh" để chụp tại lô.</p>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {thumbs.map((src, i) => (
-                <div key={src} className="relative">
-                  <img src={src} alt="" className="w-full h-24 object-cover rounded-lg" />
-                  <button
-                    onClick={() => setCaptured((prev) => prev.filter((_, idx) => idx !== i))}
-                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-3 gap-2">
+            {thumbs.map((src, i) => (
+              <div key={src} className="relative aspect-square">
+                <img src={src} alt="" className="w-full h-full object-cover rounded-xl" />
+                <button
+                  onClick={() => setCaptured((prev) => prev.filter((_, idx) => idx !== i))}
+                  aria-label="Xoá ảnh"
+                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            {captured.length < MAX_PHOTOS && (
+              <button
+                type="button"
+                onClick={() => { setCameraBlocked(false); setShowCamera(true); }}
+                aria-label="Chụp ảnh"
+                className="aspect-square rounded-xl border-2 border-dashed border-green-400 bg-green-50 flex items-center justify-center text-green-600 hover:bg-green-100 active:bg-green-100"
+              >
+                <Camera className="w-8 h-8" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Action Buttons */}

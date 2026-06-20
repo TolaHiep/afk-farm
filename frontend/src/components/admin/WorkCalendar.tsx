@@ -389,26 +389,28 @@ export function WorkCalendar() {
                     {detailPhotos.map((p) => {
                       const flag = photoFlag(p);
                       const tone = flag.tone === "bad"
-                        ? "bg-red-100 text-red-700"
+                        ? "bg-red-600 text-white"
                         : flag.tone === "warn"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-green-100 text-green-700";
+                          ? "bg-amber-500 text-white"
+                          : "bg-green-600 text-white";
                       return (
-                        <div key={p.url} className="space-y-1">
-                          <button type="button" onClick={() => setLightbox(p.url)} className="block w-full">
-                            <img src={p.url} alt="ảnh việc" className="w-full h-28 object-cover rounded-lg border border-gray-200" />
+                        <div key={p.url} className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                          <button type="button" onClick={() => setLightbox(p.url)} className="relative block w-full">
+                            <img src={p.url} alt="ảnh việc" className="w-full aspect-square object-cover" />
+                            <span className={`absolute top-1.5 left-1.5 text-[11px] font-medium px-1.5 py-0.5 rounded ${tone}`}>{flag.label}</span>
+                            {!p.inApp && <span className="absolute top-1.5 right-1.5 text-[11px] px-1.5 py-0.5 rounded bg-gray-900/70 text-white">Không in-app</span>}
                           </button>
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className={`text-xs px-1.5 py-0.5 rounded ${tone}`}>{flag.label}</span>
-                            {!p.inApp && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">Không chụp in-app</span>}
-                          </div>
-                          {p.lat != null && p.lng != null && (
-                            <a className="text-xs text-blue-600 underline" target="_blank" rel="noopener noreferrer"
-                               href={`https://www.google.com/maps?q=${p.lat},${p.lng}`}>
-                              {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
-                            </a>
+                          {(p.capturedAt || (p.lat != null && p.lng != null)) && (
+                            <div className="px-2 py-1.5 text-[11px] text-gray-500 space-y-0.5">
+                              {p.capturedAt && <div>{p.capturedAt}</div>}
+                              {p.lat != null && p.lng != null && (
+                                <a className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer"
+                                   href={`https://www.google.com/maps?q=${p.lat},${p.lng}`}>
+                                  📍 {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
+                                </a>
+                              )}
+                            </div>
                           )}
-                          {p.capturedAt && <div className="text-[11px] text-gray-500">{p.capturedAt}</div>}
                         </div>
                       );
                     })}
