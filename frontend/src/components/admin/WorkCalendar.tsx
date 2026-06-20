@@ -1,6 +1,6 @@
 import React from "react";
 import { useSearchParams } from "react-router";
-import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X, CheckCircle2 } from "lucide-react";
+import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask, getTaskPhotos } from "../../lib/queries";
@@ -91,11 +91,14 @@ export function WorkCalendar() {
     setTasks((t as Task[]) ?? []);
   }, [cells]);
 
+  // Cờ refetch nền (đổi tháng) — KHÁC loading lần đầu. Khi refetch, giữ tasks cũ trên màn,
+  // chỉ hiện spinner nhỏ ở header thay vì xoá toàn trang gây nháy trắng.
+  const [refetching, setRefetching] = React.useState(false);
   React.useEffect(() => {
-    setLoading(true);
+    setRefetching(true);
     reloadCalendar()
       .catch(() => setLoadError("Không tải được lịch công việc từ máy chủ"))
-      .finally(() => setLoading(false));
+      .finally(() => { setRefetching(false); setLoading(false); });
   }, [reloadCalendar]);
 
   const groupByPlot = (dayTasks: Task[]) => {
@@ -213,7 +216,8 @@ export function WorkCalendar() {
   const selGrouped = groupByPlot(selTasks);
   const selCompleted = selTasks.filter((t) => t.status === "completed");
 
-  if (loading) {
+  // Chỉ block full màn khi tải LẦN ĐẦU (chưa có task nào). Refetch nền giữ UI cũ.
+  if (loading && tasks.length === 0) {
     return <div className="p-10 text-center text-gray-400">Đang tải lịch công việc…</div>;
   }
   if (loadError) {
@@ -258,6 +262,7 @@ export function WorkCalendar() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
             <Calendar className="w-5 h-5 text-green-600" /> {monthLabel}
+            {refetching && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" aria-label="Đang tải tháng mới" />}
           </h3>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={() => setViewMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}>

@@ -44,5 +44,9 @@ export function useAppSettings(): AppSettings {
     window.addEventListener(EVENT, refresh);
     return () => { alive = false; window.removeEventListener(EVENT, refresh); };
   }, []);
+  // Đồng bộ tab browser title theo tên phần mềm đang cấu hình
+  useEffect(() => {
+    if (s.appName) document.title = s.appName;
+  }, [s.appName]);
   return s;
 }
