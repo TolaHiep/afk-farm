@@ -15,9 +15,11 @@
   "scope",
   "require_photo",
   "offset_days",
-  "prerequisite"
+  "prerequisite",
+  "sop"
  ],
  "fields": [
+  {"fieldname": "sop", "fieldtype": "Text", "label": "Hướng dẫn thực hiện (SOP)"},
   {
    "fieldname": "step",
    "fieldtype": "Int",

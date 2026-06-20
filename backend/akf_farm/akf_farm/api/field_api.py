@@ -207,6 +207,20 @@ def upcoming_tasks(from_date=None, days=10):
     )
 
 
+def _task_sop(doc):
+    """SOP của việc = SOP của bước tương ứng trong quy trình của chu kỳ (khớp theo tên việc)."""
+    if not doc.get("cycle"):
+        return ""
+    proc = frappe.db.get_value("Crop Cycle", doc.cycle, "cultivation_process")
+    if not proc:
+        return ""
+    base = re.sub(r"\s*\(lần \d+/\d+\)$", "", doc.title or "")  # bỏ hậu tố "(lần x/y)"
+    for s in frappe.get_doc("Cultivation Process", proc).steps:
+        if s.description == base:
+            return s.sop or ""
+    return ""
+
+
 @frappe.whitelist()
 def task_detail(task):
     doc = frappe.get_doc("Farm Task", task)
@@ -216,6 +230,7 @@ def task_detail(task):
         "id": doc.name, "title": doc.title, "plotId": doc.block, "crop": doc.crop,
         "date": str(doc.task_date), "status": doc.status, "requirePhoto": bool(doc.require_photo),
         "priority": doc.priority, "photos": [p.image for p in doc.photos],
+        "sop": _task_sop(doc),
     }
 
 

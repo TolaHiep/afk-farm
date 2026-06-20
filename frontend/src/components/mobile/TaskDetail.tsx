@@ -212,35 +212,18 @@ export function TaskDetail() {
           </div>
         </div>
 
-        {/* SOP */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="font-bold text-gray-900 mb-3">Hướng dẫn thực hiện</h3>
-          <div className="space-y-2 text-gray-700">
-            {task.title === "Tưới nước" && (
-              <>
-                <p>• Tưới đều khắp khu vực</p>
-                <p>• Đảm bảo độ ẩm đất 60-70%</p>
-                <p>• Tránh tưới quá nhiều gây úng</p>
-              </>
-            )}
-            {task.title === "Bón phân" && (
-              <>
-                <p>• Bón phân NPK theo liều lượng: 50kg/ha</p>
-                <p>• Rải đều xung quanh gốc cây</p>
-                <p>• Tưới nước sau khi bón phân</p>
-                <p>• Chụp ảnh khu vực sau khi hoàn thành</p>
-              </>
-            )}
-            {task.title === "Kiểm tra sâu bệnh" && (
-              <>
-                <p>• Kiểm tra lá, thân, rễ cây</p>
-                <p>• Tìm dấu hiệu sâu đục thân, rệp</p>
-                <p>• Chụp ảnh nếu phát hiện bất thường</p>
-                <p>• Báo cáo ngay nếu có vấn đề</p>
-              </>
-            )}
+        {/* SOP — lấy từ bước quy trình (nhập ở Quản lý quy trình) */}
+        {task.sop && task.sop.trim() && (
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-bold text-gray-900 mb-3">Hướng dẫn thực hiện</h3>
+            <div className="space-y-1 text-gray-700">
+              {task.sop.split("\n").map((line: string, i: number) => {
+                const t = line.trim();
+                return t ? <p key={i}>• {t.replace(/^[-•]\s*/, "")}</p> : null;
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Chụp ảnh tại chỗ (camera in-app) — chống gian lận */}
         <div className="bg-white rounded-lg shadow p-4">

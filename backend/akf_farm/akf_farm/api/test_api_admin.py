@@ -89,3 +89,22 @@ class TestAdminApi(FrappeTestCase):
              "offsetDays": 0, "estimatedDays": 1, "workPerHa": 1}])
         self.assertTrue(frappe.db.exists("Farm Task", {"cycle": cyc["id"], "title": "Bón phân"}))
         self.assertFalse(frappe.db.exists("Farm Task", {"cycle": cyc["id"], "title": "Tưới"}))
+
+    def test_step_sop_roundtrip_and_task_detail(self):
+        """SOP nhập ở bước quy trình -> list_processes trả về + task_detail trả đúng SOP của việc."""
+        from akf_farm.api import field_api
+        from frappe.utils import getdate
+        today = str(getdate())
+        if frappe.db.exists("Cultivation Process", "P SOP"):
+            frappe.delete_doc("Cultivation Process", "P SOP", force=True)
+        for c in frappe.get_all("Crop Cycle", filters={"block": "B ADM", "crop": "Sâm"}, pluck="name"):
+            frappe.delete_doc("Crop Cycle", c, force=True)
+        admin_api.create_process("P SOP", crop="Sâm", cycle_length_days=30, steps=[
+            {"description": "Tưới", "frequencyType": "one_time", "scopeRaw": "per_crop",
+             "offsetDays": 0, "sop": "- Tưới đều\n- Giữ ẩm 60-70%"}])
+        p = next(x for x in admin_api.list_processes() if x["id"] == "P SOP")
+        self.assertEqual(p["steps"][0]["sop"], "- Tưới đều\n- Giữ ẩm 60-70%")
+        cyc = admin_api.create_crop_cycle("B ADM", "Sâm", today, cultivation_process="P SOP")
+        names = frappe.get_all("Farm Task", filters={"cycle": cyc["id"], "title": "Tưới"}, pluck="name")
+        self.assertTrue(names)
+        self.assertEqual(field_api.task_detail(names[0])["sop"], "- Tưới đều\n- Giữ ẩm 60-70%")

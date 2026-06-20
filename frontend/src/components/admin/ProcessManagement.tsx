@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess } from "../../lib/queries";
 
-interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; timesPerPeriod: number; estimatedDays: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; prerequisite: string; }
+interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; timesPerPeriod: number; estimatedDays: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; prerequisite: string; sop: string; }
 interface Process { id: string; name: string; crop: string; cycleLengthDays: number; steps: Step[]; }
 
 const FREQ_OPTIONS: { value: string; label: string }[] = [
@@ -14,13 +14,13 @@ const FREQ_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const emptyProcess = (): Process => ({ id: "", name: "", crop: "Gấc", cycleLengthDays: 0, steps: [] });
-const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "daily", frequencyValue: 1, timesPerPeriod: 1, estimatedDays: 1, scope: "", scopeRaw: "shared", requirePhoto: false, offsetDays: 0, prerequisite: "" });
+const emptyStep = (): Step => ({ step: 0, description: "", workPerHa: 0, frequency: "", frequencyType: "daily", frequencyValue: 1, timesPerPeriod: 1, estimatedDays: 1, scope: "", scopeRaw: "shared", requirePhoto: false, offsetDays: 0, prerequisite: "", sop: "" });
 
 // Chuẩn hóa bước để gửi lên API (chỉ field backend cần)
 const toApiSteps = (steps: Step[]) =>
   steps.map((s) => ({ description: s.description, workPerHa: s.workPerHa, frequencyType: s.frequencyType,
     frequencyValue: s.frequencyValue, timesPerPeriod: s.timesPerPeriod, estimatedDays: s.estimatedDays,
-    scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto, offsetDays: s.offsetDays, prerequisite: s.prerequisite }));
+    scopeRaw: s.scopeRaw, requirePhoto: s.requirePhoto, offsetDays: s.offsetDays, prerequisite: s.prerequisite, sop: s.sop }));
 
 type ProcModal = { mode: "add" | "edit"; data: Process } | null;
 type StepModal = { mode: "add" | "edit"; procId: string; index: number; data: Step } | null;
@@ -368,6 +368,10 @@ function StepForm({ modal, otherSteps, onClose, onSave }: { modal: { mode: "add"
         <input type="checkbox" checked={form.requirePhoto} onChange={(e) => setForm({ ...form, requirePhoto: e.target.checked })} className="w-4 h-4" />
         Yêu cầu chụp ảnh khi hoàn thành
       </label>
+      <Field label="Hướng dẫn thực hiện (SOP) — tổ trưởng xem trên mobile">
+        <textarea value={form.sop} onChange={(e) => setForm({ ...form, sop: e.target.value })} rows={4}
+          className={inputCls} placeholder="Mỗi dòng một ý, vd:&#10;- Tưới đều khắp khu vực&#10;- Đảm bảo độ ẩm đất 60-70%" />
+      </Field>
       <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.description.trim()} />
     </Modal>
   );
