@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { useAppSettings } from "../../lib/useAppSettings";
 import { useAuth } from "../../lib/auth";
+import { getNotifications } from "../../lib/queries";
+import { isRead } from "../../lib/notificationsRead";
 
 export function AdminLayout() {
   const app = useAppSettings();
@@ -17,6 +19,20 @@ export function AdminLayout() {
   const [collapsed, setCollapsed] = React.useState(false); // thu gọn trên desktop
   const [mobileOpen, setMobileOpen] = React.useState(false); // drawer trên mobile/tablet
   const [userOpen, setUserOpen] = React.useState(false); // mở nút Đăng xuất khi bấm tên admin
+
+  // Badge số thông báo chưa đọc: poll mỗi 30s + tự refetch khi chuyển trang (URL đổi)
+  const [unread, setUnread] = React.useState(0);
+  React.useEffect(() => {
+    let alive = true;
+    const refresh = () => {
+      getNotifications()
+        .then((items: any[]) => { if (alive) setUnread(items.filter((n) => !isRead(n.id)).length); })
+        .catch(() => { /* giữ giá trị cũ */ });
+    };
+    refresh();
+    const t = setInterval(refresh, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, [location.pathname]);
 
   const menuItems = [
     { path: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -121,9 +137,13 @@ export function AdminLayout() {
             </h2>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <Link to="/admin/notifications" className="relative p-2 hover:bg-gray-100 rounded-lg">
+            <Link to="/admin/notifications" className="relative p-2 hover:bg-gray-100 rounded-lg" title={unread > 0 ? `${unread} thông báo chưa đọc` : "Không có thông báo chưa đọc"}>
               <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {unread > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
             </Link>
           </div>
         </header>

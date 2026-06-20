@@ -1,19 +1,29 @@
 import React from "react";
-import { Filter, Download, ClipboardCheck, ClipboardX, AlertTriangle, LifeBuoy } from "lucide-react";
-import { Button } from "../ui/button";
+import { Filter, ClipboardCheck, ClipboardX, AlertTriangle, LifeBuoy } from "lucide-react";
 import { KPICard } from "../ui/KPICard";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getTeamKpi, getTeamLeaders, getReports, getSupport } from "../../lib/queries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { todayYMD } from "../../lib/today";
 
-const REPORT_DATE = todayYMD();
-
 type CropFilter = "all" | "Gấc" | "Sâm";
+
+// Mặc định: 30 ngày gần đây (hôm nay → 30 ngày trước, dùng UTC để tránh lệch múi giờ)
+function ymdMinusDays(n: number): string {
+  const today = todayYMD();
+  const [y, m, d] = today.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - n);
+  return dt.toISOString().slice(0, 10);
+}
 
 export function TeamLeaderKPI() {
   // Bộ lọc theo cây (mô hình xen canh: mỗi lô có Gấc + Sâm)
   const [cropFilter, setCropFilter] = React.useState<CropFilter>("all");
+  // Lọc theo tổ trưởng + khoảng ngày (áp cho widget báo cáo + bảng + biểu đồ)
+  const [leaderFilter, setLeaderFilter] = React.useState<string>("all");
+  const [fromDate, setFromDate] = React.useState<string>(ymdMinusDays(30));
+  const [toDate, setToDate] = React.useState<string>(todayYMD());
 
   // Dữ liệu lấy từ backend
   const [kpiData, setKpiData] = React.useState<any[]>([]);
@@ -39,45 +49,52 @@ export function TeamLeaderKPI() {
       ? ((row as unknown as Record<string, number>)[field] ?? 0)
       : (row.byCrop?.[cropFilter]?.[field] ?? 0);
 
-  // ===== Thống kê tổng quan báo cáo trong ngày =====
-  const activeLeaders = teamLeaders.filter((t) => t.status === "active");
+  // ===== Thống kê tổng quan báo cáo (theo khoảng + tổ) =====
+  const activeLeaders = teamLeaders
+    .filter((t) => t.status === "active")
+    .filter((t) => leaderFilter === "all" || t.id === leaderFilter);
   const totalTeams = activeLeaders.length;
 
-  // Các tổ đã báo cáo trong ngày (distinct teamLeaderId thuộc tổ active)
-  const reportedIds = new Set(
-    teamLeaderReports
-      .filter((r) => r.date === REPORT_DATE && activeLeaders.some((t) => t.id === r.teamLeaderId))
-      .map((r) => r.teamLeaderId)
-  );
+  // Báo cáo trong khoảng + thuộc tổ đang chọn
+  const reportsInRange = teamLeaderReports
+    .filter((r) => r.date >= fromDate && r.date <= toDate)
+    .filter((r) => activeLeaders.some((t) => t.id === r.teamLeaderId));
+  // Các tổ đã có ít nhất 1 báo cáo trong khoảng (distinct)
+  const reportedIds = new Set(reportsInRange.map((r) => r.teamLeaderId));
   const reportedCount = reportedIds.size;
   const notReportedCount = Math.max(totalTeams - reportedCount, 0);
   const reportRate = totalTeams ? Math.round((reportedCount / totalTeams) * 100) : 0;
 
-  // Tổ đang gặp vấn đề: có báo cáo bất thường HOẶC có yêu cầu hỗ trợ đang chờ
+  // Tổ đang gặp vấn đề: có báo cáo bất thường trong khoảng HOẶC có yêu cầu hỗ trợ pending (trong khoảng)
+  const supportInRange = supportRequests
+    .filter((s) => activeLeaders.some((t) => t.id === s.teamLeaderId))
+    .filter((s) => {
+      const d = (s.sentAt || "").slice(0, 10);
+      return !d || (d >= fromDate && d <= toDate);
+    });
   const problemIds = new Set<string>();
-  teamLeaderReports
-    .filter((r) => r.date === REPORT_DATE && r.abnormal)
-    .forEach((r) => problemIds.add(r.teamLeaderId));
-  supportRequests
-    .filter((s) => s.status === "pending")
-    .forEach((s) => problemIds.add(s.teamLeaderId));
+  reportsInRange.filter((r) => r.abnormal).forEach((r) => problemIds.add(r.teamLeaderId));
+  supportInRange.filter((s) => s.status === "pending").forEach((s) => problemIds.add(s.teamLeaderId));
   const problemCount = problemIds.size;
 
-  // Yêu cầu hỗ trợ
-  const supportSent = supportRequests.length;
-  const supportHandled = supportRequests.filter((s) =>
+  // Yêu cầu hỗ trợ (trong khoảng + theo tổ)
+  const supportSent = supportInRange.length;
+  const supportHandled = supportInRange.filter((s) =>
     ["approved", "rejected", "replied", "done"].includes(s.status)
   ).length;
 
   // Map nhanh: tổ nào đã báo cáo trong ngày (dùng cho bảng)
   const reportedSet = reportedIds;
 
+  // Lọc kpiData theo tổ trưởng đang chọn (áp cho card tổng + chart + bảng)
+  const visibleKpi = kpiData.filter((k) => leaderFilter === "all" || k.teamLeaderId === leaderFilter);
+
   // ===== Số liệu KPI theo cây đang chọn =====
-  const sumOnTime = kpiData.reduce((s, k) => s + val(k, "onTime"), 0);
-  const sumCompleted = kpiData.reduce((s, k) => s + val(k, "completed"), 0);
+  const sumOnTime = visibleKpi.reduce((s, k) => s + val(k, "onTime"), 0);
+  const sumCompleted = visibleKpi.reduce((s, k) => s + val(k, "completed"), 0);
 
   // Dữ liệu biểu đồ theo cây đang chọn
-  const chartData = kpiData.map((k) => ({
+  const chartData = visibleKpi.map((k) => ({
     name: k.name,
     onTime: val(k, "onTime"),
     overdue: val(k, "overdue"),
@@ -94,10 +111,11 @@ export function TeamLeaderKPI() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-gray-500" />
-            <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-              <option>Tất cả tổ trưởng</option>
-              {kpiData.map(k => (
-                <option key={k.teamLeaderId}>{k.name}</option>
+            <select value={leaderFilter} onChange={(e) => setLeaderFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <option value="all">Tất cả tổ trưởng</option>
+              {kpiData.map((k) => (
+                <option key={k.teamLeaderId} value={k.teamLeaderId}>{k.name}</option>
               ))}
             </select>
           </div>
@@ -115,16 +133,14 @@ export function TeamLeaderKPI() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Từ:</span>
-            <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-sm" defaultValue="2026-05-01" />
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} max={toDate}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Đến:</span>
-            <input type="date" className="px-3 py-2 border border-gray-300 rounded-lg text-sm" defaultValue={todayYMD()} />
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} min={fromDate}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
           </div>
-          <Button variant="secondary" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Xuất Excel
-          </Button>
         </div>
       </div>
 
@@ -141,7 +157,7 @@ export function TeamLeaderKPI() {
           title="Tổ chưa báo cáo"
           value={notReportedCount}
           icon={ClipboardX}
-          trend={`Ngày ${REPORT_DATE.split("-").reverse().join("/")}`}
+          trend={`Từ ${fromDate.split("-").reverse().join("/")} đến ${toDate.split("-").reverse().join("/")}`}
           color={notReportedCount > 0 ? "yellow" : "green"}
         />
         <KPICard
@@ -247,7 +263,7 @@ export function TeamLeaderKPI() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {kpiData.map((kpi) => {
+              {visibleKpi.map((kpi) => {
                 const completed = val(kpi, "completed");
                 const onTime = val(kpi, "onTime");
                 const rate = completed ? onTime / completed : 0;
@@ -285,7 +301,7 @@ export function TeamLeaderKPI() {
 
         {/* Dạng thẻ: chỉ hiện trên điện thoại, xếp dọc, không tràn ngang */}
         <div className="md:hidden divide-y divide-gray-200">
-          {kpiData.map((kpi) => {
+          {visibleKpi.map((kpi) => {
             const completed = val(kpi, "completed");
             const onTime = val(kpi, "onTime");
             const rate = completed ? onTime / completed : 0;
