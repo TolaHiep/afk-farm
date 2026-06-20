@@ -54,6 +54,13 @@ class TestFieldApi(FrappeTestCase):
                                 content="ok", photos=["/files/a.jpg"], client_uuid="r1")
         self.assertEqual(frappe.db.count("Team Leader Report", {"client_uuid": "r1"}), 1)
 
+    def test_report_rejects_empty_content(self):
+        """Báo cáo không điền gì (content rỗng) phải bị từ chối."""
+        frappe.set_user(self.leader)
+        with self.assertRaises(frappe.ValidationError):
+            field_api.submit_report(block="B FLD", crop="Gấc", date="2026-06-14",
+                                    content="   ", client_uuid="emptyc")
+
     def test_report_and_support_as_leader_role(self):
         """Tổ trưởng phải gửi được báo cáo + yêu cầu hỗ trợ - regression cho lỗi quyền tạo."""
         frappe.set_user(self.leader)

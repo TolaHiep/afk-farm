@@ -107,6 +107,11 @@ export function DailyReport() {
       alert("Bạn cần chụp ảnh bất thường!");
       return;
     }
+    // Không cho gửi báo cáo trống: phải nhập số công / diện tích, hoặc báo bất thường
+    if (!hasAnomaly && !work.trim() && !area.trim()) {
+      alert("Vui lòng nhập số công hoặc diện tích (hoặc bật Bất thường) trước khi gửi.");
+      return;
+    }
 
     // Soạn nội dung báo cáo từ các trường của form
     const lines = [

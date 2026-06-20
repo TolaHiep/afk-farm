@@ -313,6 +313,8 @@ def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uu
     photos = _as_list(photos)
     if client_uuid and frappe.db.exists("Team Leader Report", {"client_uuid": client_uuid}):
         return {"ok": True}  # idempotent chống gửi trùng offline
+    if not (content or "").strip():
+        frappe.throw("Báo cáo không được để trống")
     if int(abnormal or 0) and not photos:
         frappe.throw("Báo cáo bất thường bắt buộc ảnh")
     doc = frappe.get_doc({
