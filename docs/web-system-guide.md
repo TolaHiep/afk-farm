@@ -92,6 +92,7 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 - Phạm vi (Theo cây / Dùng chung), Yêu cầu ảnh
 - **Bắt đầu:** Ngay / Sau N ngày
 - **Bước tiên quyết** (tùy chọn): bước phải hoàn thành trước
+- **Hướng dẫn (SOP):** nhập hướng dẫn cho từng bước → tổ trưởng xem trên mobile khi làm việc đó
 - (Nhập từ Excel: tạm ẩn)
 
 Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
@@ -140,6 +141,12 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 **Filter Tabs:**
 - Tất cả, Chưa đọc, Quá hạn, Bất thường
 
+**Email (thay push):** khi bật email trong Cài đặt, hệ thống gửi **email tổng hợp hằng ngày** cho admin (việc quá hạn + bất thường mới); trả lời yêu cầu hỗ trợ → gửi email cho tổ trưởng. (Web-push không dùng vì trình duyệt in-app Zalo/FB chặn + iOS hạn chế.)
+
+### 11b. Cài Đặt (`/admin/settings`)
+- Tab **Phần mềm**: tên, công ty, liên hệ, **tải logo lên** (ảnh).
+- Tab **Email (SMTP)**: host/port/email gửi/tên/**mật khẩu** + "Bật gửi email"; nút **Gửi email test** và **Gửi thông báo tổng hợp** (gửi ngay bản tổng hợp quá hạn + bất thường).
+
 ### 12. Chi Tiết Bất Thường (`/admin/anomaly/:id`)
 **Thông Tin:**
 - Loại: úng nước, hạn, sâu bệnh, hỏng giàn, khác
@@ -182,7 +189,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 ### 4. Chi Tiết Việc (`/mobile/task/:id`)
 **Thông Tin:**
 - Lô, cây, ngày
-- SOP (hướng dẫn ngắn gọn)
+- SOP (hướng dẫn) — lấy từ bước quy trình admin nhập; chỉ hiện khi bước đó có SOP
 
 **Nút Lớn:**
 - "Hoàn thành" (bấm trực tiếp, không cần bước "Bắt đầu")
