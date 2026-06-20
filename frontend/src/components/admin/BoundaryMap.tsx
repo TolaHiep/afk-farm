@@ -21,6 +21,12 @@ function pointInPolygon(pt: Pt, poly: Pt[]): boolean {
   return inside;
 }
 
+// Hai đa giác có chồng lấn không (heuristic: đỉnh của cái này nằm trong cái kia) — đủ để cảnh báo
+function polygonsOverlap(a: Pt[], b: Pt[]): boolean {
+  if (a.length < 3 || b.length < 3) return false;
+  return a.some((p) => pointInPolygon(p, b)) || b.some((p) => pointInPolygon(p, a));
+}
+
 export function BoundaryMap({
   onChange,
   initial,
@@ -36,6 +42,8 @@ export function BoundaryMap({
   splitPreview?: { label: string; polygon: Pt[] }[];
   // Các vùng đã có — hiển thị trên map (đỏ nét đứt) + chặn vẽ điểm vào trong (tránh chồng lấn)
   avoid?: { label?: string; polygon: Pt[] }[];
+  // Các lô khác trong vùng — hiển thị (xanh nét đứt) + cảnh báo nếu chồng lấn, KHÔNG chặn
+  warnOverlap?: { label?: string; polygon: Pt[] }[];
 }) {
   const elRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<L.Map | null>(null);
@@ -43,12 +51,14 @@ export function BoundaryMap({
   const constraintLayerRef = React.useRef<L.LayerGroup | null>(null);
   const previewLayerRef = React.useRef<L.LayerGroup | null>(null);
   const avoidLayerRef = React.useRef<L.LayerGroup | null>(null);
+  const warnLayerRef = React.useRef<L.LayerGroup | null>(null);
   const [points, setPoints] = React.useState<Pt[]>(initial ?? []);
   const [area, setArea] = React.useState(0);
 
   const [search, setSearch] = React.useState("");
   const [coord, setCoord] = React.useState("");
   const [msg, setMsg] = React.useState("");
+  const [warn, setWarn] = React.useState("");
   const [searching, setSearching] = React.useState(false);
 
   // Ref tới constraint mới nhất để event handler trong useEffect-init không bị stale
@@ -83,6 +93,7 @@ export function BoundaryMap({
     ).addTo(map);
     constraintLayerRef.current = L.layerGroup().addTo(map);
     avoidLayerRef.current = L.layerGroup().addTo(map);
+    warnLayerRef.current = L.layerGroup().addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     previewLayerRef.current = L.layerGroup().addTo(map);
     map.on("click", (e: L.LeafletMouseEvent) => {
@@ -222,6 +233,35 @@ export function BoundaryMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [avoid]);
 
+  // Vẽ các lô khác trong vùng (xanh nét đứt) — chỉ tham chiếu, KHÔNG chặn
+  React.useEffect(() => {
+    const layer = warnLayerRef.current;
+    if (!layer) return;
+    layer.clearLayers();
+    (warnOverlap || []).forEach((z) => {
+      if (z.polygon.length < 3) return;
+      const latlngs = z.polygon.map((p) => [p.lat, p.lng] as [number, number]);
+      L.polygon(latlngs, {
+        color: "#2563eb", weight: 1.5, dashArray: "5,4",
+        fillColor: "#3b82f6", fillOpacity: 0.08, interactive: false,
+      }).addTo(layer);
+      if (z.label) {
+        const c = latlngs.reduce((acc, [la, ln]) => [acc[0] + la, acc[1] + ln], [0, 0]);
+        L.marker([c[0] / latlngs.length, c[1] / latlngs.length], {
+          interactive: false,
+          icon: L.divIcon({ className: "akf-plot-label", html: `<span>${z.label}</span>` }),
+        }).addTo(layer);
+      }
+    });
+  }, [warnOverlap]);
+
+  // Cảnh báo (không chặn) khi ranh giới đang vẽ chồng lấn lô khác trong vùng
+  React.useEffect(() => {
+    if (points.length < 3 || !warnOverlap || !warnOverlap.length) { setWarn(""); return; }
+    const hit = warnOverlap.filter((z) => polygonsOverlap(points, z.polygon)).map((z) => z.label).filter(Boolean);
+    setWarn(hit.length ? `Ranh giới đang chồng lấn lô: ${hit.join(", ")}. Vẫn lưu được, nhưng nên chỉnh lại để không đè lô khác.` : "");
+  }, [points, warnOverlap]);
+
   // Tìm khu vực theo tên (OpenStreetMap Nominatim — miễn phí, không cần key)
   const doSearch = async () => {
     const q = search.trim();
@@ -294,6 +334,7 @@ export function BoundaryMap({
         </div>
       </div>
       {msg && <p className="text-xs text-red-600 mb-2">{msg}</p>}
+      {warn && <p className="text-xs text-amber-600 mb-2">⚠️ {warn}</p>}
 
       <div ref={elRef} className="w-full h-[clamp(320px,52vh,460px)] rounded-lg overflow-hidden border border-gray-200 relative z-0" />
       <div className="mt-3 flex items-center justify-between flex-wrap gap-2">

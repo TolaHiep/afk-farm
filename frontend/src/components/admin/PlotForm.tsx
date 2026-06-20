@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "../ui/button";
 import { BoundaryMap } from "./BoundaryMap";
-import { getZones, getTeamLeaders, getPlot, createZone, createPlot, updatePlot, createPlotsBulk } from "../../lib/queries";
+import { getZones, getTeamLeaders, getPlot, getPlots, createZone, createPlot, updatePlot, createPlotsBulk } from "../../lib/queries";
 import { polygonFromGeoJSON, geodesicArea, type LatLng } from "../../lib/geo";
 import {
   splitPolygonByWeights, equalWeights, keepSmallWeights,
@@ -36,6 +36,7 @@ export function PlotForm() {
 
   const [zones, setZones] = React.useState<any[]>([]);
   const [leaders, setLeaders] = React.useState<any[]>([]);
+  const [allPlots, setAllPlots] = React.useState<any[]>([]);
 
   const [name, setName] = React.useState("");
   const [zoneId, setZoneId] = React.useState(searchParams.get("zone") || "");
@@ -63,10 +64,11 @@ export function PlotForm() {
     let alive = true;
     (async () => {
       try {
-        const [zs, ls] = await Promise.all([getZones(), getTeamLeaders()]);
+        const [zs, ls, ps] = await Promise.all([getZones(), getTeamLeaders(), getPlots()]);
         if (!alive) return;
         setZones(zs || []);
         setLeaders(ls || []);
+        setAllPlots(ps || []);
       } catch (e: any) {
         if (alive) setError(e?.message || "Không tải được dữ liệu");
       }
@@ -111,6 +113,17 @@ export function PlotForm() {
       .map((z) => ({ label: z.name as string, polygon: toPts(polygonFromGeoJSON(z.boundary)) }))
       .filter((z): z is { label: string; polygon: Pt[] } => !!z.polygon && z.polygon.length >= 3);
   }, [isZone, zones]);
+
+  // Khi vẽ LÔ thủ công: hiển thị các lô khác cùng vùng (xanh) + cảnh báo nếu chồng lấn (không chặn)
+  const siblingPlots = React.useMemo(() => {
+    if (isZone) return undefined;
+    const zid = zoneId || searchParams.get("zone") || "";
+    if (!zid) return undefined;
+    return allPlots
+      .filter((p) => p.zoneId === zid && p.id !== id)
+      .map((p) => ({ label: p.name as string, polygon: toPts(polygonFromGeoJSON(p.boundary)) }))
+      .filter((p): p is { label: string; polygon: Pt[] } => !!p.polygon && p.polygon.length >= 3);
+  }, [isZone, zoneId, allPlots, id, searchParams]);
 
   const selectedZone = React.useMemo(
     () => zones.find((z) => z.id === (searchParams.get("zone") || zoneId)),
@@ -462,6 +475,7 @@ export function PlotForm() {
             initial={initialPoints}
             constraint={autoMode ? undefined : parentBoundary}
             avoid={avoidZones}
+            warnOverlap={autoMode ? undefined : siblingPlots}
             splitPreview={autoMode && preview ? preview.map((p) => ({ label: p.label, polygon: p.polygon })) : undefined}
           />
 
@@ -472,6 +486,9 @@ export function PlotForm() {
               <strong> Kéo các điểm</strong> để chỉnh lại ranh giới — diện tích tự cập nhật. Dùng "Hoàn tác" để bỏ điểm cuối, "Xóa hết" để vẽ lại.
               {!isZone && parentBoundary && (
                 <> <strong>Lô phải nằm trong ranh giới vùng cha</strong> (vùng vàng nét đứt) — các điểm ngoài vùng sẽ bị từ chối.</>
+              )}
+              {!isZone && siblingPlots && siblingPlots.length > 0 && (
+                <> <strong>Các lô khác trong vùng hiện màu xanh nét đứt</strong> — nếu vẽ chồng lên sẽ có cảnh báo (vẫn lưu được).</>
               )}
               {isZone && avoidZones && avoidZones.length > 0 && (
                 <> <strong>Các vùng đã có hiện màu đỏ nét đứt</strong> — không vẽ chồng lên chúng (điểm rơi vào vùng đỏ sẽ bị từ chối).</>
