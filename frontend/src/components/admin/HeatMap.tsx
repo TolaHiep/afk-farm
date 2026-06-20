@@ -117,20 +117,26 @@ function SatelliteMap({
       zonePoly.on("click", () => { onSelectZone(z.id); map.flyToBounds(L.latLngBounds(zg.polygon), { maxZoom: 17, duration: 0.6, padding: [10, 10] }); });
     });
 
-    // 3) Chỉ hiện viền + tên LÔ của vùng đang chọn (hoặc đang lọc)
+    // 3) Vẽ viền + tên LÔ cho mọi vùng đang hiển thị (không chỉ vùng đang chọn) -
+    //    để khi đến từ deep-link ?plot=, người dùng zoom out van thay cac lo khac
+    //    de click qua. Lo dang chon bold hon, lo o vung khac mo hon de bot noise.
     const activeZone = selectedZone ?? (filterZone !== "all" ? filterZone : null);
-    if (activeZone) {
-      plots.filter((p) => p.zoneId === activeZone).forEach((p) => {
+    shownZones.forEach((z) => {
+      const isActiveZone = z.id === activeZone;
+      plots.filter((p) => p.zoneId === z.id).forEach((p) => {
         const pg = plotGeo[p.id];
         if (!pg) return;
         const selP = selectedPlot === p.id;
         const pp = L.polygon(pg.polygon, {
-          color: "#ffffff", weight: selP ? 3 : 1.2, opacity: 0.9, fill: true, fillOpacity: 0,
+          color: "#ffffff",
+          weight: selP ? 3 : isActiveZone ? 1.2 : 0.8,
+          opacity: selP ? 1 : isActiveZone ? 0.9 : 0.55,
+          fill: true, fillOpacity: 0,
         }).addTo(plotLayer);
         pp.bindTooltip(p.name, { permanent: true, direction: "center", className: "akf-plot-label" });
         pp.on("click", () => onSelectPlot(p.id));
       });
-    }
+    });
 
     // Canh khung nhìn: ưu tiên zoom vào LÔ đang chọn (deep-link), kế tiếp là vùng đang lọc
     if (selectedPlot && plotGeo[selectedPlot]) {
@@ -172,18 +178,17 @@ export function HeatMap() {
         setPlots(p);
         setAnomalies(an ?? []);
         setGeo(buildGeo(z, p));
-        // Deep-link: ?plot=ID hoặc ?zone=ID -> lọc + chọn để bản đồ zoom thẳng tới đó
+        // Deep-link: ?plot=ID hoặc ?zone=ID -> chọn để zoom, GIỮ filterZone = "all"
+        // để các vùng/lô khác vẫn vẽ trên map (zoom out là thấy, click duoc).
         const qPlot = searchParams.get("plot");
         const qZone = searchParams.get("zone");
         if (qPlot) {
           const plot = p.find((x: any) => x.id === qPlot);
           if (plot) {
-            setFilterZone(plot.zoneId);
             setSelectedPlot(plot.id);
-            setSelectedZone(plot.zoneId);
+            setSelectedZone(plot.zoneId); // de drawing logic ve outline lo cho vung nay
           }
         } else if (qZone) {
-          setFilterZone(qZone);
           setSelectedZone(qZone);
         }
         if (qPlot || qZone) {
