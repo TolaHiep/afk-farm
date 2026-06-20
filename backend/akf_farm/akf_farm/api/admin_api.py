@@ -426,7 +426,7 @@ def _set_leader_plots(email, plot_ids):
 @frappe.whitelist()
 def create_team_leader(email, full_name, phone=None, password=None, status="active", plot_ids=None):
     if frappe.db.exists("User", email):
-        frappe.throw(f"Email {email} đã tồn tại")
+        frappe.throw(f"Email {email} đã tồn tại.")
     doc = frappe.get_doc({
         "doctype": "User", "email": email, "first_name": full_name,
         "username": phone or None, "send_welcome_email": 0,

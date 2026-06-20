@@ -69,7 +69,7 @@ export function TeamManagement() {
       await reload();
       setLeaderModal(null);
     } catch (e) {
-      alert("Lưu tổ trưởng thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Lưu tổ trưởng thất bại. Vui lòng thử lại.");
     }
   };
   const deleteLeader = async (id: string) => {
@@ -77,7 +77,7 @@ export function TeamManagement() {
       await deleteTeamLeader(id);
       await reload();
     } catch (e) {
-      alert("Ngừng hoạt động tổ trưởng thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Ngừng hoạt động tổ trưởng thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };
@@ -100,7 +100,7 @@ export function TeamManagement() {
       await reload();
       setMemberModal(null);
     } catch (e) {
-      alert("Lưu tổ viên thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Lưu tổ viên thất bại. Vui lòng thử lại.");
     }
   };
   const deleteMember = async (id: string) => {
@@ -108,7 +108,7 @@ export function TeamManagement() {
       await deleteTeamMember(id);
       await reload();
     } catch (e) {
-      alert("Xóa tổ viên thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Xóa tổ viên thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };

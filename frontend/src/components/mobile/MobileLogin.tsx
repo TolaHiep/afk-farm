@@ -20,7 +20,7 @@ export function MobileLogin() {
       // Tổ trưởng vào giao diện mobile; nếu là admin thì điều hướng đúng khu vực admin.
       navigate(u.role === "admin" ? "/admin/dashboard" : "/mobile/tasks");
     } catch {
-      setError("Tài khoản hoặc mật khẩu không đúng");
+      setError("Tài khoản hoặc mật khẩu không đúng.");
     } finally {
       setLoading(false);
     }

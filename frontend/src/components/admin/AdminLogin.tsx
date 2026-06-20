@@ -20,7 +20,7 @@ export function AdminLogin() {
       const u = await login(email, password);
       navigate(u.role === "team_leader" ? "/mobile/tasks" : "/admin/dashboard");
     } catch {
-      setError("Email hoặc mật khẩu không đúng");
+      setError("Email hoặc mật khẩu không đúng.");
     } finally {
       setLoading(false);
     }

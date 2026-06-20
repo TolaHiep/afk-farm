@@ -62,15 +62,15 @@ export function MobileSupport() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!plotId) {
-      alert("Vui lòng chọn lô!");
+      alert("Vui lòng chọn lô.");
       return;
     }
     if (!type) {
-      alert("Vui lòng chọn loại hỗ trợ!");
+      alert("Vui lòng chọn loại hỗ trợ.");
       return;
     }
     if (!content.trim()) {
-      alert("Vui lòng nhập nội dung yêu cầu!");
+      alert("Vui lòng nhập nội dung yêu cầu.");
       return;
     }
 
@@ -82,7 +82,7 @@ export function MobileSupport() {
       await submitSupport({ ...base, photos });
       setContent("");
       picker.clear();
-      alert("Đã gửi yêu cầu hỗ trợ");
+      alert("Đã gửi yêu cầu hỗ trợ.");
       await loadRequests();
     } catch (err) {
       if (isNetworkError(err)) {
@@ -102,7 +102,7 @@ export function MobileSupport() {
         alert("Mất mạng — đã lưu tạm, sẽ tự gửi khi có mạng (xem màn Đồng bộ).");
       } else {
         console.error("Failed to submit support request:", err);
-        alert("Gửi yêu cầu thất bại");
+        alert((err as any)?.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.");
       }
     } finally {
       setSubmitting(false);

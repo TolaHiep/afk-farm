@@ -165,9 +165,9 @@ def complete_task(task, client_uuid=None, photos=None, photo_meta=None):
     user = frappe.session.user
     if doc.team_leader and doc.team_leader != user \
             and user != "Administrator" and "AKF Admin" not in frappe.get_roles(user):
-        frappe.throw("Không có quyền hoàn thành việc này", frappe.PermissionError)
+        frappe.throw("Không có quyền hoàn thành việc này.", frappe.PermissionError)
     if doc.require_photo and not photos:
-        frappe.throw("Việc này bắt buộc đính kèm ảnh")
+        frappe.throw("Việc này bắt buộc đính kèm ảnh.")
     if client_uuid and doc.client_uuid == client_uuid and doc.status == "completed":
         return {"ok": True}  # idempotent
     doc.status = "completed"
@@ -211,7 +211,7 @@ def upcoming_tasks(from_date=None, days=10):
 def task_detail(task):
     doc = frappe.get_doc("Farm Task", task)
     if doc.team_leader and doc.team_leader != frappe.session.user:
-        frappe.throw("Không có quyền xem việc này", frappe.PermissionError)
+        frappe.throw("Không có quyền xem việc này.", frappe.PermissionError)
     return {
         "id": doc.name, "title": doc.title, "plotId": doc.block, "crop": doc.crop,
         "date": str(doc.task_date), "status": doc.status, "requirePhoto": bool(doc.require_photo),
@@ -251,7 +251,7 @@ def change_my_password(new_password, old_password=None):
         try:
             check_password(user, old_password)
         except frappe.AuthenticationError:
-            frappe.throw("Mật khẩu hiện tại không đúng")
+            frappe.throw("Mật khẩu hiện tại không đúng.")
     doc = frappe.get_doc("User", user)
     doc.new_password = new_password
     doc.save(ignore_permissions=True)
@@ -314,9 +314,9 @@ def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uu
     if client_uuid and frappe.db.exists("Team Leader Report", {"client_uuid": client_uuid}):
         return {"ok": True}  # idempotent chống gửi trùng offline
     if not (content or "").strip():
-        frappe.throw("Báo cáo không được để trống")
+        frappe.throw("Báo cáo không được để trống.")
     if int(abnormal or 0) and not photos:
-        frappe.throw("Báo cáo bất thường bắt buộc ảnh")
+        frappe.throw("Báo cáo bất thường bắt buộc có ảnh.")
     doc = frappe.get_doc({
         "doctype": "Team Leader Report", "team_leader": frappe.session.user,
         "block": block, "crop": crop, "report_date": date, "content": content,

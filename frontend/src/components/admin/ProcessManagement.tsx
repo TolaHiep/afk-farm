@@ -61,7 +61,7 @@ export function ProcessManagement() {
       }
       setProcModal(null);
     } catch (e) {
-      alert("Lưu quy trình thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Lưu quy trình thất bại. Vui lòng thử lại.");
     }
   };
   const deleteProcess = async (id: string) => {
@@ -69,7 +69,7 @@ export function ProcessManagement() {
       await apiDeleteProcess(id);
       await reload();
     } catch (e) {
-      alert("Xóa quy trình thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Xóa quy trình thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };
@@ -92,7 +92,7 @@ export function ProcessManagement() {
       await persistSteps(procId, steps);
       setStepModal(null);
     } catch (e) {
-      alert("Lưu bước thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Lưu bước thất bại. Vui lòng thử lại.");
     }
   };
   const deleteStep = async (procId: string, index: number) => {
@@ -101,7 +101,7 @@ export function ProcessManagement() {
     try {
       await persistSteps(procId, proc.steps.filter((_, i) => i !== index));
     } catch (e) {
-      alert("Xóa bước thất bại: " + (e as Error).message);
+      alert((e as Error).message || "Xóa bước thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };

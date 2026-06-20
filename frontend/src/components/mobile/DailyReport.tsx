@@ -96,15 +96,15 @@ export function DailyReport() {
     if (!activeItem || submitting) return;
 
     if (hasAnomaly && !anomalyType) {
-      alert("Vui lòng chọn loại bất thường!");
+      alert("Vui lòng chọn loại bất thường.");
       return;
     }
     if (hasAnomaly && !anomalyDesc.trim()) {
-      alert("Vui lòng nhập mô tả bất thường!");
+      alert("Vui lòng nhập mô tả bất thường.");
       return;
     }
     if (hasAnomaly && picker.files.length === 0) {
-      alert("Bạn cần chụp ảnh bất thường!");
+      alert("Vui lòng chụp ảnh bất thường.");
       return;
     }
     // Không cho gửi báo cáo trống: phải nhập số công / diện tích, hoặc báo bất thường

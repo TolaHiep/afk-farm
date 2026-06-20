@@ -289,7 +289,7 @@ export function BoundaryMap({
     if (!mapRef.current) return;
     const m = coord.split(/[,\s]+/).map((s) => parseFloat(s)).filter((n) => !Number.isNaN(n));
     if (m.length < 2) {
-      setMsg("Nhập đúng dạng: vĩ độ, kinh độ (vd 11.9404, 108.4583)");
+      setMsg("Nhập đúng dạng: vĩ độ, kinh độ (vd 11.9404, 108.4583).");
       return;
     }
     const [lat, lng] = m;

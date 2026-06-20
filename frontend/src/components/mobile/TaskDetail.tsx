@@ -103,7 +103,7 @@ export function TaskDetail() {
   const handleComplete = () => {
     if (!canComplete) return;
     if (task.requirePhoto && captured.length === 0) {
-      alert("Việc này bắt buộc chụp ảnh tại chỗ (trong app) trước khi hoàn thành!");
+      alert("Việc này bắt buộc chụp ảnh tại chỗ (trong app) trước khi hoàn thành.");
       return;
     }
     setShowConfirmation(true);

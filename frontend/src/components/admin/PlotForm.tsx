@@ -70,7 +70,7 @@ export function PlotForm() {
         setLeaders(ls || []);
         setAllPlots(ps || []);
       } catch (e: any) {
-        if (alive) setError(e?.message || "Không tải được dữ liệu");
+        if (alive) setError(e?.message || "Không tải được dữ liệu.");
       }
       if (isEdit && id) {
         try {
@@ -87,7 +87,7 @@ export function PlotForm() {
             setPoints(existing);
           }
         } catch (e: any) {
-          if (alive) setError(e?.message || "Không tải được dữ liệu lô");
+          if (alive) setError(e?.message || "Không tải được dữ liệu lô.");
         }
       }
     })();
@@ -193,7 +193,7 @@ export function PlotForm() {
     e.preventDefault();
     setError("");
     if (points.length < 3) {
-      setError("Vui lòng vẽ ranh giới trên bản đồ (ít nhất 3 điểm)");
+      setError("Vui lòng vẽ ranh giới trên bản đồ (ít nhất 3 điểm).");
       return;
     }
     const boundary = toGeoJSONPolygon(points);
@@ -208,7 +208,7 @@ export function PlotForm() {
       }
       navigate("/admin/zones");
     } catch (err: any) {
-      setError(err?.message || "Lưu thất bại, vui lòng thử lại");
+      setError(err?.message || "Lưu thất bại. Vui lòng thử lại.");
       setSaving(false);
     }
   };
