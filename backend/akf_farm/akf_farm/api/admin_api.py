@@ -244,10 +244,16 @@ def list_anomalies():
     rows = frappe.get_all("Abnormal Report",
         fields=["name", "type", "block", "crop", "reporter", "report_date", "description", "status", "reply"],
         order_by="report_date desc")
-    return [{"id": r.name, "type": r.type, "plotId": r.block, "crop": r.crop,
-             "reporter": frappe.db.get_value("User", r.reporter, "full_name") if r.reporter else "",
-             "date": str(r.report_date) if r.report_date else "", "description": r.description,
-             "status": r.status, "reply": r.reply or ""} for r in rows]
+    out = []
+    for r in rows:
+        photos = [p.image for p in frappe.get_all(
+            "Farm Task Photo", filters={"parent": r.name, "parenttype": "Abnormal Report"},
+            fields=["image"], order_by="idx asc") if p.image]
+        out.append({"id": r.name, "type": r.type, "plotId": r.block, "crop": r.crop,
+                    "reporter": frappe.db.get_value("User", r.reporter, "full_name") if r.reporter else "",
+                    "date": str(r.report_date) if r.report_date else "", "description": r.description,
+                    "status": r.status, "reply": r.reply or "", "photos": photos})
+    return out
 
 
 @frappe.whitelist()

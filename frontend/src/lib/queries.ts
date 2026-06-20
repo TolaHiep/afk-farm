@@ -97,7 +97,7 @@ export const getUpcomingTasks = (fromDate?: string, days = 10) =>
 export const getTaskDetail = (task: string) => api.get("field_api.task_detail", { task }) as Promise<any>;
 export const completeTask = (task: string, clientUuid?: string, photos?: string[], photoMeta?: PhotoMeta[]) =>
   api.post("field_api.complete_task", { task, client_uuid: clientUuid, photos, photo_meta: photoMeta });
-export const submitReport = (p: { block: string; crop: string; date: string; content: string; photos?: string[]; abnormal?: number; client_uuid?: string }) =>
+export const submitReport = (p: { block: string; crop: string; date: string; content: string; photos?: string[]; abnormal?: number; client_uuid?: string; anomaly_type?: string; anomaly_desc?: string }) =>
   api.post("field_api.submit_report", p);
 export const getMyReports = () => api.get("field_api.my_reports") as Promise<any[]>;
 export const submitSupport = (p: { block: string; type: string; content: string; photos?: string[] }) =>

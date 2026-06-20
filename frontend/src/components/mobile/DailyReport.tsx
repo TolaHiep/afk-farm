@@ -137,6 +137,8 @@ export function DailyReport() {
       const payload = {
         block: activeItem.plotId, crop: activeItem.crop, date, content,
         photos, abnormal: hasAnomaly ? 1 : 0, client_uuid: clientUuid,
+        anomaly_type: hasAnomaly ? anomalyType : undefined,
+        anomaly_desc: hasAnomaly ? anomalyDesc.trim() : undefined,
       };
       await submitReport(payload);
       setReportedIds((prev) => (prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]));
@@ -155,6 +157,8 @@ export function DailyReport() {
         const payload = {
           block: activeItem.plotId, crop: activeItem.crop, date, content,
           photos: small, abnormal: hasAnomaly ? 1 : 0, client_uuid: clientUuid,
+          anomaly_type: hasAnomaly ? anomalyType : undefined,
+          anomaly_desc: hasAnomaly ? anomalyDesc.trim() : undefined,
         };
         enqueueOffline({
           id: clientUuid, kind: "report", payload,

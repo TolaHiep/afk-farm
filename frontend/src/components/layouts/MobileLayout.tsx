@@ -1,17 +1,34 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router";
-import { CheckSquare, Calendar, ClipboardList, Bell, User } from "lucide-react";
+import { CheckSquare, Calendar, ClipboardList, Bell, User, RefreshCw } from "lucide-react";
 import { useAppSettings } from "../../lib/useAppSettings";
+import { listOffline } from "../../lib/offline";
 
 export function MobileLayout() {
   const location = useLocation();
   const app = useAppSettings();
+  // Badge số mục offline chờ đồng bộ (poll qua online/offline event + interval nhẹ)
+  const [pending, setPending] = React.useState(() => listOffline().length);
+  React.useEffect(() => {
+    const tick = () => setPending(listOffline().length);
+    window.addEventListener("online", tick);
+    window.addEventListener("offline", tick);
+    window.addEventListener("storage", tick);
+    const t = setInterval(tick, 5000);
+    return () => {
+      window.removeEventListener("online", tick);
+      window.removeEventListener("offline", tick);
+      window.removeEventListener("storage", tick);
+      clearInterval(t);
+    };
+  }, []);
 
   const navItems = [
     { path: "/mobile/tasks", icon: CheckSquare, label: "Hôm nay" },
     { path: "/mobile/upcoming", icon: Calendar, label: "Sắp tới" },
-    { path: "/mobile/history", icon: ClipboardList, label: "Lịch sử BC" },
+    { path: "/mobile/history", icon: ClipboardList, label: "Lịch sử" },
     { path: "/mobile/notifications", icon: Bell, label: "Thông báo" },
+    { path: "/mobile/offline", icon: RefreshCw, label: "Đồng bộ", badge: pending },
   ];
 
   return (
@@ -40,15 +57,23 @@ export function MobileLayout() {
         <div className="flex justify-around">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const badge = (item as any).badge as number | undefined;
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center py-3 px-4 transition-colors ${
+                className={`relative flex flex-col items-center py-3 px-3 flex-1 transition-colors ${
                   isActive ? "text-green-600" : "text-gray-600"
                 }`}
               >
-                <item.icon className="w-6 h-6" />
+                <div className="relative">
+                  <item.icon className="w-6 h-6" />
+                  {badge && badge > 0 && (
+                    <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs mt-1">{item.label}</span>
               </Link>
             );

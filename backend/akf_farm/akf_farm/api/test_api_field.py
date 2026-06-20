@@ -61,6 +61,29 @@ class TestFieldApi(FrappeTestCase):
             field_api.submit_report(block="B FLD", crop="Gấc", date="2026-06-14",
                                     content="   ", client_uuid="emptyc")
 
+    def test_report_abnormal_creates_anomaly(self):
+        """Báo cáo có abnormal=1 phải tạo song song 1 Abnormal Report (regression P0)."""
+        frappe.set_user(self.leader)
+        frappe.db.delete("Team Leader Report", {"client_uuid": "rab"})
+        frappe.db.delete("Abnormal Report", {"client_uuid": "rab-a"})
+        r = field_api.submit_report(block="B FLD", crop="Gấc", date="2026-06-14",
+                                    content="Bất thường (sâu bệnh): lá vàng",
+                                    photos=["/files/a.jpg"], abnormal=1, client_uuid="rab",
+                                    anomaly_type="sau_benh", anomaly_desc="lá vàng nhiều")
+        self.assertIn("anomalyId", r)
+        ar = frappe.get_doc("Abnormal Report", r["anomalyId"])
+        self.assertEqual(ar.type, "sau_benh")
+        self.assertEqual(ar.description, "lá vàng nhiều")
+        self.assertEqual(ar.status, "pending")
+        self.assertEqual(ar.block, "B FLD")
+        self.assertEqual(len(ar.photos), 1)
+        # Idempotent: gửi lại cùng client_uuid -> không tạo thêm Abnormal Report
+        field_api.submit_report(block="B FLD", crop="Gấc", date="2026-06-14",
+                                content="Bất thường (sâu bệnh): lá vàng",
+                                photos=["/files/a.jpg"], abnormal=1, client_uuid="rab",
+                                anomaly_type="sau_benh", anomaly_desc="lá vàng nhiều")
+        self.assertEqual(frappe.db.count("Abnormal Report", {"client_uuid": "rab-a"}), 1)
+
     def test_report_and_support_as_leader_role(self):
         """Tổ trưởng phải gửi được báo cáo + yêu cầu hỗ trợ - regression cho lỗi quyền tạo."""
         frappe.set_user(self.leader)

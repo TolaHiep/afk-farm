@@ -326,7 +326,8 @@ def my_support():
 
 
 @frappe.whitelist()
-def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uuid=None):
+def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uuid=None,
+                  anomaly_type=None, anomaly_desc=None):
     photos = _as_list(photos)
     if client_uuid and frappe.db.exists("Team Leader Report", {"client_uuid": client_uuid}):
         return {"ok": True}  # idempotent chống gửi trùng offline
@@ -338,16 +339,29 @@ def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uu
         nums = [float(x) for x in _re.findall(r"[-+]?\d*\.?\d+", content or "")]
         if nums and all(n <= 0 for n in nums):
             frappe.throw("Số công / diện tích phải lớn hơn 0, hoặc bật Bất thường.")
-    if int(abnormal or 0) and not photos:
+    is_abnormal = int(abnormal or 0)
+    if is_abnormal and not photos:
         frappe.throw("Báo cáo bất thường bắt buộc có ảnh.")
     doc = frappe.get_doc({
         "doctype": "Team Leader Report", "team_leader": frappe.session.user,
         "block": block, "crop": crop, "report_date": date, "content": content,
-        "abnormal": int(abnormal or 0), "client_uuid": client_uuid,
+        "abnormal": is_abnormal, "client_uuid": client_uuid,
         "photos": [],
     }).insert(ignore_permissions=True)
     rows = _save_photos(doc, photos)
     if rows:
         doc.set("photos", [{"image": r["image"]} for r in rows])
         doc.save(ignore_permissions=True)
+    # Bat thuong: tao song song Abnormal Report de admin co the xem chi tiet/giai quyet
+    if is_abnormal:
+        anomaly_uuid = f"{client_uuid}-a" if client_uuid else None
+        if not anomaly_uuid or not frappe.db.exists("Abnormal Report", {"client_uuid": anomaly_uuid}):
+            ar = frappe.get_doc({
+                "doctype": "Abnormal Report", "type": anomaly_type or "khác",
+                "block": block, "crop": crop, "reporter": frappe.session.user,
+                "report_date": date, "description": (anomaly_desc or "").strip() or content,
+                "status": "pending", "client_uuid": anomaly_uuid,
+                "photos": [{"image": r["image"]} for r in rows] if rows else [],
+            }).insert(ignore_permissions=True)
+            return {"ok": True, "name": doc.name, "anomalyId": ar.name}
     return {"ok": True, "name": doc.name}
