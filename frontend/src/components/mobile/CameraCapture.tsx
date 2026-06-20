@@ -81,7 +81,14 @@ export function CameraCapture({
         <button onClick={onClose} aria-label="Đóng"><X className="w-6 h-6" /></button>
       </div>
       <div className="flex-1 relative">
-        <video ref={videoRef} playsInline muted className="absolute inset-0 w-full h-full object-cover" />
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          onLoadedMetadata={(e) => e.currentTarget.play().catch(() => {})}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
         {!ready && <p className="absolute inset-0 flex items-center justify-center text-white/80 text-sm">Đang mở camera…</p>}
       </div>
       <div className="p-6 flex justify-center bg-black">
