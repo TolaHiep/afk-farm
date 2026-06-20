@@ -122,6 +122,7 @@ export function WorkCalendar() {
   const [detailTask, setDetailTask] = React.useState<Task | null>(null);
   const [detailPhotos, setDetailPhotos] = React.useState<TaskPhoto[]>([]);
   const [detailLoading, setDetailLoading] = React.useState(false);
+  const [lightbox, setLightbox] = React.useState<string | null>(null); // ảnh phóng to trong app
 
   const openDetail = (task: Task) => {
     setDetailTask(task);
@@ -394,9 +395,9 @@ export function WorkCalendar() {
                           : "bg-green-100 text-green-700";
                       return (
                         <div key={p.url} className="space-y-1">
-                          <a href={p.url} target="_blank" rel="noopener noreferrer">
+                          <button type="button" onClick={() => setLightbox(p.url)} className="block w-full">
                             <img src={p.url} alt="ảnh việc" className="w-full h-28 object-cover rounded-lg border border-gray-200" />
-                          </a>
+                          </button>
                           <div className="flex flex-wrap items-center gap-1">
                             <span className={`text-xs px-1.5 py-0.5 rounded ${tone}`}>{flag.label}</span>
                             {!p.inApp && <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">Không chụp in-app</span>}
@@ -419,6 +420,16 @@ export function WorkCalendar() {
               <Button variant="ghost" size="sm" onClick={closeDetail}>Đóng</Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox: phóng to ảnh trong app, có nút đóng (thay vì mở tab mới) */}
+      {lightbox && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4" onClick={() => setLightbox(null)}>
+          <button onClick={() => setLightbox(null)} aria-label="Đóng" className="absolute top-4 right-4 text-white/90 hover:text-white">
+            <X className="w-8 h-8" />
+          </button>
+          <img src={lightbox} alt="ảnh việc" className="max-w-full max-h-full object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
 
