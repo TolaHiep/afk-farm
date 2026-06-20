@@ -6,6 +6,7 @@ import { StatusBadge } from "../ui/StatusBadge";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import { getCropCycles, getZones, getPlots, getProcesses, getReports, createCropCycle, updateCropCycle, deleteCropCycle } from "../../lib/queries";
 import { todayYMD } from "../../lib/today";
+import { toast } from "../../lib/toast";
 
 interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
 
@@ -76,7 +77,7 @@ export function CropCycleManagement() {
 
   const saveCycle = async (data: Cycle) => {
     if (!data.plotId || !data.crop || !data.startDate) {
-      alert("Vui lòng nhập đầy đủ Lô, Loại cây và Ngày bắt đầu.");
+      toast.warning("Vui lòng nhập đầy đủ Lô, Loại cây và Ngày bắt đầu.");
       return;
     }
     setSaving(true);
@@ -100,9 +101,9 @@ export function CropCycleManagement() {
       }
       await reloadCycles();
       setCycleModal(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save crop cycle:", error);
-      alert("Lưu chu kỳ thất bại. Vui lòng thử lại.");
+      toast.error(error?.message || "Lưu chu kỳ thất bại. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
@@ -112,11 +113,11 @@ export function CropCycleManagement() {
       const res: any = await deleteCropCycle(id);
       await reloadCycles();
       if (res?.closed) {
-        alert("Chu kỳ đã có việc hoàn thành nên được ĐÓNG (giữ lịch sử) thay vì xoá; các việc chưa xong đã được gỡ.");
+        toast.info("Chu kỳ đã có việc hoàn thành nên được ĐÓNG (giữ lịch sử) thay vì xoá; các việc chưa xong đã được gỡ.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to delete crop cycle:", error);
-      alert("Xóa chu kỳ thất bại. Vui lòng thử lại.");
+      toast.error(error?.message || "Xóa chu kỳ thất bại. Vui lòng thử lại.");
     } finally {
       setConfirmId(null);
     }

@@ -5,6 +5,7 @@ import { submitReport, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
 import { usePhotoPicker } from "../../lib/usePhotoPicker";
 import { compressImage, dataUrlBytes, ONLINE, OFFLINE } from "../../lib/image";
+import { toast } from "../../lib/toast";
 
 const ANOMALY_TYPES = [
   { value: "ung", label: "Úng nước" },
@@ -96,20 +97,22 @@ export function DailyReport() {
     if (!activeItem || submitting) return;
 
     if (hasAnomaly && !anomalyType) {
-      alert("Vui lòng chọn loại bất thường.");
+      toast.warning("Vui lòng chọn loại bất thường.");
       return;
     }
     if (hasAnomaly && !anomalyDesc.trim()) {
-      alert("Vui lòng nhập mô tả bất thường.");
+      toast.warning("Vui lòng nhập mô tả bất thường.");
       return;
     }
     if (hasAnomaly && picker.files.length === 0) {
-      alert("Vui lòng chụp ảnh bất thường.");
+      toast.warning("Vui lòng chụp ảnh bất thường.");
       return;
     }
-    // Không cho gửi báo cáo trống: phải nhập số công / diện tích, hoặc báo bất thường
-    if (!hasAnomaly && !work.trim() && !area.trim()) {
-      alert("Vui lòng nhập số công hoặc diện tích (hoặc bật Bất thường) trước khi gửi.");
+    // Không cho gửi báo cáo trống: phải nhập số công > 0 hoặc diện tích > 0, hoặc báo bất thường
+    const wNum = parseFloat(work) || 0;
+    const aNum = parseFloat(area) || 0;
+    if (!hasAnomaly && wNum <= 0 && aNum <= 0) {
+      toast.warning("Vui lòng nhập số công hoặc diện tích lớn hơn 0 (hoặc bật Bất thường) trước khi gửi.");
       return;
     }
 
@@ -145,7 +148,7 @@ export function DailyReport() {
           : undefined;
         const adding = (small ?? []).reduce((s, d) => s + dataUrlBytes(d), 0);
         if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
-          alert("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
+          toast.warning("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
           setSubmitting(false);
           return;
         }
@@ -161,7 +164,7 @@ export function DailyReport() {
         setReportedIds((prev) => (prev.includes(activeItem.id) ? prev : [...prev, activeItem.id]));
         navigate("/mobile/success");
       } else {
-        alert(err?.message || "Gửi báo cáo thất bại. Vui lòng thử lại.");
+        toast.error(err?.message || "Gửi báo cáo thất bại. Vui lòng thử lại.");
       }
     } finally {
       setSubmitting(false);

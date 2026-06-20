@@ -1,9 +1,11 @@
 import React from "react";
+import { useSearchParams } from "react-router";
 import { Filter, UserCircle, Calendar, ChevronLeft, ChevronRight, MapPin, X, CheckCircle2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getCalendar, getPlots, getZones, getTeamLeaders, rescheduleTask, reassignTask, getTaskPhotos } from "../../lib/queries";
 import { photoFlag, type TaskPhoto } from "../../lib/capture";
+import { toast } from "../../lib/toast";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 type Task = { id: string; title: string; plotId: string; crop: string; date: string; status: string; teamLeaderId: string; requirePhoto?: boolean; priority?: string };
@@ -18,6 +20,7 @@ const statusLabel = (s: string) =>
   s === "completed" ? "Hoàn thành" : s === "in-progress" ? "Đang làm" : s === "overdue" ? "Quá hạn" : "Chưa làm";
 
 export function WorkCalendar() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = React.useState<Task[]>([]);
   const [plots, setPlots] = React.useState<any[]>([]);
   const [zones, setZones] = React.useState<any[]>([]);
@@ -140,12 +143,45 @@ export function WorkCalendar() {
   };
   const closeDetail = () => setDetailTask(null);
 
+  // Mở chi tiết từ deep link `/admin/calendar?task=<id>&date=YYYY-MM-DD`
+  // - Có `date`: nhảy sang tháng đó trước để lịch nạp đúng cửa sổ rồi mới mở popup.
+  // - Chỉ chạy 1 lần.
+  const autoOpenedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (autoOpenedRef.current) return;
+    const tid = searchParams.get("task");
+    const dateStr = searchParams.get("date");
+    if (!tid) return;
+    // Bước 1: nếu có date và đang ở tháng khác → chuyển tháng và đợi lần render kế tiếp
+    if (dateStr) {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      if (viewMonth.getFullYear() !== y || viewMonth.getMonth() !== m - 1) {
+        setViewMonth(new Date(y, m - 1, 1));
+        const day = new Date(y, m - 1, d); day.setHours(0, 0, 0, 0);
+        setSelectedDay(day);
+        return; // chờ tải lại tasks tháng mới
+      }
+    }
+    // Bước 2: lịch đã có dữ liệu đúng tháng → tìm task và mở popup
+    if (loading || tasks.length === 0) return;
+    const t = tasks.find((x) => x.id === tid);
+    if (!t) return;
+    autoOpenedRef.current = true;
+    const [y, m, d] = t.date.split("-").map(Number);
+    const day = new Date(y, m - 1, d); day.setHours(0, 0, 0, 0);
+    setSelectedDay(day);
+    openDetail(t);
+    const next = new URLSearchParams(searchParams);
+    next.delete("task"); next.delete("date");
+    setSearchParams(next, { replace: true });
+  }, [tasks, loading, viewMonth, searchParams, setSearchParams]);
+
   const handleUpdate = async () => {
     if (!modalTask) return;
     const dateChanged = !!modalDate && modalDate !== modalTask.date;
     const leaderChanged = !!modalLeader && modalLeader !== modalTask.teamLeaderId;
     if (!dateChanged && !leaderChanged) {
-      alert("Chưa có thay đổi nào để cập nhật.");
+      toast.warning("Chưa có thay đổi nào để cập nhật.");
       return;
     }
     setSaving(true);
@@ -154,8 +190,9 @@ export function WorkCalendar() {
       if (leaderChanged) await reassignTask(modalTask.id, modalLeader);
       await reloadCalendar();
       setModalTask(null);
-    } catch (e) {
-      alert("Không cập nhật được công việc. Vui lòng thử lại.");
+      toast.success("Đã cập nhật công việc.");
+    } catch (e: any) {
+      toast.error(e?.message || "Không cập nhật được công việc. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }

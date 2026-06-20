@@ -6,6 +6,7 @@ import { submitSupport, getMySupport, getMyPlots } from "../../lib/queries";
 import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
 import { usePhotoPicker } from "../../lib/usePhotoPicker";
 import { compressImage, dataUrlBytes, ONLINE, OFFLINE } from "../../lib/image";
+import { toast } from "../../lib/toast";
 
 type SupportRequest = {
   id: string;
@@ -62,15 +63,15 @@ export function MobileSupport() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!plotId) {
-      alert("Vui lòng chọn lô.");
+      toast.warning("Vui lòng chọn lô.");
       return;
     }
     if (!type) {
-      alert("Vui lòng chọn loại hỗ trợ.");
+      toast.warning("Vui lòng chọn loại hỗ trợ.");
       return;
     }
     if (!content.trim()) {
-      alert("Vui lòng nhập nội dung yêu cầu.");
+      toast.warning("Vui lòng nhập nội dung yêu cầu.");
       return;
     }
 
@@ -82,14 +83,14 @@ export function MobileSupport() {
       await submitSupport({ ...base, photos });
       setContent("");
       picker.clear();
-      alert("Đã gửi yêu cầu hỗ trợ.");
+      toast.success("Đã gửi yêu cầu hỗ trợ.");
       await loadRequests();
     } catch (err) {
       if (isNetworkError(err)) {
         const small = await Promise.all(picker.files.map((f) => compressImage(f, OFFLINE.maxDim, OFFLINE.quality)));
         const adding = small.reduce((s, d) => s + dataUrlBytes(d), 0);
         if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
-          alert("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
+          toast.warning("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
           return;
         }
         enqueueOffline({
@@ -99,10 +100,10 @@ export function MobileSupport() {
         });
         setContent("");
         picker.clear();
-        alert("Mất mạng — đã lưu tạm, sẽ tự gửi khi có mạng (xem màn Đồng bộ).");
+        toast.info("Mất mạng — đã lưu tạm, sẽ tự gửi khi có mạng (xem màn Đồng bộ).");
       } else {
         console.error("Failed to submit support request:", err);
-        alert((err as any)?.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.");
+        toast.error((err as any)?.message || "Gửi yêu cầu thất bại. Vui lòng thử lại.");
       }
     } finally {
       setSubmitting(false);

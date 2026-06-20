@@ -7,6 +7,7 @@ import {
   createTeamLeader, updateTeamLeader, deleteTeamLeader,
   createTeamMember, updateTeamMember, deleteTeamMember,
 } from "../../lib/queries";
+import { toast } from "../../lib/toast";
 
 interface Leader { id: string; name: string; phone: string; email: string; password?: string; plotId: string; plotIds: string[]; status: string; }
 interface Member { id: string; name: string; phone: string; teamLeaderId: string; status: string; }
@@ -60,7 +61,7 @@ export function TeamManagement() {
           ...(data.password ? { password: data.password } : {}),
         });
       } else {
-        if (!data.email.trim()) { alert("Vui lòng nhập email đăng nhập cho tổ trưởng."); return; }
+        if (!data.email.trim()) { toast.warning("Vui lòng nhập email đăng nhập cho tổ trưởng."); return; }
         await createTeamLeader({
           email: data.email.trim(), full_name: data.name, phone: data.phone,
           password: data.password || undefined, status: data.status,
@@ -69,7 +70,7 @@ export function TeamManagement() {
       await reload();
       setLeaderModal(null);
     } catch (e) {
-      alert((e as Error).message || "Lưu tổ trưởng thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Lưu tổ trưởng thất bại. Vui lòng thử lại.");
     }
   };
   const deleteLeader = async (id: string) => {
@@ -77,7 +78,7 @@ export function TeamManagement() {
       await deleteTeamLeader(id);
       await reload();
     } catch (e) {
-      alert((e as Error).message || "Ngừng hoạt động tổ trưởng thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Ngừng hoạt động tổ trưởng thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };
@@ -100,7 +101,7 @@ export function TeamManagement() {
       await reload();
       setMemberModal(null);
     } catch (e) {
-      alert((e as Error).message || "Lưu tổ viên thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Lưu tổ viên thất bại. Vui lòng thử lại.");
     }
   };
   const deleteMember = async (id: string) => {
@@ -108,7 +109,7 @@ export function TeamManagement() {
       await deleteTeamMember(id);
       await reload();
     } catch (e) {
-      alert((e as Error).message || "Xóa tổ viên thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Xóa tổ viên thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };

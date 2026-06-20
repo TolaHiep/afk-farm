@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
 import { getProcesses, createProcess, updateProcess, deleteProcess as apiDeleteProcess } from "../../lib/queries";
+import { toast } from "../../lib/toast";
 
 interface Step { step: number; description: string; workPerHa: number; frequency: string; frequencyType: string; frequencyValue: number; timesPerPeriod: number; estimatedDays: number; scope: string; scopeRaw: string; requirePhoto: boolean; offsetDays: number; prerequisite: string; sop: string; }
 interface Process { id: string; name: string; crop: string; cycleLengthDays: number; steps: Step[]; }
@@ -61,7 +62,7 @@ export function ProcessManagement() {
       }
       setProcModal(null);
     } catch (e) {
-      alert((e as Error).message || "Lưu quy trình thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Lưu quy trình thất bại. Vui lòng thử lại.");
     }
   };
   const deleteProcess = async (id: string) => {
@@ -69,7 +70,7 @@ export function ProcessManagement() {
       await apiDeleteProcess(id);
       await reload();
     } catch (e) {
-      alert((e as Error).message || "Xóa quy trình thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Xóa quy trình thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };
@@ -92,7 +93,7 @@ export function ProcessManagement() {
       await persistSteps(procId, steps);
       setStepModal(null);
     } catch (e) {
-      alert((e as Error).message || "Lưu bước thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Lưu bước thất bại. Vui lòng thử lại.");
     }
   };
   const deleteStep = async (procId: string, index: number) => {
@@ -101,7 +102,7 @@ export function ProcessManagement() {
     try {
       await persistSteps(procId, proc.steps.filter((_, i) => i !== index));
     } catch (e) {
-      alert((e as Error).message || "Xóa bước thất bại. Vui lòng thử lại.");
+      toast.error((e as Error).message || "Xóa bước thất bại. Vui lòng thử lại.");
     }
     setConfirm(null);
   };

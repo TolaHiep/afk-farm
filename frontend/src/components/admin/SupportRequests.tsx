@@ -1,6 +1,7 @@
 import React from "react";
 import { LifeBuoy, Mail, Check, X, MessageSquare, MapPin } from "lucide-react";
 import { getSupport, replySupport } from "../../lib/queries";
+import { toast } from "../../lib/toast";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Chờ xử lý", cls: "bg-yellow-100 text-yellow-800" },
@@ -36,19 +37,17 @@ export function SupportRequests() {
   const handleReply = async (id: string, status = "replied") => {
     const text = reply.trim();
     if (!text) {
-      alert("Vui lòng nhập nội dung phản hồi.");
+      toast.warning("Vui lòng nhập nội dung phản hồi.");
       return;
     }
     setSending(true);
     try {
-      const res: any = await replySupport(id, text, status);
+      await replySupport(id, text, status);
       setStatus(id, status, text);
       setReply("");
-      alert(res?.emailSent
-        ? "Đã gửi phản hồi và email cho tổ trưởng."
-        : "Đã lưu phản hồi (email chưa gửi — kiểm tra cấu hình email trong Cài đặt).");
-    } catch (e) {
-      alert("Không gửi được phản hồi. Vui lòng thử lại.");
+      toast.success("Đã lưu phản hồi.");
+    } catch (e: any) {
+      toast.error(e?.message || "Không gửi được phản hồi. Vui lòng thử lại.");
     } finally {
       setSending(false);
     }
@@ -71,7 +70,7 @@ export function SupportRequests() {
           <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
             <LifeBuoy className="w-5 h-5 text-green-600" /> Yêu cầu hỗ trợ từ tổ trưởng
           </h2>
-          <p className="text-sm text-gray-500">Duyệt, từ chối, phản hồi và gửi email cho tổ trưởng</p>
+          <p className="text-sm text-gray-500">Duyệt, từ chối và phản hồi cho tổ trưởng</p>
         </div>
         <select
           value={statusFilter}
@@ -180,7 +179,7 @@ export function SupportRequests() {
                   disabled={sending}
                   className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
                 >
-                  <Mail className="w-4 h-4" /> {sending ? "Đang gửi..." : "Gửi phản hồi + email"}
+                  <MessageSquare className="w-4 h-4" /> {sending ? "Đang gửi…" : "Gửi phản hồi"}
                 </button>
               </div>
             </div>

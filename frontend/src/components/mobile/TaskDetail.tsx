@@ -6,6 +6,7 @@ import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, O
 import { compressImage, dataUrlBytes, ONLINE, OFFLINE, MAX_PHOTOS } from "../../lib/image";
 import { CameraCapture } from "./CameraCapture";
 import { toPhotoMeta, type CapturedPhoto } from "../../lib/capture";
+import { toast } from "../../lib/toast";
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "overdue";
 
@@ -103,7 +104,7 @@ export function TaskDetail() {
   const handleComplete = () => {
     if (!canComplete) return;
     if (task.requirePhoto && captured.length === 0) {
-      alert("Việc này bắt buộc chụp ảnh tại chỗ (trong app) trước khi hoàn thành.");
+      toast.warning("Việc này bắt buộc chụp ảnh tại chỗ (trong app) trước khi hoàn thành.");
       return;
     }
     setShowConfirmation(true);

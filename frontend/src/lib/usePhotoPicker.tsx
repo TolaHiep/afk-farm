@@ -1,5 +1,6 @@
 import React from "react";
 import { MAX_PHOTOS } from "./image";
+import { toast } from "./toast";
 
 // Hook quan ly chon nhieu anh: giu File goc + thumbnail object URL, tran MAX_PHOTOS.
 export function usePhotoPicker() {
@@ -17,7 +18,7 @@ export function usePhotoPicker() {
     setFiles((prev) => {
       const next = [...prev, ...picked];
       if (next.length > MAX_PHOTOS) {
-        alert(`Chỉ được tối đa ${MAX_PHOTOS} ảnh.`);
+        toast.warning(`Chỉ được tối đa ${MAX_PHOTOS} ảnh.`);
       }
       return next.slice(0, MAX_PHOTOS);
     });
