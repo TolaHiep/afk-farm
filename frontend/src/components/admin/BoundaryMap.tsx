@@ -33,6 +33,7 @@ export function BoundaryMap({
   constraint,
   splitPreview,
   avoid,
+  warnOverlap,
 }: {
   onChange?: (area: number, points: Pt[]) => void;
   // Ranh giới đã lưu (dùng khi sửa) — nạp sẵn lên map
