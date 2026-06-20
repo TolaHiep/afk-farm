@@ -17,8 +17,9 @@ def me():
     user = frappe.session.user
     roles = frappe.get_roles(user)
     role = "admin" if ("AKF Admin" in roles or user == "Administrator") else "team_leader"
-    full_name = frappe.db.get_value("User", user, "full_name") or user
-    return {"email": user, "full_name": full_name, "role": role, "roles": roles}
+    row = frappe.db.get_value("User", user, ["full_name", "username"], as_dict=True) or {}
+    return {"email": user, "full_name": row.get("full_name") or user,
+            "phone": row.get("username") or "", "role": role, "roles": roles}
 
 
 @frappe.whitelist()

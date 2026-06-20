@@ -14,19 +14,20 @@ import {
 } from "lucide-react";
 import { getMyPlots, getMyTeamMembers, updateMyProfile, changeMyPassword } from "../../lib/queries";
 import { useAuth } from "../../lib/auth";
+import { toast } from "../../lib/toast";
 
 type Plot = { id: string; name: string; zoneId?: string; crops?: string[] };
 
 export function MobileAccount() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, refresh } = useAuth();
 
   // Dữ liệu thật của tổ trưởng đang đăng nhập
   const [myPlots, setMyPlots] = useState<Plot[]>([]);
   const [memberCount, setMemberCount] = useState(0);
 
-  // Form thông tin liên hệ
-  const [phone, setPhone] = useState("");
+  // Form thông tin liên hệ — phone đọc từ user (auth.me) để giữ lại sau khi điều hướng
+  const [phone, setPhone] = useState(user?.phone ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [savingContact, setSavingContact] = useState(false);
 
@@ -54,9 +55,10 @@ export function MobileAccount() {
     setSavingContact(true);
     try {
       await updateMyProfile(phone);
-      alert("Đã lưu số điện thoại.");
-    } catch {
-      alert("Lưu thông tin thất bại. Vui lòng thử lại.");
+      await refresh();
+      toast.success("Đã lưu số điện thoại.");
+    } catch (e: any) {
+      toast.error(e?.message || "Lưu thông tin thất bại. Vui lòng thử lại.");
     } finally {
       setSavingContact(false);
     }
@@ -64,22 +66,22 @@ export function MobileAccount() {
 
   async function handleChangePassword() {
     if (!curPass || !newPass || !confirmPass) {
-      alert("Vui lòng nhập đầy đủ thông tin mật khẩu.");
+      toast.warning("Vui lòng nhập đầy đủ thông tin mật khẩu.");
       return;
     }
     if (newPass !== confirmPass) {
-      alert("Mật khẩu nhập lại không khớp.");
+      toast.warning("Mật khẩu nhập lại không khớp.");
       return;
     }
     setSavingPass(true);
     try {
       await changeMyPassword(newPass, curPass);
-      alert("Đổi mật khẩu thành công.");
+      toast.success("Đổi mật khẩu thành công.");
       setCurPass("");
       setNewPass("");
       setConfirmPass("");
-    } catch {
-      alert("Đổi mật khẩu thất bại. Kiểm tra lại mật khẩu hiện tại.");
+    } catch (e: any) {
+      toast.error(e?.message || "Đổi mật khẩu thất bại. Vui lòng thử lại.");
     } finally {
       setSavingPass(false);
     }

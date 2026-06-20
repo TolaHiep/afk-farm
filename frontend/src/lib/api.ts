@@ -23,10 +23,28 @@ async function request(
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg = json?._server_messages || json?.message || `API ${method} lỗi (${res.status})`;
-    throw new ApiError(typeof msg === "string" ? msg : JSON.stringify(msg), res.status);
+    throw new ApiError(parseFrappeError(json) || `API ${method} lỗi (${res.status}).`, res.status);
   }
   return json.message;
+}
+
+// Frappe đóng gói lỗi vào `_server_messages` (JSON-string chứa mảng JSON-string {message:"<html>..."}).
+// Trả về chuỗi sạch để hiển thị cho người dùng.
+function parseFrappeError(json: any): string {
+  const stripHtml = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const sm = json?._server_messages;
+  if (typeof sm === "string") {
+    try {
+      const arr = JSON.parse(sm);
+      const msgs = (Array.isArray(arr) ? arr : [arr])
+        .map((x) => { try { return JSON.parse(x); } catch { return { message: String(x) }; } })
+        .map((o) => stripHtml(o?.message || ""))
+        .filter(Boolean);
+      if (msgs.length) return msgs.join(" ");
+    } catch { /* fallthrough */ }
+  }
+  if (typeof json?.message === "string") return stripHtml(json.message);
+  return "";
 }
 
 export const api = {

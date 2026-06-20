@@ -1,9 +1,11 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router";
 import { CheckSquare, Calendar, ClipboardList, Bell, User } from "lucide-react";
+import { useAppSettings } from "../../lib/useAppSettings";
 
 export function MobileLayout() {
   const location = useLocation();
+  const app = useAppSettings();
 
   const navItems = [
     { path: "/mobile/tasks", icon: CheckSquare, label: "Hôm nay" },
@@ -17,7 +19,10 @@ export function MobileLayout() {
       {/* Top Bar */}
       <header className="bg-green-600 text-white p-4 shadow">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold">Farm Mobile</h1>
+          <div className="flex items-center gap-2 min-w-0">
+            {app.logoUrl && <img src={app.logoUrl} alt="logo" className="w-7 h-7 rounded-md object-cover flex-shrink-0" />}
+            <h1 className="text-lg font-bold truncate">{app.appName}</h1>
+          </div>
           <Link to="/mobile/account" className="flex items-center gap-2">
             <User className="w-5 h-5" />
             <span className="text-sm">Tổ trưởng</span>

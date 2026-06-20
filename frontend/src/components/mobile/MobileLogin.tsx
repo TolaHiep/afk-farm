@@ -2,10 +2,12 @@ import React from "react";
 import { Link, useNavigate } from "react-router";
 import { Sprout } from "lucide-react";
 import { useAuth } from "../../lib/auth";
+import { useAppSettings } from "../../lib/useAppSettings";
 
 export function MobileLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const app = useAppSettings();
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState("");
@@ -30,11 +32,15 @@ export function MobileLogin() {
     <div className="min-h-screen bg-green-600 flex flex-col justify-center items-center p-6 max-w-[390px] mx-auto">
       {/* Logo */}
       <div className="text-center mb-12">
-        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-          <Sprout className="w-12 h-12 text-green-600" />
-        </div>
-        <h1 className="text-3xl font-bold text-white mb-2">Farm Mobile</h1>
-        <p className="text-green-100">Dành cho tổ trưởng</p>
+        {app.logoUrl ? (
+          <img src={app.logoUrl} alt="logo" className="w-20 h-20 bg-white rounded-full object-cover mx-auto mb-4" />
+        ) : (
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+            <Sprout className="w-12 h-12 text-green-600" />
+          </div>
+        )}
+        <h1 className="text-3xl font-bold text-white mb-2">{app.appName}</h1>
+        <p className="text-green-100">{app.subtitleMobile}</p>
       </div>
 
       {/* Login Form */}

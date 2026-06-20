@@ -5,6 +5,8 @@
  "engine": "InnoDB",
  "field_order": [
   "app_name",
+  "app_subtitle_admin",
+  "app_subtitle_mobile",
   "company_name",
   "contact",
   "logo_text",
@@ -19,6 +21,8 @@
  ],
  "fields": [
   {"fieldname": "app_name", "fieldtype": "Data", "label": "Tên ứng dụng"},
+  {"fieldname": "app_subtitle_admin", "fieldtype": "Data", "label": "Phụ đề trang admin"},
+  {"fieldname": "app_subtitle_mobile", "fieldtype": "Data", "label": "Phụ đề trang mobile"},
   {"fieldname": "company_name", "fieldtype": "Data", "label": "Tên công ty"},
   {"fieldname": "contact", "fieldtype": "Data", "label": "Liên hệ"},
   {"fieldname": "logo_text", "fieldtype": "Data", "label": "Logo (chữ)"},

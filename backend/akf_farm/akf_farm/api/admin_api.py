@@ -251,6 +251,27 @@ def list_anomalies():
 
 
 @frappe.whitelist()
+def mark_report_reviewed(name):
+    """Admin mở báo cáo -> nâng trạng thái từ 'pending' lên 'reviewed' (không đè 'replied')."""
+    cur = frappe.db.get_value("Team Leader Report", name, "status")
+    if cur == "pending":
+        frappe.db.set_value("Team Leader Report", name, "status", "reviewed")
+    return {"ok": True, "status": cur if cur != "pending" else "reviewed"}
+
+
+@frappe.whitelist()
+def reply_report(name, reply, status="replied"):
+    """Admin phản hồi báo cáo của tổ trưởng (chỉ lưu, không gửi email)."""
+    if not (reply or "").strip():
+        frappe.throw("Vui lòng nhập nội dung phản hồi.")
+    doc = frappe.get_doc("Team Leader Report", name)
+    doc.reply = reply
+    doc.status = status
+    doc.save()
+    return {"ok": True}
+
+
+@frappe.whitelist()
 def list_reports():
     rows = frappe.get_all("Team Leader Report",
         fields=["name", "team_leader", "block", "crop", "report_date", "content", "abnormal", "status", "reply"],
@@ -297,14 +318,12 @@ def list_support():
 
 @frappe.whitelist()
 def reply_support(name, reply, status="replied"):
+    """Admin phản hồi yêu cầu hỗ trợ (chỉ lưu, không gửi email)."""
     doc = frappe.get_doc("Support Request", name)
     doc.reply = reply
     doc.status = status
     doc.save()
-    # Gửi email phản hồi cho tổ trưởng (không chặn nếu email tắt/lỗi)
-    to = frappe.db.get_value("User", doc.team_leader, "email") if doc.team_leader else None
-    sent = _send_smtp(to, "Phản hồi yêu cầu hỗ trợ - AKF", reply) if to else {"ok": False, "reason": "Tổ trưởng không có email."}
-    return {"ok": True, "emailSent": bool(sent.get("ok")), "emailReason": sent.get("reason")}
+    return {"ok": True}
 
 
 # ---- Cài đặt & dashboard ----
@@ -313,6 +332,7 @@ def reply_support(name, reply, status="replied"):
 def get_settings():
     s = frappe.get_single("AKF Settings")
     return {"appName": s.app_name or "", "companyName": s.company_name or "", "contact": s.contact or "",
+            "appSubtitleAdmin": s.app_subtitle_admin or "", "appSubtitleMobile": s.app_subtitle_mobile or "",
             "logoText": s.logo_text or "", "logoUrl": s.logo_url or "",
             "smtpHost": s.smtp_host or "", "smtpPort": s.smtp_port or "",
             "fromEmail": s.from_email or "", "fromName": s.from_name or "",
@@ -323,6 +343,7 @@ def get_settings():
 def save_settings(**kwargs):
     s = frappe.get_single("AKF Settings")
     mapping = {"appName": "app_name", "companyName": "company_name", "contact": "contact",
+               "appSubtitleAdmin": "app_subtitle_admin", "appSubtitleMobile": "app_subtitle_mobile",
                "logoText": "logo_text", "logoUrl": "logo_url", "smtpHost": "smtp_host", "smtpPort": "smtp_port",
                "fromEmail": "from_email", "fromName": "from_name", "emailEnabled": "email_enabled"}
     for k, field in mapping.items():
@@ -466,7 +487,8 @@ def list_notifications():
     for t in frappe.get_all("Farm Task", filters={"status": "overdue"},
                             fields=["name", "title", "block", "task_date"], limit=20):
         out.append({"id": f"t-{t.name}", "type": "overdue", "title": "Công việc quá hạn",
-                    "description": f"{t.title} tại {t.block}", "date": str(t.task_date), "read": False})
+                    "description": f"{t.title} tại {t.block}", "date": str(t.task_date),
+                    "taskId": t.name, "taskDate": str(t.task_date), "read": False})
     for a in frappe.get_all("Abnormal Report", filters={"status": "pending"},
                             fields=["name", "type", "block", "report_date"], limit=20):
         out.append({"id": f"a-{a.name}", "type": "anomaly", "title": "Bất thường mới",

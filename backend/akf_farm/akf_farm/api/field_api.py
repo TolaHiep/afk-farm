@@ -260,16 +260,17 @@ def update_my_profile(phone=None):
 @frappe.whitelist()
 def change_my_password(new_password, old_password=None):
     """Tổ trưởng tự đổi mật khẩu; xác minh mật khẩu hiện tại trước."""
-    from frappe.utils.password import check_password
+    from frappe.utils.password import check_password, update_password
     user = frappe.session.user
+    if not new_password or len(new_password) < 6:
+        frappe.throw("Mật khẩu mới phải có ít nhất 6 ký tự.")
     if old_password:
         try:
             check_password(user, old_password)
         except frappe.AuthenticationError:
             frappe.throw("Mật khẩu hiện tại không đúng.")
-    doc = frappe.get_doc("User", user)
-    doc.new_password = new_password
-    doc.save(ignore_permissions=True)
+    # update_password bo qua zxcvbn strength check cua Frappe (vs doc.new_password=...; doc.save())
+    update_password(user, new_password)
     return {"ok": True}
 
 
@@ -289,7 +290,8 @@ def notifications():
                             filters={"team_leader": frappe.session.user, "status": "overdue"},
                             fields=["name", "title", "block", "task_date"], limit=20):
         out.append({"id": f"t-{t.name}", "type": "overdue", "title": "Việc quá hạn",
-                    "description": f"{t.title} - {t.block}", "date": str(t.task_date), "read": False})
+                    "description": f"{t.title} - {t.block}", "date": str(t.task_date),
+                    "taskId": t.name, "read": False})
     return out
 
 
@@ -330,6 +332,12 @@ def submit_report(block, crop, date, content, photos=None, abnormal=0, client_uu
         return {"ok": True}  # idempotent chống gửi trùng offline
     if not (content or "").strip():
         frappe.throw("Báo cáo không được để trống.")
+    # Không nhận báo cáo chỉ chứa số 0 (số công 0 + diện tích 0) khi không có bất thường.
+    if not int(abnormal or 0):
+        import re as _re
+        nums = [float(x) for x in _re.findall(r"[-+]?\d*\.?\d+", content or "")]
+        if nums and all(n <= 0 for n in nums):
+            frappe.throw("Số công / diện tích phải lớn hơn 0, hoặc bật Bất thường.")
     if int(abnormal or 0) and not photos:
         frappe.throw("Báo cáo bất thường bắt buộc có ảnh.")
     doc = frappe.get_doc({

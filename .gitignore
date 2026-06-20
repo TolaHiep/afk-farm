@@ -1,2 +1,9 @@
 .playwright-mcp/
 .env
+.gitnexus
+.claude/
+AGENTS.md
+CLAUDE.md
+zones-grid.png
+heatmap-deeplink.png
+frontend/2026-*.txt

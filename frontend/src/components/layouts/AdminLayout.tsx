@@ -1,14 +1,22 @@
 import React from "react";
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard, Map, MapPin, Users, FileText, Sprout, Calendar, TrendingUp,
   Bell, ClipboardList, LifeBuoy, Settings, LogOut, Menu, X, PanelLeftClose, PanelLeft,
 } from "lucide-react";
+import { useAppSettings } from "../../lib/useAppSettings";
+import { useAuth } from "../../lib/auth";
 
 export function AdminLayout() {
+  const app = useAppSettings();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const doLogout = async () => { await logout(); navigate("/"); };
+  const initial = (user?.full_name || user?.email || "A").trim().charAt(0).toUpperCase();
   const location = useLocation();
   const [collapsed, setCollapsed] = React.useState(false); // thu gọn trên desktop
   const [mobileOpen, setMobileOpen] = React.useState(false); // drawer trên mobile/tablet
+  const [userOpen, setUserOpen] = React.useState(false); // mở nút Đăng xuất khi bấm tên admin
 
   const menuItems = [
     { path: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -43,7 +51,12 @@ export function AdminLayout() {
         <div className="h-full flex flex-col">
           {/* Logo + toggle */}
           <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
-            <h1 className={`text-xl font-bold text-green-600 ${collapsed ? "lg:hidden" : ""}`}>Farm Admin</h1>
+            <div className={`flex items-center gap-2 min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
+              {app.logoUrl
+                ? <img src={app.logoUrl} alt="logo" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                : <div className="w-8 h-8 rounded-lg bg-green-600 text-white grid place-items-center font-bold flex-shrink-0">{app.logoText}</div>}
+              <h1 className="text-xl font-bold text-green-600 truncate">{app.appName}</h1>
+            </div>
             {/* Thu gọn (desktop) */}
             <button onClick={() => setCollapsed(!collapsed)} className="hidden lg:block p-2 hover:bg-gray-100 rounded-lg" title="Thu gọn">
               {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
@@ -74,12 +87,22 @@ export function AdminLayout() {
             })}
           </nav>
 
-          {/* Logout */}
-          <div className="p-3 border-t border-gray-200">
-            <Link to="/" className="flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              <span className={labelCls}>Đăng xuất</span>
-            </Link>
+          {/* User + Logout (bấm tên/avatar để hiện nút Đăng xuất) */}
+          <div className="p-3 border-t border-gray-200 space-y-1">
+            <button
+              onClick={() => setUserOpen((v) => !v)}
+              className={`w-full flex items-center px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors ${collapsed ? "lg:justify-center" : ""}`}
+              aria-expanded={userOpen}
+            >
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0">{initial}</div>
+              <span className={`text-sm font-medium text-gray-700 truncate text-left ${labelCls}`}>{user?.full_name || user?.email || "Admin"}</span>
+            </button>
+            {userOpen && (
+              <button onClick={doLogout} className="w-full flex items-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+                <span className={labelCls}>Đăng xuất</span>
+              </button>
+            )}
           </div>
         </div>
       </aside>
@@ -102,10 +125,6 @@ export function AdminLayout() {
               <Bell className="w-5 h-5 text-gray-600" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </Link>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-medium">A</div>
-              <span className="hidden sm:inline text-sm font-medium text-gray-700">Admin</span>
-            </div>
           </div>
         </header>
 

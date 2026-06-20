@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router";
 import { Sprout } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "../../lib/auth";
+import { useAppSettings } from "../../lib/useAppSettings";
 
 export function AdminLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const app = useAppSettings();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState("");
@@ -31,11 +33,15 @@ export function AdminLogin() {
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
-            <Sprout className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Farm Admin</h1>
-          <p className="text-gray-600 mt-1">Hệ thống quản lý sản xuất nông trại</p>
+          {app.logoUrl ? (
+            <img src={app.logoUrl} alt="logo" className="w-16 h-16 rounded-full object-cover mb-4" />
+          ) : (
+            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4">
+              <Sprout className="w-10 h-10 text-white" />
+            </div>
+          )}
+          <h1 className="text-2xl font-bold text-gray-900">{app.appName}</h1>
+          <p className="text-gray-600 mt-1">{app.subtitleAdmin}</p>
         </div>
 
         {/* Login Form */}

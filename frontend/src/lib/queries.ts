@@ -1,7 +1,7 @@
 import { api } from "./api";
 import type { PhotoMeta, TaskPhoto } from "./capture";
 
-export type User = { email: string; full_name: string; role: "admin" | "team_leader"; roles: string[] };
+export type User = { email: string; full_name: string; phone?: string; role: "admin" | "team_leader"; roles: string[] };
 
 // Auth
 export const apiMe = () => api.get("auth_api.me") as Promise<User>;
@@ -83,6 +83,8 @@ export const saveSettings = (s: Record<string, unknown>) => api.post("admin_api.
 export const uploadLogo = (dataUrl: string) => api.post("admin_api.upload_logo", { data_url: dataUrl }) as Promise<{ ok: boolean; logoUrl: string }>;
 export const sendTestEmail = (to?: string) => api.post("admin_api.send_test_email", to ? { to } : {}) as Promise<{ ok: boolean; reason?: string }>;
 export const sendDailyNotifications = () => api.post("admin_api.send_daily_notifications", {}) as Promise<{ ok: boolean; sent: number; overdue: number; anomalies: number; reason?: string }>;
+export const markReportReviewed = (name: string) => api.post("admin_api.mark_report_reviewed", { name }) as Promise<{ ok: boolean; status: string }>;
+export const replyReport = (name: string, reply: string, status = "replied") => api.post("admin_api.reply_report", { name, reply, status }) as Promise<{ ok: boolean }>;
 export const getDashboard = (date?: string) =>
   api.get("admin_api.dashboard", date ? { date } : undefined) as Promise<any>;
 export const getTeamKpi = () => api.get("admin_api.team_kpi") as Promise<any[]>;

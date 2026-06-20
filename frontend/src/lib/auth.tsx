@@ -6,6 +6,7 @@ type AuthState = {
   loading: boolean;
   login: (usr: string, pwd: string) => Promise<User>;
   logout: () => Promise<void>;
+  refresh: () => Promise<void>;
 };
 
 const Ctx = React.createContext<AuthState>(null!);
@@ -30,8 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await apiLogout().catch(() => {});
     setUser(null);
   };
+  const refresh = async () => {
+    const u = await apiMe().catch(() => null);
+    setUser(u && u.email !== "Guest" ? u : null);
+  };
 
-  return <Ctx.Provider value={{ user, loading, login, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, loading, login, logout, refresh }}>{children}</Ctx.Provider>;
 }
 
 export const useAuth = () => React.useContext(Ctx);

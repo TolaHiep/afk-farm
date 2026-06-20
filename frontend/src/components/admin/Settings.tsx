@@ -1,9 +1,13 @@
 import React from "react";
 import { Settings as SettingsIcon, Mail, Building2, Send } from "lucide-react";
 import { getSettings, saveSettings, uploadLogo, sendTestEmail, sendDailyNotifications } from "../../lib/queries";
+import { notifyAppSettingsChanged } from "../../lib/useAppSettings";
+import { toast } from "../../lib/toast";
 
 type SettingsState = {
   appName: string;
+  appSubtitleAdmin: string;
+  appSubtitleMobile: string;
   companyName: string;
   contact: string;
   logoText: string;
@@ -18,6 +22,8 @@ type SettingsState = {
 
 const EMPTY: SettingsState = {
   appName: "",
+  appSubtitleAdmin: "",
+  appSubtitleMobile: "",
   companyName: "",
   contact: "",
   logoText: "",
@@ -54,6 +60,8 @@ export function Settings() {
         if (!alive) return;
         setData({
           appName: s?.appName ?? "",
+          appSubtitleAdmin: s?.appSubtitleAdmin ?? "",
+          appSubtitleMobile: s?.appSubtitleMobile ?? "",
           companyName: s?.companyName ?? "",
           contact: s?.contact ?? "",
           logoText: s?.logoText ?? "",
@@ -74,14 +82,15 @@ export function Settings() {
     };
   }, []);
 
+  const logoInputRef = React.useRef<HTMLInputElement>(null);
+
   if (loading) {
     return <div className="text-sm text-gray-500 p-6">Đang tải cài đặt…</div>;
   }
 
-  const logoInputRef = React.useRef<HTMLInputElement>(null);
-
   const save = (msg: string) => {
-    saveSettings(data).then(() => alert(msg));
+    saveSettings(data).then(() => { notifyAppSettingsChanged(); toast.success(msg); })
+      .catch((e: any) => toast.error(e?.message || "Lưu cài đặt thất bại. Vui lòng thử lại."));
   };
 
   const onLogoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,28 +106,31 @@ export function Settings() {
       });
       const r = await uploadLogo(dataUrl);
       setData((d) => ({ ...d, logoUrl: r.logoUrl }));
-      alert("Đã tải logo lên.");
+      notifyAppSettingsChanged();
+      toast.success("Đã tải logo lên.");
     } catch (err: any) {
-      alert(err?.message || "Tải logo thất bại. Vui lòng thử lại.");
+      toast.error(err?.message || "Tải logo thất bại. Vui lòng thử lại.");
     }
   };
 
   const onTestEmail = async () => {
     try {
       const r = await sendTestEmail();
-      alert(r.ok ? "Đã gửi email thử nghiệm." : (r.reason || "Gửi email thất bại. Vui lòng kiểm tra cấu hình SMTP."));
+      if (r.ok) toast.success("Đã gửi email thử nghiệm.");
+      else toast.error(r.reason || "Gửi email thất bại. Vui lòng kiểm tra cấu hình SMTP.");
     } catch (err: any) {
-      alert(err?.message || "Gửi email thất bại. Vui lòng thử lại.");
+      toast.error(err?.message || "Gửi email thất bại. Vui lòng thử lại.");
     }
   };
 
   const onSendNotifications = async () => {
     try {
       const r = await sendDailyNotifications();
-      alert(`Tổng hợp: ${r.overdue} việc quá hạn, ${r.anomalies} bất thường mới. ` +
-        (r.sent ? `Đã gửi email cho ${r.sent} admin.` : (r.reason || "Chưa gửi được email (kiểm tra cấu hình/Bật gửi email).")));
+      const summary = `Tổng hợp: ${r.overdue} việc quá hạn, ${r.anomalies} bất thường mới.`;
+      if (r.sent) toast.success(`${summary}\nĐã gửi email cho ${r.sent} admin.`);
+      else toast.warning(`${summary}\n${r.reason || "Chưa gửi được email (kiểm tra cấu hình/Bật gửi email)."}`);
     } catch (err: any) {
-      alert(err?.message || "Gửi thông báo thất bại. Vui lòng thử lại.");
+      toast.error(err?.message || "Gửi thông báo thất bại. Vui lòng thử lại.");
     }
   };
 
@@ -145,6 +157,10 @@ export function Settings() {
       {tab === "app" && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
           <Field label="Tên phần mềm" value={data.appName} onChange={(v) => setData({ ...data, appName: v })} />
+          <Field label="Phụ đề trang đăng nhập admin" value={data.appSubtitleAdmin}
+            onChange={(v) => setData({ ...data, appSubtitleAdmin: v })} />
+          <Field label="Phụ đề trang đăng nhập mobile" value={data.appSubtitleMobile}
+            onChange={(v) => setData({ ...data, appSubtitleMobile: v })} />
           <Field label="Tên trang trại / công ty" value={data.companyName} onChange={(v) => setData({ ...data, companyName: v })} />
           <Field label="Thông tin liên hệ" value={data.contact} onChange={(v) => setData({ ...data, contact: v })} />
           <div>
