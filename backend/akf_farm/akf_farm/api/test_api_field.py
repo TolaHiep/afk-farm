@@ -180,6 +180,15 @@ class TestFieldApi(FrappeTestCase):
         self.assertEqual(row.gps_status, "missing")
         self.assertEqual(row.in_app, 0)
 
+    def test_complete_task_iso_z_captured_at(self):
+        """capturedAt dang ISO UTC 'Z' (client toISOString) phai luu duoc - regression loi DATETIME 1292."""
+        frappe.set_user(self.leader)
+        meta = [{"lat": 11.94, "lng": 108.458, "capturedAt": "2026-06-20T03:00:00.000Z", "inApp": True}]
+        field_api.complete_task(self.t.name, client_uuid="isoz", photos=[self._PNG_1PX], photo_meta=meta)
+        row = frappe.get_doc("Farm Task", self.t.name).photos[0]
+        self.assertIsNotNone(row.captured_at)          # luu thanh cong (truoc fix: OperationalError 1292)
+        self.assertIsNone(row.captured_at.tzinfo)      # naive (gio he thong), khong con offset
+
     def test_complete_task_photo_meta_skip_then_align(self):
         """Anh dau bi bo qua (sai ext) -> anh thu 2 phai nhan meta[1], khong lech index."""
         frappe.set_user(self.leader)

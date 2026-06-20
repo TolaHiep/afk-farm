@@ -59,6 +59,21 @@ def _as_list(photos):
     return json.loads(photos) if photos else []
 
 
+def _naive_dt(value):
+    """Chuoi thoi gian client (ISO co 'Z'/offset) -> datetime naive theo gio he thong.
+
+    Client gui `capturedAt` dang toISOString() (UTC, co hau to 'Z'); get_datetime tra
+    datetime tz-aware ma cot MariaDB DATETIME khong nhan (loi 1292). Doi UTC -> gio he
+    thong roi bo tzinfo.
+    """
+    if not value:
+        return None
+    dt = frappe.utils.get_datetime(value)
+    if dt is not None and dt.tzinfo is not None:
+        dt = frappe.utils.convert_utc_to_system_timezone(dt).replace(tzinfo=None)
+    return dt
+
+
 _GPS_TOLERANCE_M = 50  # ngoai polygon nhung <= 50m van coi la trong lo (dung sai GPS dien thoai)
 
 
@@ -168,7 +183,7 @@ def complete_task(task, client_uuid=None, photos=None, photo_meta=None):
         child.append({
             "image": r["image"], "lat": lat, "lng": lng,
             "gps_accuracy": m.get("accuracy"),
-            "captured_at": frappe.utils.get_datetime(cap) if cap else None,
+            "captured_at": _naive_dt(cap),
             "in_app": 1 if m.get("inApp") else 0,
             "gps_status": status, "distance_m": dist,
         })
