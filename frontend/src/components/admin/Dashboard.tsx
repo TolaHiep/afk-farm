@@ -135,8 +135,9 @@ export function Dashboard() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {plots.filter((p) => p.zoneId === openZone).map((p) => (
-                <Link key={p.id} to={`/admin/zones?plot=${p.id}`}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                <Link key={p.id} to={`/admin/heatmap?plot=${p.id}`}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                  title="Xem trên bản đồ">
                   <div>
                     <div className="font-medium text-gray-900 text-sm">{p.name} · {p.crop}</div>
                     <div className="text-xs text-gray-500">{p.teamLeader} · {p.done}/{p.total} việc</div>
