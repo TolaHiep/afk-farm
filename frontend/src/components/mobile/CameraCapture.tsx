@@ -27,9 +27,14 @@ export function CameraCapture({
       .then((stream) => {
         if (!alive) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
+        const v = videoRef.current;
+        if (v) {
+          v.srcObject = stream;
+          // JSX `muted` khong duoc React set dang tin -> ep muted + playsinline bang JS,
+          // neu khong trinh duyet chan autoplay va hien controls native (nut play + thanh time).
+          v.muted = true;
+          v.setAttribute("playsinline", "");
+          v.play().catch(() => {});
         }
         setReady(true);
       })
@@ -86,8 +91,8 @@ export function CameraCapture({
           autoPlay
           playsInline
           muted
-          onLoadedMetadata={(e) => e.currentTarget.play().catch(() => {})}
-          className="absolute inset-0 w-full h-full object-cover"
+          onLoadedMetadata={(e) => { e.currentTarget.muted = true; e.currentTarget.play().catch(() => {}); }}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
         {!ready && <p className="absolute inset-0 flex items-center justify-center text-white/80 text-sm">Đang mở camera…</p>}
       </div>
