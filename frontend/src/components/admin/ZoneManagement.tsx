@@ -135,16 +135,24 @@ export function ZoneManagement() {
   const closeConfirm = () => setConfirm(null);
 
   const doDeleteZone = async (zoneId: string) => {
-    await deleteZone(zoneId).catch(() => {});
-    setZones((prev) => prev.filter((z) => z.id !== zoneId));
-    setPlots((prev) => prev.filter((p) => p.zoneId !== zoneId));
-    closeConfirm();
+    try {
+      await deleteZone(zoneId);
+      setZones((prev) => prev.filter((z) => z.id !== zoneId));
+      setPlots((prev) => prev.filter((p) => p.zoneId !== zoneId));
+      closeConfirm();
+    } catch (e: any) {
+      alert(e?.message || "Không xóa được vùng. Vui lòng thử lại.");
+    }
   };
 
   const doDeletePlot = async (plotId: string) => {
-    await deletePlot(plotId).catch(() => {});
-    setPlots((prev) => prev.filter((p) => p.id !== plotId));
-    closeConfirm();
+    try {
+      await deletePlot(plotId);
+      setPlots((prev) => prev.filter((p) => p.id !== plotId));
+      closeConfirm();
+    } catch (e: any) {
+      alert(e?.message || "Không xóa được lô. Vui lòng thử lại.");
+    }
   };
 
   const doDeactivatePlot = async (plotId: string) => {

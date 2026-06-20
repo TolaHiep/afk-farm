@@ -58,3 +58,14 @@ class TestAdminApi(FrappeTestCase):
         admin_api.reschedule_task(g.name, "2026-06-16")
         self.assertEqual(str(frappe.db.get_value("Farm Task", g.name, "task_date")), "2026-06-16")
         self.assertEqual(str(frappe.db.get_value("Farm Task", s.name, "task_date")), "2026-06-14")
+
+    def test_delete_zone_cascades_blocks_and_dependents(self):
+        """Xoá vùng phải xoá luôn lô bên trong + việc phụ thuộc (regression: xoá xong reload vẫn còn)."""
+        frappe.get_doc({"doctype": "Farm Zone", "zone_name": "Z DEL", "area": 40000}).insert()
+        frappe.get_doc({"doctype": "Farm Block", "block_name": "B DEL", "zone": "Z DEL", "area": 10000}).insert()
+        frappe.get_doc({"doctype": "Farm Task", "title": "T DEL", "block": "B DEL", "crop": "Gấc",
+                        "task_date": "2026-06-14", "status": "pending"}).insert()
+        admin_api.delete_zone("Z DEL")
+        self.assertFalse(frappe.db.exists("Farm Zone", "Z DEL"))
+        self.assertFalse(frappe.db.exists("Farm Block", "B DEL"))
+        self.assertEqual(frappe.db.count("Farm Task", {"block": "B DEL"}), 0)

@@ -41,9 +41,24 @@ def update_zone(name, **kwargs):
     return serialize_zone(doc.name)
 
 
+_BLOCK_CHILD_DOCTYPES = ("Farm Task", "Crop Cycle", "Team Leader Report",
+                         "Support Request", "Daily Production", "Abnormal Report")
+
+
+def _delete_block_cascade(block):
+    """Xoa du lieu phu thuoc lo (viec/chu ky/bao cao/...) roi xoa lo — tranh LinkExistsError."""
+    for dt in _BLOCK_CHILD_DOCTYPES:
+        for nm in frappe.get_all(dt, filters={"block": block}, pluck="name"):
+            frappe.delete_doc(dt, nm, ignore_permissions=True, force=True)
+    frappe.delete_doc("Farm Block", block, ignore_permissions=True, force=True)
+
+
 @frappe.whitelist()
 def delete_zone(name):
-    frappe.delete_doc("Farm Zone", name)
+    """Xoa vung + toan bo lo ben trong va du lieu phu thuoc (dung canh bao tren UI)."""
+    for block in frappe.get_all("Farm Block", filters={"zone": name}, pluck="name"):
+        _delete_block_cascade(block)
+    frappe.delete_doc("Farm Zone", name, ignore_permissions=True)
     return {"ok": True}
 
 
@@ -90,7 +105,7 @@ def update_plot(name, **kwargs):
 
 @frappe.whitelist()
 def delete_plot(name):
-    frappe.delete_doc("Farm Block", name)
+    _delete_block_cascade(name)
     return {"ok": True}
 
 
