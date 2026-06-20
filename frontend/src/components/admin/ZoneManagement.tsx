@@ -50,6 +50,8 @@ interface PlotItem {
   total: number;
   // Mô hình xen canh: từng cây (Gấc tầng trên + Sâm tầng dưới) có tiến độ/trạng thái riêng
   crops: CropOnPlot[];
+  // Cây đã gắn khi tạo lô (chưa cần chu kỳ) — dùng để hiển thị "Loại cây" trước khi có chu kỳ
+  cropTags?: string[];
 }
 
 interface ZoneItem {
@@ -165,6 +167,14 @@ export function ZoneManagement() {
 
   const statusMeta = (status: string) =>
     STATUS_META[(status as PlotStatus)] ?? STATUS_META.pending;
+
+  // "Loại cây": ưu tiên cây từ chu kỳ active; chưa có chu kỳ thì dùng cây đã gắn khi tạo lô (cropTags)
+  const cropListOf = (plot: PlotItem): CropOnPlot[] =>
+    plot.crops.length > 0
+      ? plot.crops
+      : plot.cropTags && plot.cropTags.length
+        ? plot.cropTags.map((c) => ({ crop: c, done: 0, total: 0, status: plot.status }))
+        : [{ crop: plot.crop, done: plot.done, total: plot.total, status: plot.status }];
 
   if (loading) {
     return <div className="p-10 text-center text-gray-400">Đang tải dữ liệu vùng/lô…</div>;
@@ -304,17 +314,7 @@ export function ZoneManagement() {
                       )}
                       {visiblePlots.map((plot) => {
                         // Danh sách cây xen canh trên lô (Gấc tầng trên + Sâm tầng dưới)
-                        const cropList =
-                          plot.crops.length > 0
-                            ? plot.crops
-                            : [
-                                {
-                                  crop: plot.crop,
-                                  done: plot.done,
-                                  total: plot.total,
-                                  status: plot.status,
-                                },
-                              ];
+                        const cropList = cropListOf(plot);
 
                         return (
                           <tr key={plot.id} className="hover:bg-gray-50">
@@ -432,17 +432,7 @@ export function ZoneManagement() {
                   )}
                   {visiblePlots.map((plot) => {
                     // Danh sách cây xen canh trên lô (Gấc tầng trên + Sâm tầng dưới)
-                    const cropList =
-                      plot.crops.length > 0
-                        ? plot.crops
-                        : [
-                            {
-                              crop: plot.crop,
-                              done: plot.done,
-                              total: plot.total,
-                              status: plot.status,
-                            },
-                          ];
+                    const cropList = cropListOf(plot);
 
                     return (
                       <div key={`m-${plot.id}`} className="p-4 space-y-3">
