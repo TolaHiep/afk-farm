@@ -69,3 +69,23 @@ class TestAdminApi(FrappeTestCase):
         self.assertFalse(frappe.db.exists("Farm Zone", "Z DEL"))
         self.assertFalse(frappe.db.exists("Farm Block", "B DEL"))
         self.assertEqual(frappe.db.count("Farm Task", {"block": "B DEL"}), 0)
+
+    def test_update_process_regenerates_active_cycle_tasks(self):
+        """Sửa quy trình -> việc của chu kỳ active sinh lại theo cấu hình mới (regression #1)."""
+        from frappe.utils import getdate
+        today = str(getdate())
+        if frappe.db.exists("Cultivation Process", "P RG"):
+            frappe.delete_doc("Cultivation Process", "P RG", force=True)
+        for c in frappe.get_all("Crop Cycle", filters={"block": "B ADM", "crop": "Gấc"}, pluck="name"):
+            frappe.delete_doc("Crop Cycle", c, force=True)
+        admin_api.create_process("P RG", crop="Gấc", cycle_length_days=30, steps=[
+            {"description": "Tưới", "frequencyType": "one_time", "scopeRaw": "per_crop",
+             "offsetDays": 0, "estimatedDays": 1, "workPerHa": 1}])
+        cyc = admin_api.create_crop_cycle("B ADM", "Gấc", today, cultivation_process="P RG")
+        self.assertTrue(frappe.db.exists("Farm Task", {"cycle": cyc["id"], "title": "Tưới"}))
+        # Sửa bước -> sinh lại: "Bón phân" xuất hiện, "Tưới" bị gỡ
+        admin_api.update_process("P RG", steps=[
+            {"description": "Bón phân", "frequencyType": "one_time", "scopeRaw": "per_crop",
+             "offsetDays": 0, "estimatedDays": 1, "workPerHa": 1}])
+        self.assertTrue(frappe.db.exists("Farm Task", {"cycle": cyc["id"], "title": "Bón phân"}))
+        self.assertFalse(frappe.db.exists("Farm Task", {"cycle": cyc["id"], "title": "Tưới"}))

@@ -537,6 +537,24 @@ def create_process(process_name, crop=None, steps=None, cycle_length_days=0):
     return {"id": doc.name, "name": doc.process_name, "crop": doc.crop}
 
 
+def _regenerate_cycle_tasks(cycle_name):
+    """Sinh lại việc cho 1 chu kỳ sau khi sửa quy trình / ngày bắt đầu.
+
+    Giữ việc đã hoàn thành + việc quá khứ (lịch sử); xoá việc CHƯA hoàn thành từ HÔM NAY
+    trở đi rồi sinh lại theo cấu hình mới (generate_tasks sinh cho cửa sổ hôm nay→+10,
+    scheduler bù các ngày sau).
+    """
+    from frappe.utils import getdate
+    from akf_farm.engine.task_generator import generate_tasks
+    today = str(getdate())
+    stale = frappe.get_all("Farm Task", filters={
+        "cycle": cycle_name, "status": ("!=", "completed"), "task_date": (">=", today),
+    }, pluck="name")
+    for nm in stale:
+        frappe.delete_doc("Farm Task", nm, force=True, ignore_permissions=True)
+    generate_tasks(cycle=cycle_name)
+
+
 @frappe.whitelist()
 def update_process(name, process_name=None, crop=None, steps=None, cycle_length_days=None):
     doc = frappe.get_doc("Cultivation Process", name)
@@ -547,9 +565,13 @@ def update_process(name, process_name=None, crop=None, steps=None, cycle_length_
     if steps is not None:
         _apply_steps(doc, steps)
     doc.save()
-    # process_name là autoname (field:process_name) — đổi tên cần rename_doc
+    # process_name là autoname (field:process_name) — đổi tên cần rename_doc (tự cập nhật link)
     if process_name and process_name != doc.process_name:
         doc = frappe.rename_doc("Cultivation Process", doc.name, process_name, force=True)
+    # Sửa quy trình -> sinh lại việc cho mọi chu kỳ active đang dùng quy trình này
+    for cyc in frappe.get_all("Crop Cycle",
+                              filters={"cultivation_process": doc.name, "status": "active"}, pluck="name"):
+        _regenerate_cycle_tasks(cyc)
     return {"id": doc.name, "name": doc.process_name, "crop": doc.crop}
 
 
@@ -580,6 +602,9 @@ def update_crop_cycle(name, **kwargs):
         if k in kwargs:
             doc.set(field, kwargs[k] or None if field == "cultivation_process" else kwargs[k])
     doc.save()
+    # Sửa chu kỳ (đặc biệt ngày bắt đầu / quy trình) -> sinh lại việc cho chu kỳ nếu còn active
+    if doc.status == "active":
+        _regenerate_cycle_tasks(doc.name)
     return {"id": doc.name, "plotId": doc.block, "crop": doc.crop,
             "processId": doc.cultivation_process or "", "startDate": str(doc.start_date), "status": doc.status}
 
