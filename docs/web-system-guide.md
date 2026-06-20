@@ -51,6 +51,8 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 - Expand/collapse vùng
 - Tìm kiếm và lọc
 - Nút "Thêm vùng" và "Thêm lô"
+- Cột **Loại cây** hiển thị cây đã gắn cho lô (kể cả khi lô chưa có chu kỳ)
+- **Xóa vùng** = xóa luôn toàn bộ lô bên trong + dữ liệu phụ thuộc (việc/chu kỳ/báo cáo) — không hoàn tác
 
 ### 5. Form Thêm/Sửa Lô (`/admin/zones/add`)
 **2 chế độ tạo lô:**
@@ -63,6 +65,10 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 - Diện tích (tự động từ bản đồ)
 - Tổ trưởng
 - **Nhãn cây** (Gấc / Sâm — tích được cả hai)
+
+**Chống chồng lấn trên bản đồ:**
+- Tạo **vùng** mới → các vùng đã có hiện **đỏ nét đứt**, **chặn** vẽ điểm chồng lên.
+- Vẽ/sửa **lô** → các lô khác trong vùng hiện **xanh nét đứt**, chỉ **cảnh báo** nếu chồng (vẫn lưu được). Sửa một lô **không** ảnh hưởng các lô khác (kể cả lô chia tự động).
 
 ### 6. Quản Lý Tổ & Tổ Viên (`/admin/teams`)
 **2 Tab:**
@@ -90,6 +96,8 @@ Hệ thống quản lý sản xuất nông trại toàn diện với 2 phần:
 
 Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 
+**Sửa quy trình → tự sinh lại việc** cho các chu kỳ đang chạy dùng quy trình đó (giữ việc đã hoàn thành + quá khứ, làm lại từ hôm nay).
+
 ### 8. Quản Lý Chu Kỳ Cây Trồng (`/admin/crop-cycles`)
 **Thông Tin:**
 - Lô, cây trồng, ngày bắt đầu (mặc định hôm nay)
@@ -100,6 +108,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 **Sinh việc (event-driven):**
 - Tạo chu kỳ → sinh việc ngay (cửa sổ 10 ngày); scheduler bù mỗi ngày.
 - Bước có **tiên quyết** chỉ sinh sau khi bước đó được đánh dấu hoàn thành (neo từ ngày hoàn thành + offset); bước không tiên quyết neo từ ngày gieo + offset. Việc lặp dừng khi hết "Số ngày 1 chu kỳ".
+- **Sửa chu kỳ** (ngày bắt đầu / quy trình) → tự **sinh lại việc** theo lịch mới (giữ việc đã hoàn thành + quá khứ).
 - **Xoá chu kỳ:** chưa có việc hoàn thành → xoá hẳn; đã có → tự đóng (giữ lịch sử), gỡ việc chưa xong.
 
 ### 9. Lịch Công Việc 10 Ngày (`/admin/calendar`)
@@ -108,7 +117,8 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 - Bộ lọc: vùng, lô, tổ trưởng, cây
 - Thẻ việc theo ngày
 - Mỗi việc có nút **Cập nhật** mở popup: đổi ngày và/hoặc đổi tổ trưởng rồi bấm **Cập nhật** (gộp chung, lưu một lần)
-- Vùng **Việc đã hoàn thành** (dưới lịch) → nút **Chi tiết** xem ảnh nghiệm thu kèm **cờ GPS**: 🟢 Trong lô / 🔴 Ngoài lô (~Xm) / 🟡 Thiếu GPS, và nhãn *Không chụp in-app*; mỗi ảnh có toạ độ (mở Google Maps) + giờ chụp
+- Bấm **ô ngày bất kỳ** trên lịch (gồm **ngày quá khứ**) → xem việc + trạng thái từng việc của ngày đó
+- Vùng **Việc đã hoàn thành** (dưới lịch) → nút **Chi tiết** xem ảnh nghiệm thu kèm **cờ GPS**: 🟢 Trong lô / 🔴 Ngoài lô (~Xm) / 🟡 Thiếu GPS, và nhãn *Không chụp in-app*; mỗi ảnh có toạ độ (mở Google Maps) + giờ chụp; **bấm ảnh để phóng to** (lightbox)
 
 ### 10. KPI Tổ Trưởng (`/admin/kpi`)
 **Bộ Lọc:**
@@ -164,8 +174,10 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 ### 3. Các Ngày Tới (`/mobile/upcoming`)
 **Hiển Thị:**
 - Danh sách theo ngày
-- Header ngày với số lượng việc
+- Header ngày với số lượng việc — **bấm để thu gọn/mở** từng ngày (dễ xem các ngày sau)
 - Thẻ việc đơn giản
+
+> Camera (mục 4 & 5): trình duyệt thật (Chrome/Safari) chạy đúng; **trình duyệt in-app Zalo/Facebook chặn camera** → mở link bằng trình duyệt thật.
 
 ### 4. Chi Tiết Việc (`/mobile/task/:id`)
 **Thông Tin:**
@@ -186,6 +198,7 @@ Chi tiết khai báo + mẫu: `docs/huong-dan-tao-quy-trinh.md`.
 **Form:**
 - Số liệu sản xuất (số công, diện tích)
 - Ghi chú
+- **Không gửi được nếu để trống** — phải nhập số công hoặc diện tích (hoặc bật Bất thường)
 
 **Bất Thường:**
 - Toggle có/không
