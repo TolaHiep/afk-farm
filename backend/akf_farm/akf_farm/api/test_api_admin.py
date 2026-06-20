@@ -135,3 +135,47 @@ class TestAdminApi(FrappeTestCase):
         r = admin_api.send_daily_notifications()
         self.assertGreaterEqual(r["overdue"], 1)
         self.assertGreaterEqual(r["anomalies"], 1)
+
+    def test_mark_report_reviewed_only_from_pending(self):
+        """mark_report_reviewed: pending -> reviewed; KHÔNG đè 'replied'."""
+        frappe.db.delete("Team Leader Report", {"client_uuid": "mr1"})
+        r = frappe.get_doc({"doctype": "Team Leader Report", "block": "B ADM", "crop": "Gấc",
+                            "report_date": "2026-06-14", "content": "p", "status": "pending",
+                            "client_uuid": "mr1"}).insert(ignore_permissions=True)
+        admin_api.mark_report_reviewed(r.name)
+        self.assertEqual(frappe.db.get_value("Team Leader Report", r.name, "status"), "reviewed")
+        # Đã 'replied' -> KHÔNG bị đè
+        frappe.db.set_value("Team Leader Report", r.name, "status", "replied")
+        admin_api.mark_report_reviewed(r.name)
+        self.assertEqual(frappe.db.get_value("Team Leader Report", r.name, "status"), "replied")
+
+    def test_reply_report_saves_reply_and_status(self):
+        frappe.db.delete("Team Leader Report", {"client_uuid": "rr1"})
+        r = frappe.get_doc({"doctype": "Team Leader Report", "block": "B ADM", "crop": "Gấc",
+                            "report_date": "2026-06-14", "content": "p", "status": "reviewed",
+                            "client_uuid": "rr1"}).insert(ignore_permissions=True)
+        admin_api.reply_report(r.name, "Đã xem, ok.")
+        doc = frappe.get_doc("Team Leader Report", r.name)
+        self.assertEqual(doc.status, "replied")
+        self.assertEqual(doc.reply, "Đã xem, ok.")
+        with self.assertRaises(frappe.ValidationError):
+            admin_api.reply_report(r.name, "   ")  # trống -> reject
+
+    def test_update_anomaly_status_and_reply(self):
+        frappe.db.delete("Abnormal Report", {"client_uuid": "ua1"})
+        a = frappe.get_doc({"doctype": "Abnormal Report", "type": "sâu bệnh", "block": "B ADM",
+                            "crop": "Gấc", "report_date": "2026-06-14", "description": "lá vàng",
+                            "status": "pending", "client_uuid": "ua1"}).insert(ignore_permissions=True)
+        admin_api.update_anomaly(a.name, status="in-progress", reply="Đang kiểm tra.")
+        doc = frappe.get_doc("Abnormal Report", a.name)
+        self.assertEqual(doc.status, "in-progress")
+        self.assertEqual(doc.reply, "Đang kiểm tra.")
+
+    def test_reply_support_saves_reply(self):
+        frappe.db.delete("Support Request", {"content": "_test_rs1"})
+        sr = frappe.get_doc({"doctype": "Support Request", "block": "B ADM", "type": "Vật tư",
+                             "content": "_test_rs1", "status": "pending"}).insert(ignore_permissions=True)
+        admin_api.reply_support(sr.name, "Đã gửi vật tư.")
+        doc = frappe.get_doc("Support Request", sr.name)
+        self.assertEqual(doc.status, "replied")
+        self.assertEqual(doc.reply, "Đã gửi vật tư.")

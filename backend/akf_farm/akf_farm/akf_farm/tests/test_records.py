@@ -25,11 +25,6 @@ class TestRecordDoctypes(FrappeTestCase):
                             "report_date": "2026-06-14", "content": "OK", "abnormal": 0}).insert()
         self.assertEqual(r.status, "pending")
 
-    def test_daily_production(self):
-        d = frappe.get_doc({"doctype": "Daily Production", "block": "Lô RC1", "crop": "Gấc",
-                            "prod_date": "2026-06-14", "quantity": 12.5, "unit": "kg"}).insert()
-        self.assertTrue(d.name)
-
     def test_team_member(self):
         m = frappe.get_doc({"doctype": "Team Member", "member_name": "Nguyễn Văn G",
                             "phone": "0907890123"}).insert()

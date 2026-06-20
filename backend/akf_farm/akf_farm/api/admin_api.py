@@ -42,7 +42,7 @@ def update_zone(name, **kwargs):
 
 
 _BLOCK_CHILD_DOCTYPES = ("Farm Task", "Crop Cycle", "Team Leader Report",
-                         "Support Request", "Daily Production", "Abnormal Report")
+                         "Support Request", "Abnormal Report")
 
 
 def _delete_block_cascade(block):

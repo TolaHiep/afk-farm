@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import { RequireAuth } from "./components/RequireAuth";
+import { NotFound } from "./components/NotFound";
 import { AdminLayout } from "./components/layouts/AdminLayout";
 import { MobileLayout } from "./components/layouts/MobileLayout";
 import { AdminLogin } from "./components/admin/AdminLogin";
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <AdminLogin />,
+    errorElement: <NotFound />,
   },
   {
     path: "/admin",
@@ -87,4 +89,6 @@ export const router = createBrowserRouter([
     path: "/mobile/login",
     element: <MobileLogin />,
   },
+  // Catch-all: URL không khớp route nào -> trang Không tìm thấy + link về home
+  { path: "*", element: <NotFound /> },
 ]);

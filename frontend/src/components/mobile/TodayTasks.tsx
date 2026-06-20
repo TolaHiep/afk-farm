@@ -184,7 +184,7 @@ export function TodayTasks() {
           <CheckCircle className="w-10 h-10 text-green-600 flex-shrink-0" />
           <div>
             <p className="font-bold text-green-800">Ngày hôm nay bạn đã hoàn thành hết việc.</p>
-            <p className="text-sm text-green-700">Hoàn thành 100%. Tuyệt vời!</p>
+            <p className="text-sm text-green-700">Hoàn thành 100%. Tuyệt vời.</p>
           </div>
         </div>
       )}

@@ -19,7 +19,7 @@ export function ReportSuccess() {
             <CheckCircle className="w-16 h-16 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Gửi thành công!
+            Gửi thành công.
           </h1>
           <p className="text-gray-600">
             Báo cáo cuối ngày của bạn đã được ghi nhận
@@ -61,7 +61,7 @@ export function ReportSuccess() {
 
         {/* Info */}
         <p className="text-sm text-gray-500 mt-6">
-          Cảm ơn bạn đã hoàn thành công việc hôm nay!
+          Cảm ơn bạn đã hoàn thành công việc hôm nay.
         </p>
       </div>
     </div>
