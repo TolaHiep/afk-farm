@@ -2,7 +2,14 @@ import React from "react";
 import { Link } from "react-router";
 import { CheckCircle } from "lucide-react";
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
 export function ReportSuccess() {
+  // Mốc thời gian thực khi render trang (sau khi gửi báo cáo thành công)
+  const [sentAt] = React.useState(() => new Date());
+  const dateStr = `${pad(sentAt.getDate())}/${pad(sentAt.getMonth() + 1)}/${sentAt.getFullYear()}`;
+  const timeStr = `${pad(sentAt.getHours())}:${pad(sentAt.getMinutes())}`;
+
   return (
     <div className="min-h-screen bg-green-50 flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
@@ -25,11 +32,11 @@ export function ReportSuccess() {
           <div className="space-y-2 text-sm text-gray-600">
             <div className="flex justify-between">
               <span>Ngày:</span>
-              <span className="font-medium text-gray-900">14/06/2026</span>
+              <span className="font-medium text-gray-900">{dateStr}</span>
             </div>
             <div className="flex justify-between">
               <span>Thời gian gửi:</span>
-              <span className="font-medium text-gray-900">18:30</span>
+              <span className="font-medium text-gray-900">{timeStr}</span>
             </div>
             <div className="flex justify-between">
               <span>Trạng thái:</span>
