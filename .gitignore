@@ -4,6 +4,5 @@
 .claude/
 AGENTS.md
 CLAUDE.md
-zones-grid.png
-heatmap-deeplink.png
+*.png
 frontend/2026-*.txt
