@@ -27,10 +27,13 @@ function formatVNDate(iso: string) {
   return `${weekdays[d.getDay()]}, ${d.getDate()} tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
 }
 
+// Cộng ngày vào chuỗi "YYYY-MM-DD" — dùng UTC để không lệch múi giờ
+// (toISOString() trên Date local sẽ trừ +07:00 ra → lệch 1 ngày khi setDate/getDate trên VN).
 function addDays(iso: string, n: number) {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
 }
 
 // Chip + màu trạng thái việc

@@ -1,6 +1,7 @@
 import React from "react";
-import { ClipboardList, ImageIcon, AlertTriangle } from "lucide-react";
-import { getReports, getTeamLeaders, getPlots, getZones } from "../../lib/queries";
+import { ClipboardList, ImageIcon, AlertTriangle, Send } from "lucide-react";
+import { getReports, getTeamLeaders, getPlots, getZones, markReportReviewed, replyReport } from "../../lib/queries";
+import { toast } from "../../lib/toast";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Chờ xem", cls: "bg-yellow-100 text-yellow-800" },
@@ -17,6 +18,8 @@ export function TeamLeaderReports() {
   const [abnormal, setAbnormal] = React.useState("all");
   const [date, setDate] = React.useState("");
   const [detail, setDetail] = React.useState<string | null>(null);
+  const [reply, setReply] = React.useState("");
+  const [sending, setSending] = React.useState(false);
   const [teamLeaderReports, setTeamLeaderReports] = React.useState<any[]>([]);
   const [teamLeaders, setTeamLeaders] = React.useState<any[]>([]);
   const [plots, setPlots] = React.useState<any[]>([]);
@@ -61,6 +64,37 @@ export function TeamLeaderReports() {
     const p = plotById.get(plotId);
     return p ? (p.zoneId ?? p.zone) : undefined;
   }, [plotById]);
+
+  // Mở chi tiết: hiện modal + tự đánh dấu 'reviewed' nếu đang 'pending'
+  const openDetail = async (id: string) => {
+    setDetail(id);
+    setReply("");
+    const r = teamLeaderReports.find((x) => x.id === id);
+    if (r?.status === "pending") {
+      try {
+        await markReportReviewed(id);
+        setTeamLeaderReports((prev) => prev.map((x) => (x.id === id ? { ...x, status: "reviewed" } : x)));
+      } catch (e: any) {
+        toast.error(e?.message || "Không cập nhật được trạng thái báo cáo.");
+      }
+    }
+  };
+
+  const handleReply = async () => {
+    const text = reply.trim();
+    if (!text || !detail) { toast.warning("Vui lòng nhập nội dung phản hồi."); return; }
+    setSending(true);
+    try {
+      await replyReport(detail, text);
+      setTeamLeaderReports((prev) => prev.map((x) => (x.id === detail ? { ...x, status: "replied", reply: text } : x)));
+      setReply("");
+      toast.success("Đã lưu phản hồi.");
+    } catch (e: any) {
+      toast.error(e?.message || "Không gửi được phản hồi. Vui lòng thử lại.");
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-10 text-center text-gray-400">Đang tải…</div>;
@@ -157,7 +191,7 @@ export function TeamLeaderReports() {
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS[r.status].cls}`}>{STATUS[r.status].label}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => setDetail(r.id)} className="text-sm text-green-600 hover:underline">Xem</button>
+                    <button onClick={() => openDetail(r.id)} className="text-sm text-green-600 hover:underline">Xem</button>
                   </td>
                 </tr>
               );
@@ -228,9 +262,27 @@ export function TeamLeaderReports() {
             {current.reply && (
               <div className="p-3 bg-blue-50 rounded-lg text-sm">
                 <div className="font-medium text-blue-800 mb-1">Phản hồi Admin</div>
-                <p className="text-blue-900">{current.reply}</p>
+                <p className="text-blue-900 whitespace-pre-line">{current.reply}</p>
               </div>
             )}
+
+            {/* Form phản hồi (luôn cho phép cập nhật/sửa) */}
+            <div className="pt-2 border-t border-gray-200">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {current.reply ? "Cập nhật phản hồi" : "Phản hồi cho tổ trưởng"}
+              </label>
+              <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3}
+                placeholder="Nhập nội dung phản hồi…"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+              <div className="flex justify-end gap-2 mt-2">
+                <button onClick={() => setDetail(null)}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Đóng</button>
+                <button onClick={handleReply} disabled={sending || !reply.trim()}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                  <Send className="w-4 h-4" /> {sending ? "Đang gửi…" : "Gửi phản hồi"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
