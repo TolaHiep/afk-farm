@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Filter, Calendar, MapPin, Sprout, User, AlertTriangle, CheckCircle2, Clock, CircleDashed, Layers } from "lucide-react";
@@ -132,8 +132,10 @@ function SatelliteMap({
       });
     }
 
-    // Canh khung nhìn theo bộ lọc vùng (không tự fit khi chỉ chọn để tránh giật)
-    if (filterZone !== "all" && zoneGeo[filterZone]) {
+    // Canh khung nhìn: ưu tiên zoom vào LÔ đang chọn (deep-link), kế tiếp là vùng đang lọc
+    if (selectedPlot && plotGeo[selectedPlot]) {
+      map.fitBounds(L.latLngBounds(plotGeo[selectedPlot].polygon), { padding: [16, 16], maxZoom: 19 });
+    } else if (filterZone !== "all" && zoneGeo[filterZone]) {
       map.fitBounds(L.latLngBounds(zoneGeo[filterZone].polygon), { padding: [10, 10], maxZoom: 17 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,6 +145,7 @@ function SatelliteMap({
 }
 
 export function HeatMap() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedPlot, setSelectedPlot] = React.useState<string | null>(null);
   const [selectedZone, setSelectedZone] = React.useState<string | null>(null);
   const [filterDate, setFilterDate] = React.useState(todayYMD());
@@ -169,9 +172,29 @@ export function HeatMap() {
         setPlots(p);
         setAnomalies(an ?? []);
         setGeo(buildGeo(z, p));
+        // Deep-link: ?plot=ID hoặc ?zone=ID -> lọc + chọn để bản đồ zoom thẳng tới đó
+        const qPlot = searchParams.get("plot");
+        const qZone = searchParams.get("zone");
+        if (qPlot) {
+          const plot = p.find((x: any) => x.id === qPlot);
+          if (plot) {
+            setFilterZone(plot.zoneId);
+            setSelectedPlot(plot.id);
+            setSelectedZone(plot.zoneId);
+          }
+        } else if (qZone) {
+          setFilterZone(qZone);
+          setSelectedZone(qZone);
+        }
+        if (qPlot || qZone) {
+          const next = new URLSearchParams(searchParams);
+          next.delete("plot"); next.delete("zone");
+          setSearchParams(next, { replace: true });
+        }
       })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {

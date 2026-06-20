@@ -8,11 +8,17 @@ import {
   Trash2,
   PauseCircle,
   Layers,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getZones, getPlots, deleteZone, deletePlot, updatePlot } from "../../lib/queries";
 import { type CropOnPlot } from "../../lib/mockData";
+import { toast } from "../../lib/toast";
+import { polygonFromGeoJSON, type LatLng } from "../../lib/geo";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // Kiểu trạng thái chi tiết của lô/vùng
 type PlotStatus = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
@@ -52,6 +58,7 @@ interface PlotItem {
   crops: CropOnPlot[];
   // Cây đã gắn khi tạo lô (chưa cần chu kỳ) — dùng để hiển thị "Loại cây" trước khi có chu kỳ
   cropTags?: string[];
+  boundary?: any;
 }
 
 interface ZoneItem {
@@ -60,6 +67,81 @@ interface ZoneItem {
   area: number;
   plots: number;
   status: string;
+  boundary?: any;
+}
+
+// Màu fill cho lô trong mini-map (đồng bộ với PROGRESS_COLOR ở dạng hex để vẽ SVG)
+const FILL: Record<string, string> = {
+  good: "#22c55e", warning: "#eab308", danger: "#ef4444",
+  pending: "#9ca3af", done: "#16a34a", inactive: "#d1d5db",
+};
+
+// Mini-map Leaflet với ảnh vệ tinh (Esri World_Imagery) cho từng vùng.
+// Init khi card hiện trong viewport (IntersectionObserver) để tránh tải đồng loạt khi có nhiều vùng.
+function ZoneMiniMap({
+  zonePoly, plots, onPlotClick,
+}: {
+  zonePoly: LatLng[] | null;
+  plots: { id: string; name: string; status: string; polygon: LatLng[] }[];
+  onPlotClick?: (id: string) => void;
+}) {
+  const elRef = React.useRef<HTMLDivElement>(null);
+  const mapRef = React.useRef<L.Map | null>(null);
+  const [visible, setVisible] = React.useState(false);
+
+  // Chỉ tải bản đồ khi card đi vào viewport
+  React.useEffect(() => {
+    if (!elRef.current || visible) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) { setVisible(true); io.disconnect(); } }),
+      { rootMargin: "200px" },
+    );
+    io.observe(elRef.current);
+    return () => io.disconnect();
+  }, [visible]);
+
+  React.useEffect(() => {
+    if (!visible || !elRef.current || mapRef.current) return;
+    const map = L.map(elRef.current, { attributionControl: false, zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false });
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }).addTo(map);
+    mapRef.current = map;
+    // Đảm bảo Leaflet đo lại kích thước sau khi card render
+    requestAnimationFrame(() => map.invalidateSize());
+    return () => { map.remove(); mapRef.current = null; };
+  }, [visible]);
+
+  // Vẽ vùng + lô khi data đổi
+  React.useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const layer = L.layerGroup().addTo(map);
+    const all: LatLng[] = [...(zonePoly || []), ...plots.flatMap((p) => p.polygon)];
+    if (zonePoly && zonePoly.length >= 3) {
+      L.polygon(zonePoly as L.LatLngExpression[], {
+        color: "#eab308", weight: 2, dashArray: "5,4", fillColor: "#fef3c7", fillOpacity: 0.15, interactive: false,
+      }).addTo(layer);
+    }
+    plots.forEach((p) => {
+      if (p.polygon.length < 3) return;
+      const fill = FILL[p.status] || FILL.pending;
+      const poly = L.polygon(p.polygon as L.LatLngExpression[], {
+        color: fill, weight: 2, fillColor: fill, fillOpacity: 0.45,
+      }).addTo(layer);
+      poly.bindTooltip(p.name, { permanent: true, direction: "center", className: "akf-plot-label" });
+      if (onPlotClick) poly.on("click", () => onPlotClick(p.id));
+    });
+    if (all.length) map.fitBounds(L.latLngBounds(all as L.LatLngExpression[]), { padding: [12, 12], maxZoom: 19 });
+    return () => { layer.remove(); };
+  }, [zonePoly, plots, onPlotClick, visible]);
+
+  if (!zonePoly && plots.every((p) => p.polygon.length < 3)) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-sm text-gray-400 bg-gray-50">
+        Chưa có ranh giới — chỉnh sửa vùng/lô để vẽ trên bản đồ.
+      </div>
+    );
+  }
+  return <div ref={elRef} className="w-full h-full bg-gray-100" />;
 }
 
 type ConfirmTarget =
@@ -89,6 +171,9 @@ export function ZoneManagement() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [confirm, setConfirm] = React.useState<ConfirmTarget | null>(null);
+  const [viewMode, setViewMode] = React.useState<"list" | "grid">(() =>
+    (localStorage.getItem("akf_zones_view") as "list" | "grid") || "list");
+  const switchView = (m: "list" | "grid") => { setViewMode(m); localStorage.setItem("akf_zones_view", m); };
 
   const toggleZone = (zoneId: string) => {
     setExpandedZones((prev) => {
@@ -116,10 +201,12 @@ export function ZoneManagement() {
     return byStatus && byTerm;
   };
 
-  // Điều hướng tới lịch công việc khi bấm vào tên lô hoặc tiến độ
-  const goToPlot = (plotId: string) => {
-    navigate(`/admin/calendar?plot=${plotId}`);
-  };
+  // Mở Bản đồ nhiệt và zoom vào đúng lô khi bấm trong dạng Lưới hoặc trên mini-map
+  const goToPlotMap = (plotId: string) => navigate(`/admin/heatmap?plot=${plotId}`);
+  // Mở trang sửa lô khi bấm tên lô ở dạng Danh sách
+  const goToPlotEdit = (plotId: string) => navigate(`/admin/zones/edit/${plotId}`);
+  // Vẫn giữ điều hướng tới lịch công việc khi bấm vào tiến độ ở dạng Danh sách
+  const goToPlotCalendar = (plotId: string) => navigate(`/admin/calendar?plot=${plotId}`);
 
   // Yêu cầu xác nhận xóa vùng
   const askDeleteZone = (z: ZoneItem) =>
@@ -143,7 +230,7 @@ export function ZoneManagement() {
       setPlots((prev) => prev.filter((p) => p.zoneId !== zoneId));
       closeConfirm();
     } catch (e: any) {
-      alert(e?.message || "Không xóa được vùng. Vui lòng thử lại.");
+      toast.error(e?.message || "Không xóa được vùng. Vui lòng thử lại.");
     }
   };
 
@@ -153,7 +240,7 @@ export function ZoneManagement() {
       setPlots((prev) => prev.filter((p) => p.id !== plotId));
       closeConfirm();
     } catch (e: any) {
-      alert(e?.message || "Không xóa được lô. Vui lòng thử lại.");
+      toast.error(e?.message || "Không xóa được lô. Vui lòng thử lại.");
     }
   };
 
@@ -212,7 +299,20 @@ export function ZoneManagement() {
             <option value="inactive">Nghỉ / Không hoạt động</option>
           </select>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          {/* Toggle xem dạng Danh sách / Lưới có mini-map */}
+          <div className="inline-flex border border-gray-300 rounded-lg overflow-hidden">
+            <button onClick={() => switchView("list")}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm ${viewMode === "list" ? "bg-green-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+              aria-pressed={viewMode === "list"} title="Danh sách">
+              <List className="w-4 h-4" /> Danh sách
+            </button>
+            <button onClick={() => switchView("grid")}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm border-l border-gray-300 ${viewMode === "grid" ? "bg-green-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+              aria-pressed={viewMode === "grid"} title="Lưới + Bản đồ">
+              <LayoutGrid className="w-4 h-4" /> Lưới
+            </button>
+          </div>
           <Link to="/admin/zones/add?type=zone">
             <Button variant="secondary">
               <Plus className="w-4 h-4 mr-2" />
@@ -228,7 +328,78 @@ export function ZoneManagement() {
         </div>
       </div>
 
-      {/* Cây Vùng & Lô (accordion theo zone) */}
+      {/* Dạng LƯỚI: mỗi vùng là 1 card có mini-map chia lô + chip điều hướng */}
+      {viewMode === "grid" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {zones.length === 0 && (
+            <div className="md:col-span-2 xl:col-span-3 bg-white rounded-lg shadow border border-gray-200 p-10 text-center text-gray-400">
+              Không còn vùng nào.
+            </div>
+          )}
+          {zones.map((zone) => {
+            const zonePlots = plots.filter((p) => p.zoneId === zone.id);
+            const visiblePlots = zonePlots.filter(plotMatches);
+            const filtering = term !== "" || statusFilter !== "all";
+            if (filtering && visiblePlots.length === 0) return null;
+            const zoneMeta = statusMeta(zone.status);
+            const zonePoly = polygonFromGeoJSON(zone.boundary);
+            const mapPlots = (filtering ? visiblePlots : zonePlots)
+              .map((p) => ({ id: p.id, name: p.name, status: p.status,
+                             polygon: polygonFromGeoJSON(p.boundary) || [] as LatLng[] }));
+            return (
+              <div key={`grid-${zone.id}`} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden flex flex-col">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Layers className="w-4 h-4 text-green-600 shrink-0" />
+                    <span className="font-semibold text-gray-900 truncate">{zone.name}</span>
+                  </div>
+                  <StatusBadge status={zoneMeta.badge}>{zoneMeta.label}</StatusBadge>
+                </div>
+                <div className="aspect-[4/3] bg-gray-50 border-b border-gray-200">
+                  <ZoneMiniMap zonePoly={zonePoly} plots={mapPlots} onPlotClick={goToPlotMap} />
+                </div>
+                <div className="p-3 space-y-2 flex-1">
+                  <div className="text-xs text-gray-500">
+                    {zone.area.toLocaleString()} m² · {zonePlots.length} lô{filtering ? ` · ${visiblePlots.length} khớp` : ""}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(filtering ? visiblePlots : zonePlots).map((p) => {
+                      const pm = statusMeta(p.status);
+                      const color = FILL[p.status] || FILL.pending;
+                      return (
+                        <button key={`chip-${p.id}`} onClick={() => goToPlotMap(p.id)}
+                          title={`${p.name} · ${pm.label} · ${p.done}/${p.total} · Xem trên bản đồ`}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-gray-50 border border-gray-200 hover:bg-gray-100">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                          <span className="font-medium text-gray-800">{p.name}</span>
+                          <span className="text-gray-500">{p.done}/{p.total}</span>
+                        </button>
+                      );
+                    })}
+                    {zonePlots.length === 0 && (
+                      <span className="text-xs text-gray-400">Chưa có lô.</span>
+                    )}
+                  </div>
+                </div>
+                <div className="px-3 pb-3 pt-1 flex gap-2 mt-auto border-t border-gray-100">
+                  <Link to={`/admin/zones/add?type=plot&zone=${zone.id}`} className="flex-1">
+                    <Button variant="secondary" size="sm" className="w-full">
+                      <Plus className="w-4 h-4 mr-1" /> Thêm lô
+                    </Button>
+                  </Link>
+                  <button onClick={() => askDeleteZone(zone)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg border border-red-200">
+                    <Trash2 className="w-4 h-4" /> Xóa
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Cây Vùng & Lô (accordion theo zone) — dạng danh sách */}
+      {viewMode === "list" && (
       <div className="space-y-4">
         {zones.length === 0 && (
           <div className="bg-white rounded-lg shadow border border-gray-200 p-10 text-center text-gray-400">
@@ -318,11 +489,12 @@ export function ZoneManagement() {
 
                         return (
                           <tr key={plot.id} className="hover:bg-gray-50">
-                            {/* Tên lô -> điều hướng */}
+                            {/* Tên lô -> trang sửa lô */}
                             <td className="px-5 py-4">
                               <button
-                                onClick={() => goToPlot(plot.id)}
+                                onClick={() => goToPlotEdit(plot.id)}
                                 className="font-medium text-green-700 hover:underline text-left"
+                                title="Sửa lô"
                               >
                                 {plot.name}
                               </button>
@@ -365,10 +537,10 @@ export function ZoneManagement() {
                                 })}
                               </div>
                             </td>
-                            {/* Tiến độ: 1 thanh nhỏ cho mỗi cây -> điều hướng */}
+                            {/* Tiến độ: bấm để mở lịch công việc của lô */}
                             <td className="px-5 py-4">
                               <button
-                                onClick={() => goToPlot(plot.id)}
+                                onClick={() => goToPlotCalendar(plot.id)}
                                 className="w-44 text-left group space-y-2"
                                 title="Xem lịch công việc"
                               >
@@ -439,8 +611,9 @@ export function ZoneManagement() {
                         {/* Tên lô + diện tích */}
                         <div>
                           <button
-                            onClick={() => goToPlot(plot.id)}
+                            onClick={() => goToPlotEdit(plot.id)}
                             className="font-medium text-green-700 hover:underline text-left break-words"
+                            title="Sửa lô"
                           >
                             {plot.name}
                           </button>
@@ -492,7 +665,7 @@ export function ZoneManagement() {
                                   </StatusBadge>
                                 </div>
                                 <button
-                                  onClick={() => goToPlot(plot.id)}
+                                  onClick={() => goToPlotCalendar(plot.id)}
                                   className="w-full text-left group"
                                   title="Xem lịch công việc"
                                 >
@@ -539,6 +712,7 @@ export function ZoneManagement() {
           );
         })}
       </div>
+      )}
 
       {/* Modal xác nhận xóa */}
       {confirm && (
