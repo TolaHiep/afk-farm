@@ -1,6 +1,6 @@
 import React from "react";
 import { Settings as SettingsIcon, Mail, Building2, Send } from "lucide-react";
-import { getSettings, saveSettings, uploadLogo, sendTestEmail } from "../../lib/queries";
+import { getSettings, saveSettings, uploadLogo, sendTestEmail, sendDailyNotifications } from "../../lib/queries";
 
 type SettingsState = {
   appName: string;
@@ -112,6 +112,16 @@ export function Settings() {
     }
   };
 
+  const onSendNotifications = async () => {
+    try {
+      const r = await sendDailyNotifications();
+      alert(`Tổng hợp: ${r.overdue} việc quá hạn, ${r.anomalies} bất thường mới. ` +
+        (r.sent ? `Đã gửi email cho ${r.sent} admin.` : (r.reason || "Chưa gửi được email (kiểm tra cấu hình/Bật gửi email).")));
+    } catch (err: any) {
+      alert(err?.message || "Gửi thông báo thất bại. Vui lòng thử lại.");
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-3xl">
       <div>
@@ -175,7 +185,12 @@ export function Settings() {
               className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
               <Send className="w-4 h-4" /> Gửi email test
             </button>
+            <button onClick={onSendNotifications}
+              className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+              <Mail className="w-4 h-4" /> Gửi thông báo tổng hợp
+            </button>
           </div>
+          <p className="text-xs text-gray-500">Hệ thống tự gửi email tổng hợp (việc quá hạn + bất thường mới) cho admin mỗi ngày. Nút trên để gửi ngay.</p>
         </div>
       )}
     </div>

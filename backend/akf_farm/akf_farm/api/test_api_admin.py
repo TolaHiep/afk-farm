@@ -124,3 +124,14 @@ class TestAdminApi(FrappeTestCase):
         s.save(ignore_permissions=True)
         r = admin_api.send_test_email("x@example.com")
         self.assertFalse(r["ok"])  # không raise, trả ok=False để UI báo nhẹ nhàng
+
+    def test_daily_notifications_counts_overdue_and_anomalies(self):
+        frappe.get_doc({"doctype": "Farm Task", "title": "QH", "block": "B ADM", "crop": "Gấc",
+                        "task_date": "2026-06-01", "status": "overdue"}).insert(ignore_permissions=True)
+        frappe.db.delete("Team Leader Report", {"client_uuid": "dn1"})
+        frappe.get_doc({"doctype": "Team Leader Report", "block": "B ADM", "crop": "Gấc",
+                        "report_date": "2026-06-20", "content": "sâu bệnh", "abnormal": 1,
+                        "client_uuid": "dn1"}).insert(ignore_permissions=True)
+        r = admin_api.send_daily_notifications()
+        self.assertGreaterEqual(r["overdue"], 1)
+        self.assertGreaterEqual(r["anomalies"], 1)

@@ -151,7 +151,8 @@ permission_query_conditions = {
 scheduler_events = {
 	"daily": [
 		"akf_farm.engine.task_generator.mark_overdue",
-		"akf_farm.engine.task_generator.generate_tasks"
+		"akf_farm.engine.task_generator.generate_tasks",
+		"akf_farm.api.admin_api.send_daily_notifications"
 	],
 }
 

@@ -389,6 +389,46 @@ def send_test_email(to=None):
                       "Đây là email thử nghiệm từ hệ thống AKF. Nhận được email này nghĩa là cấu hình SMTP đã hoạt động.")
 
 
+def _admin_emails():
+    """Email các admin (role AKF Admin) đang bật, để nhận thông báo."""
+    rows = frappe.get_all("Has Role", filters={"role": "AKF Admin", "parenttype": "User"}, fields=["parent"])
+    out = []
+    for r in rows:
+        if frappe.db.get_value("User", r.parent, "enabled"):
+            em = frappe.db.get_value("User", r.parent, "email")
+            if em and "@" in em:
+                out.append(em)
+    return list(dict.fromkeys(out))
+
+
+def _send_smtp_many(recipients, subject, body):
+    return sum(1 for to in recipients if _send_smtp(to, subject, body).get("ok"))
+
+
+@frappe.whitelist()
+def send_daily_notifications():
+    """Email tổng hợp cho admin: việc quá hạn + bất thường mới (24h). Whitelist để chạy tay/test;
+    cũng gọi tự động hằng ngày qua scheduler. Không gửi nếu không có gì để báo."""
+    from frappe.utils import add_to_date, now_datetime
+    overdue = frappe.get_all("Farm Task", filters={"status": "overdue"},
+                             fields=["title", "block", "task_date"], limit=50)
+    since = add_to_date(now_datetime(), hours=-24)
+    anomalies = frappe.get_all("Team Leader Report", filters={"abnormal": 1, "creation": [">", since]},
+                               fields=["block", "crop", "content"], limit=50)
+    if not overdue and not anomalies:
+        return {"ok": True, "sent": 0, "overdue": 0, "anomalies": 0}
+    recipients = _admin_emails()
+    if not recipients:
+        return {"ok": False, "sent": 0, "overdue": len(overdue), "anomalies": len(anomalies),
+                "reason": "Không có email admin."}
+    lines = ["Tổng hợp hệ thống AKF:", "", f"Việc quá hạn: {len(overdue)}"]
+    lines += [f"  • {t.title} — {t.block} ({t.task_date})" for t in overdue[:20]]
+    lines += ["", f"Bất thường mới (24h): {len(anomalies)}"]
+    lines += [f"  • {a.block}/{a.crop}: {(a.content or '')[:80]}" for a in anomalies[:20]]
+    sent = _send_smtp_many(recipients, "Thông báo AKF: việc quá hạn & bất thường", "\n".join(lines))
+    return {"ok": True, "sent": sent, "overdue": len(overdue), "anomalies": len(anomalies)}
+
+
 @frappe.whitelist()
 def team_kpi():
     """KPI theo tổ trưởng (xấp xỉ GĐ1). Trả shape kpiData: top-level + byCrop (Gấc/Sâm)."""

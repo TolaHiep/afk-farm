@@ -82,6 +82,7 @@ export const getSettings = () => api.get("admin_api.get_settings") as Promise<an
 export const saveSettings = (s: Record<string, unknown>) => api.post("admin_api.save_settings", s);
 export const uploadLogo = (dataUrl: string) => api.post("admin_api.upload_logo", { data_url: dataUrl }) as Promise<{ ok: boolean; logoUrl: string }>;
 export const sendTestEmail = (to?: string) => api.post("admin_api.send_test_email", to ? { to } : {}) as Promise<{ ok: boolean; reason?: string }>;
+export const sendDailyNotifications = () => api.post("admin_api.send_daily_notifications", {}) as Promise<{ ok: boolean; sent: number; overdue: number; anomalies: number; reason?: string }>;
 export const getDashboard = (date?: string) =>
   api.get("admin_api.dashboard", date ? { date } : undefined) as Promise<any>;
 export const getTeamKpi = () => api.get("admin_api.team_kpi") as Promise<any[]>;
