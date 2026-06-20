@@ -3,6 +3,9 @@ import { Camera, X } from "lucide-react";
 import { drawWatermark, watermarkLines } from "../../lib/watermark";
 import type { CapturedPhoto } from "../../lib/capture";
 
+// Camera in-app: KHONG hien thi the <video> (mot so trinh duyet/webview tu gan controls
+// native play/pause/timeline len video dang phat). Thay vao do <video> chay an (1px) chi de
+// cap frame, con preview duoc ve len <canvas> moi frame -> canvas khong bao gio co controls.
 export function CameraCapture({
   plotName, onCapture, onClose, onUnavailable,
 }: {
@@ -12,7 +15,9 @@ export function CameraCapture({
   onUnavailable: () => void;
 }) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const previewRef = React.useRef<HTMLCanvasElement>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
+  const rafRef = React.useRef<number | null>(null);
   const geoRef = React.useRef<{ lat: number | null; lng: number | null; accuracy: number | null }>({
     lat: null, lng: null, accuracy: null,
   });
@@ -30,12 +35,23 @@ export function CameraCapture({
         const v = videoRef.current;
         if (v) {
           v.srcObject = stream;
-          // JSX `muted` khong duoc React set dang tin -> ep muted + playsinline bang JS,
-          // neu khong trinh duyet chan autoplay va hien controls native (nut play + thanh time).
           v.muted = true;
           v.setAttribute("playsinline", "");
           v.play().catch(() => {});
         }
+        // Ve frame video len canvas preview lien tuc (canvas khong co controls native).
+        const draw = () => {
+          if (!alive) return;
+          const vid = videoRef.current;
+          const cv = previewRef.current;
+          if (vid && cv && vid.videoWidth) {
+            if (cv.width !== vid.videoWidth) { cv.width = vid.videoWidth; cv.height = vid.videoHeight; }
+            const ctx = cv.getContext("2d");
+            if (ctx) ctx.drawImage(vid, 0, 0, cv.width, cv.height);
+          }
+          rafRef.current = requestAnimationFrame(draw);
+        };
+        rafRef.current = requestAnimationFrame(draw);
         setReady(true);
       })
       .catch(() => { if (alive) onUnavailable(); });
@@ -49,6 +65,7 @@ export function CameraCapture({
     }
     return () => {
       alive = false;
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
     };
   }, [onUnavailable]);
@@ -86,14 +103,17 @@ export function CameraCapture({
         <button onClick={onClose} aria-label="Đóng"><X className="w-6 h-6" /></button>
       </div>
       <div className="flex-1 relative">
+        {/* <video> chay an 1px chi de cap frame; KHONG hien de tranh controls native */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
           onLoadedMetadata={(e) => { e.currentTarget.muted = true; e.currentTarget.play().catch(() => {}); }}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          className="pointer-events-none absolute left-0 top-0 opacity-0"
+          style={{ width: 1, height: 1 }}
         />
+        <canvas ref={previewRef} className="absolute inset-0 w-full h-full object-cover" />
         {!ready && <p className="absolute inset-0 flex items-center justify-center text-white/80 text-sm">Đang mở camera…</p>}
       </div>
       <div className="p-6 flex justify-center bg-black">
