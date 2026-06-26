@@ -99,7 +99,7 @@ def generate_tasks(from_date=None, days=10, cycle=None):
     cycles = frappe.get_all(
         "Crop Cycle",
         filters=filters,
-        fields=["name", "block", "crop", "cultivation_process", "start_date"],
+        fields=["name", "block", "crop", "cultivation_process", "start_date", "team_leader"],
     )
     area_of = {}
     rows = []
@@ -134,6 +134,7 @@ def generate_tasks(from_date=None, days=10, cycle=None):
                         "cycle": c.name, "block": c.block, "crop": c.crop, "date": d,
                         "description": title, "scope": s.scope, "require_photo": s.require_photo,
                         "mandays": compute_mandays(s.mandays_per_ha, area_of[c.block]),
+                        "leader": c.team_leader,  # tổ trưởng riêng của chu kỳ (nếu có) -> ghim cho việc
                     })
     for r in dedupe_shared(rows):
         if r.get("scope") == "shared":
@@ -152,6 +153,7 @@ def generate_tasks(from_date=None, days=10, cycle=None):
             "crop": r["crop"], "cycle": r.get("cycle"), "task_date": str(r["date"]),
             "status": "pending", "require_photo": r.get("require_photo") or 0,
             "mandays": r.get("mandays") or 0,
+            "team_leader": r.get("leader") or None,  # ghim tổ trưởng chu kỳ; rỗng -> assign_tasks lo
         }).insert()
         created += 1
     # Tự gán tổ trưởng cho việc trong cửa sổ (ưu tiên chủ lô active, còn lại cân tải)
@@ -165,6 +167,8 @@ def _active_leaders():
 
     out = []
     for u in frappe.get_all("User", filters={"enabled": 1}, fields=["name"]):
+        if u.name == "Administrator":
+            continue  # Administrator có mọi role -> không phải tổ trưởng, không nhận việc
         if "AKF Team Leader" in frappe.get_roles(u.name):
             out.append(u.name)
     return out
@@ -225,6 +229,18 @@ def mark_overdue(today=None):
         fields=["name"])
     for t in names:
         frappe.db.set_value("Farm Task", t.name, "status", "overdue")
+    return len(names)
+
+
+def reassign_cycle_tasks(cycle, leader):
+    """Gán lại tổ trưởng cho mọi việc CHƯA hoàn thành của 1 chu kỳ (cả quá hạn lẫn tương lai).
+    Việc đã hoàn thành giữ nguyên (lịch sử). leader rỗng -> để trống (chủ lô/cân tải lo sau)."""
+    import frappe
+
+    names = frappe.get_all("Farm Task",
+        filters={"cycle": cycle, "status": ["!=", "completed"]}, pluck="name")
+    for n in names:
+        frappe.db.set_value("Farm Task", n, "team_leader", leader or None)
     return len(names)
 
 

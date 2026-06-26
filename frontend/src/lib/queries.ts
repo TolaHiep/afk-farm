@@ -61,7 +61,7 @@ export const updateProcess = (name: string, p: Record<string, unknown>) =>
 export const deleteProcess = (name: string) => api.post("admin_api.delete_process", { name });
 
 // Chu kỳ cây trồng (CRUD)
-export const createCropCycle = (p: { block: string; crop: string; start_date: string; cultivation_process?: string; status?: string }) =>
+export const createCropCycle = (p: { block: string; crop: string; start_date: string; cultivation_process?: string; status?: string; team_leader?: string }) =>
   api.post("admin_api.create_crop_cycle", p);
 export const updateCropCycle = (name: string, p: Record<string, unknown>) =>
   api.post("admin_api.update_crop_cycle", { name, ...p });

@@ -224,7 +224,9 @@ def _task_sop(doc):
 @frappe.whitelist()
 def task_detail(task):
     doc = frappe.get_doc("Farm Task", task)
-    if doc.team_leader and doc.team_leader != frappe.session.user:
+    user = frappe.session.user
+    if doc.team_leader and doc.team_leader != user \
+            and user != "Administrator" and "AKF Admin" not in frappe.get_roles(user):
         frappe.throw("Không có quyền xem việc này.", frappe.PermissionError)
     return {
         "id": doc.name, "title": doc.title, "plotId": doc.block, "crop": doc.crop,

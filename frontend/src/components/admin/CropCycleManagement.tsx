@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Plus, Calendar, FileText, X, AlertTriangle, MapPin, Edit2, Trash2, ChevronDown, ChevronRight, Filter, LayoutGrid, List, Layers } from "lucide-react";
+import { Plus, Calendar, FileText, X, AlertTriangle, MapPin, Edit2, Trash2, ChevronDown, ChevronRight, Filter, LayoutGrid, List, Layers, User } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { Modal, Field, FormActions, ConfirmDialog, inputCls } from "../ui/FormModal";
-import { getCropCycles, getZones, getPlots, getProcesses, getReports, createCropCycle, updateCropCycle, deleteCropCycle } from "../../lib/queries";
+import { getCropCycles, getZones, getPlots, getProcesses, getReports, getTeamLeaders, createCropCycle, updateCropCycle, deleteCropCycle } from "../../lib/queries";
 import { todayYMD } from "../../lib/today";
 import { toast } from "../../lib/toast";
 
-interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; }
+interface Cycle { id: string; plotId: string; crop: string; startDate: string; processId: string; status: string; teamLeaderId?: string; }
 
 const CYCLE_STATUS: Record<string, { label: string; badge: "active" | "pending" | "completed" }> = {
   active: { label: "Đang hoạt động", badge: "active" },
@@ -16,7 +16,7 @@ const CYCLE_STATUS: Record<string, { label: string; badge: "active" | "pending" 
   done: { label: "Kết thúc", badge: "completed" },
   closed: { label: "Đã đóng", badge: "completed" },
 };
-const emptyCycle = (firstPlotId = "", firstProcessId = ""): Cycle => ({ id: "", plotId: firstPlotId, crop: "Gấc", startDate: todayYMD(), processId: firstProcessId, status: "active" });
+const emptyCycle = (firstPlotId = "", firstProcessId = ""): Cycle => ({ id: "", plotId: firstPlotId, crop: "Gấc", startDate: todayYMD(), processId: firstProcessId, status: "active", teamLeaderId: "" });
 const cropOrder = (crop: string) => (crop === "Gấc" ? 0 : crop === "Sâm" ? 1 : 2);
 
 export function CropCycleManagement() {
@@ -26,6 +26,7 @@ export function CropCycleManagement() {
   const [zones, setZones] = useState<any[]>([]);
   const [plots, setPlots] = useState<any[]>([]);
   const [processes, setProcesses] = useState<any[]>([]);
+  const [teamLeaders, setTeamLeaders] = useState<any[]>([]);
   const [teamLeaderReports, setTeamLeaderReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cycleModal, setCycleModal] = useState<{ mode: "add" | "edit"; data: Cycle } | null>(null);
@@ -40,18 +41,20 @@ export function CropCycleManagement() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [cyclesData, zonesData, plotsData, processesData, reportsData] = await Promise.all([
+        const [cyclesData, zonesData, plotsData, processesData, reportsData, leadersData] = await Promise.all([
           getCropCycles(),
           getZones(),
           getPlots(),
           getProcesses(),
           getReports(),
+          getTeamLeaders(),
         ]);
         setCycles(cyclesData || []);
         setZones(zonesData || []);
         setPlots(plotsData || []);
         setProcesses(processesData || []);
         setTeamLeaderReports(reportsData || []);
+        setTeamLeaders(leadersData || []);
         setOpenZones(new Set((zonesData || []).map((z: any) => z.id)));
       } catch (error) {
         console.error("Failed to fetch crop cycle data:", error);
@@ -60,6 +63,7 @@ export function CropCycleManagement() {
         setPlots([]);
         setProcesses([]);
         setTeamLeaderReports([]);
+        setTeamLeaders([]);
       } finally {
         setLoading(false);
       }
@@ -80,6 +84,10 @@ export function CropCycleManagement() {
       toast.warning("Vui lòng nhập đầy đủ Lô, Loại cây và Ngày bắt đầu.");
       return;
     }
+    if (!data.teamLeaderId) {
+      toast.warning("Vui lòng chọn tổ trưởng phụ trách.");
+      return;
+    }
     setSaving(true);
     try {
       if (data.id) {
@@ -89,6 +97,7 @@ export function CropCycleManagement() {
           cultivation_process: data.processId || undefined,
           start_date: data.startDate,
           status: data.status,
+          team_leader: data.teamLeaderId || "",
         });
       } else {
         await createCropCycle({
@@ -97,6 +106,7 @@ export function CropCycleManagement() {
           start_date: data.startDate,
           cultivation_process: data.processId || undefined,
           status: data.status,
+          team_leader: data.teamLeaderId || undefined,
         });
       }
       await reloadCycles();
@@ -123,6 +133,7 @@ export function CropCycleManagement() {
     }
   };
   const goToPlot = (plotId: string) => navigate(`/admin/zones?plot=${plotId}`);
+  const leaderName = (id?: string) => (id ? (teamLeaders.find((l) => l.id === id)?.name || id) : "");
 
   const cycleProgress = (cycle: Cycle): number => {
     const days = Math.floor((new Date().getTime() - new Date(cycle.startDate).getTime()) / 86400000);
@@ -174,15 +185,19 @@ export function CropCycleManagement() {
             const cs = CYCLE_STATUS[cycle.status] ?? CYCLE_STATUS.active;
             const progress = cycleProgress(cycle);
             const isGac = cycle.crop === "Gấc";
+            const ldName = leaderName(cycle.teamLeaderId || plot.teamLeaderId) || "Chưa gán";
             return (
               <div key={cycle.id} className="flex items-center gap-2 sm:gap-3 px-3 py-2"
-                title={`${process?.name || ""} · Bắt đầu ${new Date(cycle.startDate).toLocaleDateString("vi-VN")}`}>
+                title={`${process?.name || ""} · Bắt đầu ${new Date(cycle.startDate).toLocaleDateString("vi-VN")} · Tổ trưởng: ${ldName}`}>
                 <span className={`shrink-0 inline-block w-2 h-2 rounded-full ${isGac ? "bg-emerald-500" : "bg-amber-500"}`} />
                 <div className="w-[88px] shrink-0">
                   <div className="text-sm font-medium text-gray-900 leading-tight">{cycle.crop}</div>
                   <div className="text-[11px] text-gray-400 leading-tight">{isGac ? "Giàn trên" : "Dưới tán"}</div>
                 </div>
                 <StatusBadge status={cs.badge}>{cs.label}</StatusBadge>
+                <span className="hidden sm:inline-flex items-center gap-1 text-xs text-gray-500 truncate max-w-[120px] shrink-0" title={`Tổ trưởng: ${ldName}`}>
+                  <User className="w-3 h-3 shrink-0" /> {ldName}
+                </span>
                 <div className="flex-1 min-w-[48px] flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${isGac ? "bg-emerald-600" : "bg-amber-500"}`} style={{ width: `${progress}%` }} />
@@ -350,7 +365,7 @@ export function CropCycleManagement() {
       )}
 
       {/* Modal thêm/sửa chu kỳ */}
-      {cycleModal && <CycleForm modal={cycleModal} zones={zones} plots={plots} processes={processes} saving={saving} onClose={() => setCycleModal(null)} onSave={saveCycle} />}
+      {cycleModal && <CycleForm modal={cycleModal} zones={zones} plots={plots} processes={processes} teamLeaders={teamLeaders} saving={saving} onClose={() => setCycleModal(null)} onSave={saveCycle} />}
 
       {/* Xác nhận xóa */}
       {confirmId && (
@@ -366,17 +381,22 @@ export function CropCycleManagement() {
 }
 
 // Form: chọn VÙNG trước → rồi chọn LÔ trong vùng đó
-function CycleForm({ modal, zones, plots, processes, saving, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Cycle }; zones: any[]; plots: any[]; processes: any[]; saving: boolean; onClose: () => void; onSave: (d: Cycle) => void; }) {
-  const [form, setForm] = React.useState<Cycle>(modal.data);
+function CycleForm({ modal, zones, plots, processes, teamLeaders, saving, onClose, onSave }: { modal: { mode: "add" | "edit"; data: Cycle }; zones: any[]; plots: any[]; processes: any[]; teamLeaders: any[]; saving: boolean; onClose: () => void; onSave: (d: Cycle) => void; }) {
+  const ownerOf = (pid: string) => plots.find((p) => p.id === pid)?.teamLeaderId || "";
+  // Có tổ trưởng đã lưu -> hiện đúng người đó; chưa lưu -> mặc định = chủ lô (người thực nhận việc).
+  const [form, setForm] = React.useState<Cycle>(
+    modal.data.teamLeaderId ? modal.data : { ...modal.data, teamLeaderId: ownerOf(modal.data.plotId) }
+  );
   const [zoneId, setZoneId] = React.useState<string>(
     plots.find((p) => p.id === modal.data.plotId)?.zoneId ?? zones[0]?.id ?? ""
   );
   const zonePlots = plots.filter((p) => p.zoneId === zoneId);
 
+  // Đổi lô -> tổ trưởng mặc định nhảy theo chủ lô mới
+  const setPlot = (pid: string) => setForm((f) => ({ ...f, plotId: pid, teamLeaderId: ownerOf(pid) }));
   const onZoneChange = (zid: string) => {
     setZoneId(zid);
-    const first = plots.find((p) => p.zoneId === zid);
-    setForm((f) => ({ ...f, plotId: first?.id ?? "" }));
+    setPlot(plots.find((p) => p.zoneId === zid)?.id ?? "");
   };
 
   return (
@@ -388,7 +408,7 @@ function CycleForm({ modal, zones, plots, processes, saving, onClose, onSave }: 
           </select>
         </Field>
         <Field label="Lô *">
-          <select value={form.plotId} onChange={(e) => setForm({ ...form, plotId: e.target.value })} className={inputCls}>
+          <select value={form.plotId} onChange={(e) => setPlot(e.target.value)} className={inputCls}>
             {zonePlots.length === 0 && <option value="">(Vùng chưa có lô)</option>}
             {zonePlots.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
@@ -410,6 +430,12 @@ function CycleForm({ modal, zones, plots, processes, saving, onClose, onSave }: 
           {processes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </Field>
+      <Field label="Tổ trưởng phụ trách">
+        <select value={form.teamLeaderId || ""} onChange={(e) => setForm({ ...form, teamLeaderId: e.target.value })} className={inputCls}>
+          <option value="" disabled>— Chọn tổ trưởng —</option>
+          {teamLeaders.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+        </select>
+      </Field>
       <Field label="Trạng thái">
         <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={inputCls}>
           <option value="active">Đang hoạt động</option>
@@ -417,7 +443,7 @@ function CycleForm({ modal, zones, plots, processes, saving, onClose, onSave }: 
           <option value="done">Kết thúc</option>
         </select>
       </Field>
-      <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.plotId || saving} />
+      <FormActions onClose={onClose} onSave={() => onSave(form)} disabled={!form.plotId || !form.teamLeaderId || saving} />
     </Modal>
   );
 }

@@ -8,6 +8,7 @@
   "block",
   "crop",
   "cultivation_process",
+  "team_leader",
   "start_date",
   "status"
  ],
@@ -31,6 +32,12 @@
    "fieldtype": "Link",
    "label": "Quy trình",
    "options": "Cultivation Process"
+  },
+  {
+   "fieldname": "team_leader",
+   "fieldtype": "Link",
+   "label": "Tổ trưởng",
+   "options": "User"
   },
   {
    "fieldname": "start_date",

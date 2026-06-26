@@ -188,6 +188,8 @@ def list_team_leaders():
     users = frappe.get_all("User", filters={"enabled": 1}, fields=["name", "full_name", "username", "enabled"])
     out = []
     for u in users:
+        if u.name == "Administrator":
+            continue  # Administrator có mọi role -> không liệt kê như tổ trưởng
         roles = frappe.get_roles(u.name)
         if "AKF Team Leader" not in roles:
             continue
@@ -232,9 +234,10 @@ def list_processes():
 @frappe.whitelist()
 def list_crop_cycles():
     rows = frappe.get_all("Crop Cycle",
-        fields=["name", "block", "crop", "cultivation_process", "start_date", "status"])
+        fields=["name", "block", "crop", "cultivation_process", "start_date", "status", "team_leader"])
     return [{"id": r.name, "plotId": r.block, "crop": r.crop, "processId": r.cultivation_process or "",
-             "startDate": str(r.start_date) if r.start_date else "", "status": r.status} for r in rows]
+             "startDate": str(r.start_date) if r.start_date else "", "status": r.status,
+             "teamLeaderId": r.team_leader or ""} for r in rows]
 
 
 # ---- Báo cáo / hỗ trợ / bất thường / thông báo ----
@@ -715,29 +718,38 @@ def delete_process(name):
 # ---- CRUD chu kỳ cây trồng (Crop Cycle) ----
 
 @frappe.whitelist()
-def create_crop_cycle(block, crop, start_date, cultivation_process=None, status="active"):
+def create_crop_cycle(block, crop, start_date, cultivation_process=None, status="active", team_leader=None):
     doc = frappe.get_doc({"doctype": "Crop Cycle", "block": block, "crop": crop,
-                          "cultivation_process": cultivation_process or None,
+                          "cultivation_process": cultivation_process or None, "team_leader": team_leader or None,
                           "start_date": start_date, "status": status}).insert()
     return {"id": doc.name, "plotId": doc.block, "crop": doc.crop,
-            "processId": doc.cultivation_process or "", "startDate": str(doc.start_date), "status": doc.status}
+            "processId": doc.cultivation_process or "", "startDate": str(doc.start_date), "status": doc.status,
+            "teamLeaderId": doc.team_leader or ""}
 
 
 @frappe.whitelist()
 def update_crop_cycle(name, **kwargs):
     doc = frappe.get_doc("Crop Cycle", name)
+    old_leader = doc.team_leader
     mapping = {"plotId": "block", "block": "block", "crop": "crop", "processId": "cultivation_process",
                "cultivation_process": "cultivation_process", "startDate": "start_date",
-               "start_date": "start_date", "status": "status"}
+               "start_date": "start_date", "status": "status",
+               "teamLeaderId": "team_leader", "team_leader": "team_leader"}
+    nullable = ("cultivation_process", "team_leader")
     for k, field in mapping.items():
         if k in kwargs:
-            doc.set(field, kwargs[k] or None if field == "cultivation_process" else kwargs[k])
+            doc.set(field, (kwargs[k] or None) if field in nullable else kwargs[k])
     doc.save()
     # Sửa chu kỳ (đặc biệt ngày bắt đầu / quy trình) -> sinh lại việc cho chu kỳ nếu còn active
     if doc.status == "active":
         _regenerate_cycle_tasks(doc.name)
+    # Đổi tổ trưởng -> gán lại việc chưa hoàn thành của chu kỳ sang người mới (cả quá hạn lẫn tương lai)
+    if doc.team_leader != old_leader:
+        from akf_farm.engine.task_generator import reassign_cycle_tasks
+        reassign_cycle_tasks(doc.name, doc.team_leader)
     return {"id": doc.name, "plotId": doc.block, "crop": doc.crop,
-            "processId": doc.cultivation_process or "", "startDate": str(doc.start_date), "status": doc.status}
+            "processId": doc.cultivation_process or "", "startDate": str(doc.start_date), "status": doc.status,
+            "teamLeaderId": doc.team_leader or ""}
 
 
 @frappe.whitelist()
