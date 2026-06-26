@@ -2,11 +2,12 @@ import React from "react";
 import { Link, useSearchParams } from "react-router";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Filter, Calendar, MapPin, Sprout, User, AlertTriangle, CheckCircle2, Clock, CircleDashed, Layers } from "lucide-react";
+import { Filter, Calendar, MapPin, Sprout, User, AlertTriangle, CheckCircle2, Clock, CircleDashed, Layers, Navigation } from "lucide-react";
 import { Button } from "../ui/button";
 import { getHeatmap, getAnomalies, getCalendar } from "../../lib/queries";
 import { buildGeo, type GeoEntry, type LatLng } from "../../lib/geo";
 import { todayYMD } from "../../lib/today";
+import { locateMe } from "../../lib/locate";
 
 type StatusKey = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
 
@@ -52,6 +53,15 @@ function SatelliteMap({
   const heatRef = React.useRef<L.LayerGroup | null>(null);   // lớp màu nền (blur) — KHÔNG nhận click
   const zoneRef = React.useRef<L.LayerGroup | null>(null);   // viền vùng + nhãn + bắt click
   const plotRef = React.useRef<L.LayerGroup | null>(null);   // viền lô của vùng đang chọn
+  const [locErr, setLocErr] = React.useState("");
+
+  // Vị trí của tôi (GPS) — canh để thấy cả mình lẫn toàn bộ vùng trồng
+  const goToMyLocation = () => {
+    if (!mapRef.current) return;
+    setLocErr("");
+    const all = zones.flatMap((z) => zoneGeo[z.id]?.polygon || []) as [number, number][];
+    locateMe(mapRef.current, { onError: setLocErr, fitWith: all });
+  };
 
   // Màu tô của lô trên bản đồ nhiệt:
   // - Khi lọc 1 cây: dùng đúng màu trạng thái cây đó.
@@ -147,7 +157,16 @@ function SatelliteMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterZone, filterCrop, selectedPlot, selectedZone]);
 
-  return <div ref={elRef} className="w-full h-[clamp(360px,58vh,560px)] rounded-lg overflow-hidden border border-gray-200 relative z-0" />;
+  return (
+    <div className="relative">
+      <div ref={elRef} className="w-full h-[clamp(360px,58vh,560px)] rounded-lg overflow-hidden border border-gray-200 z-0" />
+      <Button variant="secondary" size="sm" onClick={goToMyLocation}
+        className="absolute top-3 right-3 z-[500] shadow-md whitespace-nowrap">
+        <Navigation className="w-4 h-4 mr-1" /> Vị trí của tôi
+      </Button>
+      {locErr && <p className="absolute bottom-3 left-3 right-3 z-[500] text-xs text-red-700 bg-white/90 rounded px-2 py-1">{locErr}</p>}
+    </div>
+  );
 }
 
 export function HeatMap() {

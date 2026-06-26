@@ -1,9 +1,10 @@
 import React from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Undo2, Trash2, Search, Crosshair } from "lucide-react";
+import { Undo2, Trash2, Search, Crosshair, Navigation } from "lucide-react";
 import { Button } from "../ui/button";
 import { geodesicArea } from "../../lib/geo";
+import { locateMe } from "../../lib/locate";
 
 type Pt = { lat: number; lng: number };
 
@@ -301,6 +302,16 @@ export function BoundaryMap({
     mapRef.current.setView([lat, lng], 18);
   };
 
+  // Vị trí của tôi (GPS) — canh để thấy cả mình lẫn ranh giới vùng cha / điểm đang vẽ / vùng đã có
+  const goToMyLocation = () => {
+    if (!mapRef.current) return;
+    setMsg("");
+    const ref = constraintRef.current?.length ? constraintRef.current
+      : points.length ? points
+      : (avoidRef.current || []).flatMap((a) => a.polygon);
+    locateMe(mapRef.current, { onError: setMsg, fitWith: ref.map((p) => [p.lat, p.lng]) });
+  };
+
   return (
     <div>
       {/* Thanh tìm kiếm khu vực + nhập tọa độ */}
@@ -333,6 +344,9 @@ export function BoundaryMap({
             Đi tới
           </Button>
         </div>
+        <Button variant="secondary" size="sm" onClick={goToMyLocation} className="whitespace-nowrap">
+          <Navigation className="w-4 h-4 mr-1" /> Vị trí của tôi
+        </Button>
       </div>
       {msg && <p className="text-xs text-red-600 mb-2">{msg}</p>}
       {warn && <p className="text-xs text-amber-600 mb-2">⚠️ {warn}</p>}
