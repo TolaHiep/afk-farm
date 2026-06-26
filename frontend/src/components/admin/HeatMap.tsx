@@ -8,7 +8,7 @@ import { getHeatmap, getAnomalies, getCalendar } from "../../lib/queries";
 import { buildGeo, type GeoEntry, type LatLng } from "../../lib/geo";
 import { todayYMD } from "../../lib/today";
 import { locateMe } from "../../lib/locate";
-import { addBasemapSwitcher } from "../../lib/basemap";
+import { addBasemapSwitcher, prefetchTiles } from "../../lib/basemap";
 
 type StatusKey = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
 
@@ -201,7 +201,11 @@ export function HeatMap() {
         setZones(z);
         setPlots(p);
         setAnomalies(an ?? []);
-        setGeo(buildGeo(z, p));
+        const g = buildGeo(z, p);
+        setGeo(g);
+        // Tải trước tile khu nông trại (nền, có trần) -> pan/zoom giữa các vùng mượt
+        const pts = z.flatMap((zz: any) => g.zoneGeo[zz.id]?.polygon || []);
+        if (pts.length) prefetchTiles(L.latLngBounds(pts as L.LatLngExpression[]), { minZoom: 15, maxZoom: 18, max: 800 });
         // Deep-link: ?plot=ID hoặc ?zone=ID -> chọn để zoom, GIỮ filterZone = "all"
         // để các vùng/lô khác vẫn vẽ trên map (zoom out là thấy, click duoc).
         const qPlot = searchParams.get("plot");
