@@ -84,6 +84,7 @@ app_license = "mit"
 
 # before_install = "akf_farm.install.before_install"
 after_install = "akf_farm.install.after_install"
+after_migrate = "akf_farm.install.enable_scheduler"
 
 # Uninstallation
 # ------------
