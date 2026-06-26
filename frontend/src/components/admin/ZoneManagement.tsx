@@ -18,6 +18,7 @@ import { getZones, getPlots, deleteZone, deletePlot, updatePlot } from "../../li
 import { type CropOnPlot } from "../../lib/mockData";
 import { toast } from "../../lib/toast";
 import { polygonFromGeoJSON, type LatLng } from "../../lib/geo";
+import { addSatelliteHybrid } from "../../lib/basemap";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -104,7 +105,7 @@ function ZoneMiniMap({
   React.useEffect(() => {
     if (!visible || !elRef.current || mapRef.current) return;
     const map = L.map(elRef.current, { attributionControl: false, zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false });
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }).addTo(map);
+    addSatelliteHybrid(map);
     mapRef.current = map;
     // Đảm bảo Leaflet đo lại kích thước sau khi card render
     requestAnimationFrame(() => map.invalidateSize());

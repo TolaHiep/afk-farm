@@ -8,6 +8,7 @@ import { getHeatmap, getAnomalies, getCalendar } from "../../lib/queries";
 import { buildGeo, type GeoEntry, type LatLng } from "../../lib/geo";
 import { todayYMD } from "../../lib/today";
 import { locateMe } from "../../lib/locate";
+import { addBasemapSwitcher } from "../../lib/basemap";
 
 type StatusKey = "good" | "warning" | "danger" | "pending" | "done" | "inactive";
 
@@ -76,13 +77,17 @@ function SatelliteMap({
   React.useEffect(() => {
     if (!elRef.current || mapRef.current) return;
     const map = L.map(elRef.current, { center: farmCenter, zoom: 15, attributionControl: false, zoomControl: true });
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 }).addTo(map);
-    // Pane riêng cho lớp màu nhiệt, làm mờ để các ô màu hòa vào nhau (gradient như bản đồ thời tiết)
+    // Pane lớp màu nhiệt (blur) ở dưới; pane nhãn ở trên để chữ địa danh/đường không bị màu nhiệt che
     const pane = map.createPane("heat");
     pane.style.zIndex = "250";
     pane.style.filter = "blur(18px)";
     pane.style.opacity = "0.8";
     pane.style.pointerEvents = "none";
+    const labelsPane = map.createPane("labels");
+    labelsPane.style.zIndex = "260";
+    labelsPane.style.pointerEvents = "none";
+    // bottomright để không đè nút "Vị trí của tôi" (góc trên phải) và nút zoom (góc trên trái)
+    addBasemapSwitcher(map, "labels", "bottomright");
     heatRef.current = L.layerGroup().addTo(map);
     zoneRef.current = L.layerGroup().addTo(map);
     plotRef.current = L.layerGroup().addTo(map);

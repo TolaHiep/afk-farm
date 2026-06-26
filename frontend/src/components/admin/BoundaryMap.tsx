@@ -5,6 +5,7 @@ import { Undo2, Trash2, Search, Crosshair, Navigation } from "lucide-react";
 import { Button } from "../ui/button";
 import { geodesicArea } from "../../lib/geo";
 import { locateMe } from "../../lib/locate";
+import { addBasemapSwitcher } from "../../lib/basemap";
 
 type Pt = { lat: number; lng: number };
 
@@ -89,10 +90,7 @@ export function BoundaryMap({
   React.useEffect(() => {
     if (!elRef.current || mapRef.current) return;
     const map = L.map(elRef.current, { center: [11.9404, 108.4583], zoom: 16, attributionControl: false });
-    L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 19 }
-    ).addTo(map);
+    addBasemapSwitcher(map);
     constraintLayerRef.current = L.layerGroup().addTo(map);
     avoidLayerRef.current = L.layerGroup().addTo(map);
     warnLayerRef.current = L.layerGroup().addTo(map);
