@@ -10,6 +10,7 @@ import {
   Layers,
   List,
   LayoutGrid,
+  Edit2,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { StatusBadge } from "../ui/StatusBadge";
@@ -367,13 +368,20 @@ export function ZoneManagement() {
                       const pm = statusMeta(p.status);
                       const color = FILL[p.status] || FILL.pending;
                       return (
-                        <button key={`chip-${p.id}`} onClick={() => goToPlotMap(p.id)}
-                          title={`${p.name} · ${pm.label} · ${p.done}/${p.total} · Xem trên bản đồ`}
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs bg-gray-50 border border-gray-200 hover:bg-gray-100">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                          <span className="font-medium text-gray-800">{p.name}</span>
-                          <span className="text-gray-500">{p.done}/{p.total}</span>
-                        </button>
+                        <span key={`chip-${p.id}`}
+                          className="inline-flex items-center rounded-full text-xs bg-gray-50 border border-gray-200 overflow-hidden">
+                          <button onClick={() => goToPlotMap(p.id)}
+                            title={`${p.name} · ${pm.label} · ${p.done}/${p.total} · Xem trên bản đồ`}
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 hover:bg-gray-100">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                            <span className="font-medium text-gray-800">{p.name}</span>
+                            <span className="text-gray-500">{p.done}/{p.total}</span>
+                          </button>
+                          <Link to={`/admin/zones/edit/${p.id}`} title="Sửa lô"
+                            className="px-1.5 py-0.5 border-l border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-700">
+                            <Edit2 className="w-3 h-3" />
+                          </Link>
+                        </span>
                       );
                     })}
                     {zonePlots.length === 0 && (
