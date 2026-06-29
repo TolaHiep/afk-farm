@@ -2,6 +2,7 @@ import React from "react";
 import { Camera, X } from "lucide-react";
 import { drawWatermark, watermarkLines } from "../../lib/watermark";
 import type { CapturedPhoto } from "../../lib/capture";
+import { toast } from "../../lib/toast";
 
 // Camera in-app: KHONG hien thi the <video> (mot so trinh duyet/webview tu gan controls
 // native play/pause/timeline len video dang phat). Thay vao do <video> chay an (1px) chi de
@@ -75,8 +76,13 @@ export function CameraCapture({
     if (!video || shooting) return;
     setShooting(true);
     try {
-      const w = video.videoWidth || 1280;
-      const h = video.videoHeight || 720;
+      const vw = video.videoWidth || 1280;
+      const vh = video.videoHeight || 720;
+      // Giới hạn cạnh dài ~1920: canvas camera điện thoại (12MP) quá lớn dễ làm toBlob trả null /
+      // hết bộ nhớ -> nút chụp "không ăn". Ảnh nghiệm thu 1920px là quá đủ.
+      const scale = Math.min(1, 1920 / Math.max(vw, vh));
+      const w = Math.round(vw * scale);
+      const h = Math.round(vh * scale);
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
@@ -87,10 +93,12 @@ export function CameraCapture({
       const capturedAt = new Date();
       drawWatermark(ctx, w, h, watermarkLines(capturedAt, lat, lng, plotName));
       const blob: Blob = await new Promise((resolve, reject) =>
-        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob null"))), "image/jpeg", 0.92),
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob null"))), "image/jpeg", 0.9),
       );
       const file = new File([blob], `capture-${capturedAt.getTime()}.jpg`, { type: "image/jpeg" });
       onCapture({ file, lat, lng, accuracy, capturedAt: capturedAt.toISOString() });
+    } catch {
+      toast.error("Không chụp được ảnh. Vui lòng thử lại.");  // hết im lặng khi lỗi
     } finally {
       setShooting(false);
     }
