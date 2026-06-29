@@ -39,6 +39,13 @@ function write(items: OfflineItem[]) {
 export function listOffline(): OfflineItem[] {
   return read();
 }
+
+// ID các việc đang chờ đồng bộ (đã hoàn thành offline) -> phủ trạng thái 'completed' trên UI.
+export function queuedTaskIds(): Set<string> {
+  return new Set(
+    read().filter((i) => i.kind === "task" && i.payload?.task).map((i) => String(i.payload.task)),
+  );
+}
 export function offlineCount(): number {
   return read().length;
 }

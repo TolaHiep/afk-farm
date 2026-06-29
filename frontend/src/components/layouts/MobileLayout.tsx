@@ -2,7 +2,7 @@ import React from "react";
 import { Outlet, Link, useLocation } from "react-router";
 import { CheckSquare, Calendar, ClipboardList, Bell, User, RefreshCw } from "lucide-react";
 import { useAppSettings } from "../../lib/useAppSettings";
-import { listOffline } from "../../lib/offline";
+import { listOffline, replayOffline } from "../../lib/offline";
 
 export function MobileLayout() {
   const location = useLocation();
@@ -11,12 +11,21 @@ export function MobileLayout() {
   const [pending, setPending] = React.useState(() => listOffline().length);
   React.useEffect(() => {
     const tick = () => setPending(listOffline().length);
-    window.addEventListener("online", tick);
+    // Tự đồng bộ toàn cục: vừa có mạng (hoặc mở app) là gửi hàng đợi, không cần mở màn "Đồng bộ".
+    let busy = false;
+    const onOnline = async () => {
+      tick();
+      if (busy || !navigator.onLine || listOffline().length === 0) return;
+      busy = true;
+      try { await replayOffline(); } finally { busy = false; tick(); }
+    };
+    onOnline();
+    window.addEventListener("online", onOnline);
     window.addEventListener("offline", tick);
     window.addEventListener("storage", tick);
     const t = setInterval(tick, 5000);
     return () => {
-      window.removeEventListener("online", tick);
+      window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", tick);
       window.removeEventListener("storage", tick);
       clearInterval(t);

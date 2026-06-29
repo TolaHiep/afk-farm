@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useParams, useNavigate } from "react-router";
 import { ArrowLeft, MapPin, Calendar, Camera, CheckCircle, LifeBuoy, Trash2, Loader2 } from "lucide-react";
 import { getTaskDetail, completeTask, getMyPlots } from "../../lib/queries";
-import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET } from "../../lib/offline";
+import { enqueueOffline, isNetworkError, uid, currentQueueBytes, withinBudget, OFFLINE_BUDGET, queuedTaskIds } from "../../lib/offline";
 import { compressImage, dataUrlBytes, ONLINE, OFFLINE, MAX_PHOTOS } from "../../lib/image";
 import { CameraCapture } from "./CameraCapture";
 import { toPhotoMeta, type CapturedPhoto } from "../../lib/capture";
@@ -65,7 +65,9 @@ export function TaskDetail() {
       .then((data) => {
         if (!alive) return;
         setTask(data);
-        setStatus((data?.status as TaskStatus) || "pending");
+        // Đã hoàn thành offline (chờ đồng bộ) -> hiện 'completed' dù server chưa biết
+        const queued = queuedTaskIds().has(String(id));
+        setStatus(queued ? "completed" : ((data?.status as TaskStatus) || "pending"));
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -115,7 +117,41 @@ export function TaskDetail() {
     setError(null);
     setSubmitting(true);
     const clientUuid = uid();
+
+    // Lưu việc hoàn thành vào hàng đợi offline (nén ảnh nhỏ, kiểm tra dung lượng).
+    // Trả false nếu vượt bộ nhớ (đã set error). Dùng cho cả mất mạng lẫn mạng kém/rớt.
+    const queueOffline = async (): Promise<boolean> => {
+      const small = await Promise.all(
+        captured.map((c) => compressImage(c.file, OFFLINE.maxDim, OFFLINE.quality)),
+      );
+      const adding = small.reduce((s, d) => s + dataUrlBytes(d), 0);
+      if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
+        setError("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
+        return false;
+      }
+      enqueueOffline({
+        id: clientUuid, kind: "task",
+        payload: { task: id, client_uuid: clientUuid, photos: small, photo_meta: captured.map(toPhotoMeta) },
+        title: task.title,
+        date: new Date().toISOString(),
+      });
+      return true;
+    };
+
+    const finishQueued = () => {
+      setStatus("completed");
+      setShowConfirmation(false);
+      toast.success("Mạng yếu hoặc mất kết nối — đã lưu vào hàng đợi, hệ thống sẽ tự gửi khi có mạng.");
+      navigate("/mobile/tasks");  // về danh sách (không vào trang 'Gửi thành công' vì chưa gửi)
+    };
+
     try {
+      // Mất mạng -> xếp hàng NGAY, không chờ, báo người dùng liền.
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        if (await queueOffline()) finishQueued();
+        return;
+      }
+      // Có mạng -> gửi thẳng (api có timeout ~12s, mạng kém sẽ rớt nhanh sang nhánh dưới).
       const photos = await Promise.all(
         captured.map((c) => compressImage(c.file, ONLINE.maxDim, ONLINE.quality)),
       );
@@ -126,23 +162,8 @@ export function TaskDetail() {
       navigate("/mobile/success");
     } catch (e: any) {
       if (isNetworkError(e)) {
-        const small = await Promise.all(
-          captured.map((c) => compressImage(c.file, OFFLINE.maxDim, OFFLINE.quality)),
-        );
-        const adding = small.reduce((s, d) => s + dataUrlBytes(d), 0);
-        if (!withinBudget(currentQueueBytes(), adding, OFFLINE_BUDGET)) {
-          setError("Bộ nhớ offline gần đầy. Hãy bớt ảnh hoặc thử lại khi có mạng.");
-          return;
-        }
-        enqueueOffline({
-          id: clientUuid, kind: "task",
-          payload: { task: id, client_uuid: clientUuid, photos: small, photo_meta: captured.map(toPhotoMeta) },
-          title: task.title,
-          date: new Date().toISOString(),
-        });
-        setStatus("completed");
-        setShowConfirmation(false);
-        navigate("/mobile/success");
+        // Mạng kém/rớt giữa chừng -> xếp hàng thay vì bắt chờ.
+        if (await queueOffline()) finishQueued();
       } else {
         setError(e?.message || "Không thể hoàn thành công việc. Vui lòng thử lại.");
       }

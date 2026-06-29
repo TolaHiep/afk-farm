@@ -1,5 +1,19 @@
-import { api } from "./api";
+import { api, ApiError } from "./api";
+import { cacheGet, cacheSet } from "./cache";
 import type { PhotoMeta, TaskPhoto } from "./capture";
+
+// Đọc có cache: thành công -> lưu cache; lỗi MẠNG -> trả cache (nếu có). Lỗi server thì ném ra.
+async function cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  try {
+    const r = await fetcher();
+    cacheSet(key, r);
+    return r;
+  } catch (e) {
+    const c = cacheGet<T>(key);
+    if (c !== null && !(e instanceof ApiError)) return c;
+    throw e;
+  }
+}
 
 export type User = { email: string; full_name: string; phone?: string; role: "admin" | "team_leader"; roles: string[] };
 
@@ -89,12 +103,24 @@ export const getDashboard = (date?: string) =>
   api.get("admin_api.dashboard", date ? { date } : undefined) as Promise<any>;
 export const getTeamKpi = () => api.get("admin_api.team_kpi") as Promise<any[]>;
 
-// Field (mobile)
-export const getTodayTasks = (date?: string) =>
-  api.get("field_api.today_tasks", date ? { date } : undefined) as Promise<any[]>;
+// Field (mobile) — có cache offline cho danh sách việc, chi tiết việc, danh sách lô
+export const getTodayTasks = async (date?: string): Promise<any[]> => {
+  const key = `today_${date || "today"}`;
+  try {
+    const r = (await api.get("field_api.today_tasks", date ? { date } : undefined)) as any[];
+    cacheSet(key, r);
+    for (const t of r) if (t?.id) cacheSet(`task_${t.id}`, t);  // để mở từng việc offline
+    return r;
+  } catch (e) {
+    const c = cacheGet<any[]>(key);
+    if (c && !(e instanceof ApiError)) return c;  // offline -> dùng danh sách đã tải gần nhất
+    throw e;
+  }
+};
 export const getUpcomingTasks = (fromDate?: string, days = 10) =>
   api.get("field_api.upcoming_tasks", fromDate ? { from_date: fromDate, days: String(days) } : undefined) as Promise<any[]>;
-export const getTaskDetail = (task: string) => api.get("field_api.task_detail", { task }) as Promise<any>;
+export const getTaskDetail = (task: string) =>
+  cached(`task_${task}`, () => api.get("field_api.task_detail", { task }) as Promise<any>);
 export const completeTask = (task: string, clientUuid?: string, photos?: string[], photoMeta?: PhotoMeta[]) =>
   api.post("field_api.complete_task", { task, client_uuid: clientUuid, photos, photo_meta: photoMeta });
 export const submitReport = (p: { block: string; crop: string; date: string; content: string; photos?: string[]; abnormal?: number; client_uuid?: string; anomaly_type?: string; anomaly_desc?: string }) =>
@@ -104,7 +130,8 @@ export const submitSupport = (p: { block: string; type: string; content: string;
   api.post("field_api.submit_support", p);
 export const getMySupport = () => api.get("field_api.my_support") as Promise<any[]>;
 export const getMobileNotifications = () => api.get("field_api.notifications") as Promise<any[]>;
-export const getMyPlots = () => api.get("field_api.my_plots") as Promise<any[]>;
+export const getMyPlots = () =>
+  cached("my_plots", () => api.get("field_api.my_plots") as Promise<any[]>);
 export const getMyTeamMembers = () => api.get("field_api.my_team_members") as Promise<any[]>;
 export const updateMyProfile = (phone: string) => api.post("field_api.update_my_profile", { phone });
 export const changeMyPassword = (newPassword: string, oldPassword?: string) =>

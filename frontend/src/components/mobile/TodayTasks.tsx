@@ -16,6 +16,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { getTodayTasks, getMyPlots } from "../../lib/queries";
+import { queuedTaskIds } from "../../lib/offline";
 import { todayYMD } from "../../lib/today";
 
 const TODAY = todayYMD();
@@ -97,7 +98,9 @@ export function TodayTasks() {
   useEffect(() => {
     setLoading(true);
     getTodayTasks(viewDate).then((tasks) => {
-      setDayTasks(tasks);
+      // Phủ trạng thái: việc đã hoàn thành offline (đang chờ đồng bộ) hiện 'completed' ngay
+      const queued = queuedTaskIds();
+      setDayTasks(tasks.map((t) => (queued.has(String(t.id)) ? { ...t, status: "completed" } : t)));
       setLoading(false);
     }).catch(() => {
       setDayTasks([]);

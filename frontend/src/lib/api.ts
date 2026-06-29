@@ -10,22 +10,36 @@ export class ApiError extends Error {
   }
 }
 
+// Timeout mặc định: mạng kém thì rớt sớm để vào hàng đợi offline, không bắt người dùng chờ.
+const DEFAULT_TIMEOUT_MS = 12000;
+
 async function request(
   method: string,
-  opts: { body?: unknown; params?: Record<string, string> } = {},
+  opts: { body?: unknown; params?: Record<string, string>; timeoutMs?: number } = {},
 ): Promise<any> {
-  const qs = opts.params ? "?" + new URLSearchParams(opts.params).toString() : "";
-  const res = await fetch(`${BASE}.${method}${qs}`, {
-    method: opts.body !== undefined ? "POST" : "GET",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new ApiError(parseFrappeError(json) || `API ${method} lỗi (${res.status}).`, res.status);
+  // Mất mạng -> báo lỗi mạng NGAY, không treo chờ timeout TCP của hệ điều hành (2-3 phút).
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    throw new Error("Mất kết nối mạng.");  // không phải ApiError -> isNetworkError -> xếp hàng offline
   }
-  return json.message;
+  const qs = opts.params ? "?" + new URLSearchParams(opts.params).toString() : "";
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), opts.timeoutMs ?? DEFAULT_TIMEOUT_MS) : null;
+  try {
+    const res = await fetch(`${BASE}.${method}${qs}`, {
+      method: opts.body !== undefined ? "POST" : "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      signal: ctrl?.signal,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new ApiError(parseFrappeError(json) || `API ${method} lỗi (${res.status}).`, res.status);
+    }
+    return json.message;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 // Frappe đóng gói lỗi vào `_server_messages` (JSON-string chứa mảng JSON-string {message:"<html>..."}).
